@@ -11,17 +11,7 @@ Services to retrieve information about (mountain) huts.
 - **Github repository**: <https://github.com/wodore/hut-services/>
 - **Documentation** <https://wodore.github.io/hut-services/>
 
-## Getting started with your project
-
-First, create a repository on GitHub with the same name as this project, and then run the following commands:
-
-```bash
-git init -b main
-git add .
-git commit -m "init commit"
-git remote add origin git@github.com:wodore/hut-services.git
-git push -u origin main
-```
+## Getting started
 
 Finally, install the environment and the pre-commit hooks with
 
@@ -29,7 +19,8 @@ Finally, install the environment and the pre-commit hooks with
 make install
 ```
 
-You are now ready to start development on your project!
+## CI/CD
+
 The CI/CD pipeline will be triggered when you open a pull request, merge to main, or when you create a new release.
 
 To finalize the set-up for publishing to PyPi or Artifactory, see [here](https://fpgmaas.github.io/cookiecutter-poetry/features/publishing/#set-up-for-pypi).

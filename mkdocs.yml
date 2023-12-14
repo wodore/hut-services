@@ -3,8 +3,10 @@ repo_url: https://github.com/wodore/hut-services
 site_url: https://wodore.github.io/hut-services
 site_description: Services to retrieve information about (mountain) huts.
 site_author: TBxy
-edit_uri: edit/main/docs/
-repo_name: wodore/hut-services
+edit_uri:
+  edit/main/docs/
+  #repo_name: wodore/hut-services
+repo_name: hut-services
 copyright: Maintained by <a href="tb@wodore.com">TBxy</a>.
 
 nav:
@@ -15,9 +17,11 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          setup_commands:
-            - import sys
-            - sys.path.append('../src')
+          paths: [src]
+          load_external_modules: true
+          #setup_commands:
+          #  - import sys
+          #  - sys.path.append('../src')
 theme:
   name: material
   feature:
