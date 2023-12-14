@@ -6,9 +6,9 @@ authors = ["TBxy <tb@wodore.com>"]
 repository = "https://github.com/wodore/hut-services"
 documentation = "https://wodore.github.io/hut-services/"
 readme = "README.md"
-packages = [
-  {include = "hut_services"}
-]
+#packages = [
+#  {include = "src/hut_services"}
+#]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
@@ -19,6 +19,7 @@ deptry = "^0.12.0"
 mypy = "^1.5.1"
 pre-commit = "^3.4.0"
 tox = "^4.11.1"
+pytest-cov = "^4.1.0"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
@@ -30,7 +31,7 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.mypy]
-files = ["hut_services"]
+files = ["src/hut_services"]
 disallow_untyped_defs = "True"
 disallow_any_unimported = "True"
 no_implicit_optional = "True"
