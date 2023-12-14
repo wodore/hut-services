@@ -5,7 +5,7 @@ site_description: Services to retrieve information about (mountain) huts.
 site_author: TBxy
 edit_uri: edit/main/docs/
 repo_name: wodore/hut-services
-copyright: Maintained by <a href="https://wodore.com">Florian</a>.
+copyright: Maintained by <a href="tb@wodore.com">TBxy</a>.
 
 nav:
   - Home: index.md
@@ -17,7 +17,7 @@ plugins:
         python:
           setup_commands:
             - import sys
-            - sys.path.append('../')
+            - sys.path.append('../src')
 theme:
   name: material
   feature:
