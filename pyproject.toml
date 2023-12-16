@@ -16,6 +16,7 @@ pydantic = "^2.5.2"
 overpy = "^0.7"
 geojson-pydantic = "^1.0.1"
 click = "^8.1.7"
+phonenumbers = "^8.13.26"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"
@@ -45,6 +46,7 @@ check_untyped_defs = "True"
 warn_return_any = "True"
 warn_unused_ignores = "True"
 show_error_codes = "True"
+plugins = ["pydantic.mypy"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

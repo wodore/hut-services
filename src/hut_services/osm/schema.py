@@ -1,4 +1,7 @@
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
+
+import click
+import phonenumbers
 
 # from app.models.utils.locale import Translations
 # from ..utils.hut_fields import Contact, Monthly, MonthlyOptions, Open, Catering
@@ -12,7 +15,7 @@ from pydantic import BaseModel, Field, computed_field
 # import phonenumbers
 # from app.models.ref import HutRefLink
 # from .hut_base import HutBaseSource
-from hut_services.core.schema import HutBaseSource
+from hut_services.core.schema import Contact, HutBaseSource, HutSchema
 from hut_services.core.schema.geo import Location
 from hut_services.core.schema.geo.types import Elevation, Latitude, Longitude
 from hut_services.core.schema.locale import TranslationSchema
@@ -111,12 +114,16 @@ class HutOsm(BaseModel):
 
 
 # HutOsmSource = HutBaseSource[HutOsm]
-class HutOsmSource(HutBaseSource):
+class HutOsmSource(HutBaseSource[HutOsm]):
     source_name: str = "osm"
 
 
 class HutOsm0Convert(BaseModel):
-    source: HutOsm
+    source: HutOsm = Field(..., exclude=True)
+
+    def get_hut(self) -> HutSchema:
+        hut_dict = self.model_dump(by_alias=True)
+        return HutSchema(**hut_dict)
 
     @property
     def _tags(self) -> OSMTags:
@@ -124,18 +131,40 @@ class HutOsm0Convert(BaseModel):
 
     @computed_field  # type: ignore[misc]
     @property
-    def name(self) -> dict[str, str]:
-        return TranslationSchema(de=self._tags.name[:69]).model_dump()
+    def slug(self) -> str:
+        return f"osm-{self.source.get_id()}"
 
     @computed_field  # type: ignore[misc]
     @property
-    def description(self) -> dict[str, str]:
-        return TranslationSchema(en=self._tags.note or "").model_dump()
+    def name(self) -> TranslationSchema:
+        return TranslationSchema(de=self._tags.name[:69])
 
     @computed_field  # type: ignore[misc]
     @property
-    def note(self) -> dict[str, str]:
-        return self.description
+    def description(self) -> TranslationSchema:
+        return TranslationSchema()
+        # return TranslationSchema(de=self._tags.note or "")
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def notes(self) -> list[TranslationSchema]:
+        return []
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def comment(self) -> str:
+        note = ""
+        if self._tags.note:
+            note = f"OSM note: {self._tags.note}\n"
+        return note
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def extras(self) -> dict[str, Any]:
+        extras = {}
+        if self._tags.wikidata:
+            extras["wikidata"] = self._tags.wikidata
+        return extras
 
     @computed_field  # type: ignore[misc]
     @property
@@ -201,7 +230,7 @@ class HutOsm0Convert(BaseModel):
         if self._tags.operator:
             _orgs = "sac" if "sac" in self._tags.operator else ""
         return guess_hut_type(
-            name=self.name.get("de", ""),
+            name=self.name.i18n or "",
             capacity=self.capacity,
             capacity_shelter=self.capacity_shelter,
             elevation=self.elevation,
@@ -228,5 +257,55 @@ class HutOsm0Convert(BaseModel):
 
     @computed_field  # type: ignore[misc]
     @property
-    def props(self) -> dict[str, str]:
-        return {"osm_type": self.source.osm_type or "node"}
+    def is_public(self) -> bool:
+        if self._tags.access:
+            return self._tags.access in ["yes", "public", "customers", "permissive"]
+        return True
+
+    @property
+    def _email(self) -> str | None:
+        if self._tags.email:
+            return self._tags.email.strip()
+        elif self._tags.contact_email:
+            return self._tags.contact_email.strip()
+        return ""
+
+    @property
+    def _phones(self) -> list[str]:
+        phone = None
+        if self._tags.phone:
+            phone = self._tags.phone
+        elif self._tags.contact_phone:
+            phone = self._tags.contact_phone
+        phones = []
+        if phone:
+            _matches = phonenumbers.PhoneNumberMatcher(phone, "CH")
+            if not _matches:
+                click.secho(f"warning: could not match phone number: '{phone}'", fg="red")
+            phone_match: phonenumbers.PhoneNumberMatch
+            for phone_match in _matches:
+                # if len(str(phone)) > 30: # probably not valid
+                # click.secho(f"warning: phone number is too long: '{phone}'",fg="red")
+                phone_fmt = phonenumbers.format_number(phone_match.number, phonenumbers.PhoneNumberFormat.INTERNATIONAL)
+                phones.append(phone_fmt)
+        return phones
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def contacts(self) -> list[Contact]:
+        contacts = []
+        emails = self._email
+        for phone in self._phones:
+            is_mobile = phonenumbers.number_type(phonenumbers.parse(phone)) == phonenumbers.PhoneNumberType.MOBILE
+            mobile = ""
+            if is_mobile:
+                mobile = phone
+                phone = ""
+            contacts.append(Contact(phone=phone, email=emails, mobile=mobile, name="", function="", is_public=True))
+            if emails:
+                emails = None
+        # TODO: do the same with emails as for phones
+        if emails:
+            for email in emails.split(";"):
+                contacts.append(Contact(email=email.strip(), is_public=True))
+        return contacts

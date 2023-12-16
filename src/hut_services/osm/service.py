@@ -5,8 +5,9 @@ from typing import IO, Any, AnyStr, List, Optional
 import click
 import overpy  # type: ignore[import-untyped]
 
+from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
-from hut_services.osm.schema import HutOsm, HutOsmSource
+from hut_services.osm.schema import HutOsm, HutOsm0Convert, HutOsmSource
 
 if __name__ == "__main__":  # only for testing
     from rich import print as rprint  # noqa: F401, RUF100
@@ -91,6 +92,17 @@ class OsmService:
         self._echo("  ... done", fg="green")
         return huts
 
+    def convert(self, src: HutOsmSource) -> HutSchema:
+        if src.version >= 0:
+            if src.source_data is None:
+                err_msg = f"Conversion for '{src.source_name}' version {src.version} without 'source_data' not allowed."
+                raise AttributeError(err_msg)
+            return HutOsm0Convert(source=src.source_data).get_hut()
+        else:
+            err_msg = f"Conversion for '{src.source_name}' version {src.version} not implemented."
+            raise NotImplementedError(err_msg)
+        return hut
+
     # @lru_cache(10)
     # def get_hut_list(self, limit: int = 5000, lang: str = "de") -> List[Hut]:
     #    huts = []
@@ -105,4 +117,7 @@ if __name__ == "__main__":
     huts = osm_service.get_huts_from_source(limit=limit)
     for h in huts:
         # rprint(h)
-        print(h.show(source_name=False))
+        hut = osm_service.convert(h)
+        rprint(hut)
+        rprint(h)
+        # print(h.show(source_name=False))
