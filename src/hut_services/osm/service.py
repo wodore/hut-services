@@ -1,33 +1,41 @@
 #!/usr/bin/env python
 # from functools import lru_cache
-from typing import List
+from typing import IO, Any, AnyStr, List, Optional
 
 import click
-import overpy
+import overpy  # type: ignore[import-untyped]
 
 from hut_services.core.schema.geo import BBox
 from hut_services.osm.schema import HutOsm, HutOsmSource
 
 if __name__ == "__main__":  # only for testing
-    from rich import print  # noqa: F401, RUF100
+    from rich import print as rprint  # noqa: F401, RUF100
     from rich.traceback import install
 
     install(show_locals=False)
 
 
 class OsmService:
-    def __init__(self, request_url: str = "https://overpass.osm.ch/api/", log=False):
+    def __init__(self, request_url: str = "https://overpass.osm.ch/api/", log: bool = False):
         self.request_url = request_url
         self._log = log
-        self._cache = {}
+        self._cache: dict = {}
 
-    def _echo(self, *args, **kwargs):
+    def _echo(
+        self,
+        message: Optional[Any] = None,
+        file: Optional[IO[AnyStr]] = None,
+        nl: bool = True,
+        err: bool = False,
+        color: Optional[bool] = None,
+        **styles: Any,
+    ) -> None:
         if self._log:
-            click.secho(*args, **kwargs)
+            click.secho(message=message, file=file, nl=nl, err=err, color=color, **styles)
 
     # @lru_cache(10)
     def get_huts_from_source(
-        self, bbox: BBox | None = None, limit: int = 1, offset: int = 0, **kwargs
+        self, bbox: BBox | None = None, limit: int = 1, offset: int = 0, **kwargs: dict
     ) -> List[HutOsmSource]:
         """Get all huts from openstreet map."""
         api = overpy.Overpass(url=self.request_url)
@@ -75,7 +83,7 @@ class OsmService:
                 hut = HutOsmSource(
                     name=osm_hut.get_name(),
                     source_id=osm_hut.get_id(),
-                    location=osm_hut.get_point(),
+                    location=osm_hut.get_location(),
                     source_data=osm_hut,
                 )
                 huts.append(hut)
@@ -92,12 +100,9 @@ class OsmService:
 
 
 if __name__ == "__main__":
-
-    def main():
-        limit = 30
-        osm_service = OsmService(log=True)
-        huts = osm_service.get_huts_from_source(limit)
-        for h in huts:
-            print(h.name)
-
-    main()
+    limit = 30
+    osm_service = OsmService(log=True)
+    huts = osm_service.get_huts_from_source(limit=limit)
+    for h in huts:
+        # rprint(h)
+        print(h.show(source_name=False))

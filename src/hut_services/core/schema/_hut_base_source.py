@@ -3,20 +3,17 @@ from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
-from .geo import Elevation, Point
+from .geo import Location
 
 T = TypeVar("T")
 
 
 class HutBaseSource(BaseModel, Generic[T]):
-    # TODO: does not work, needs to be added on parent
-    # source_class: str = Field(default_factory=lambda: __class__.__name__)
-    # convert_class: str = Field(default_factory=lambda: __class__.__name__.replace("Source", "Convert"))
+    source_name: str = Field(..., description="Name of the source (e.g. osm, wikipedia, ...).")
 
     # hut information
     name: str = Field(..., description="Original hut name.")
-    location: Point | None = Field(None, description="Location of the hut.")
-    elevation: Elevation | None = None
+    location: Location = Field(..., description="Location of the hut.")
 
     # source information
     source_id: str = Field(..., description="Originial source id of the hut.")
@@ -28,61 +25,30 @@ class HutBaseSource(BaseModel, Generic[T]):
         default_factory=datetime.now, description="Version of the service when this entry was created."
     )
 
-    # @abstractmethod
-    # def get_id(self) -> str:
-    #    return str(self.id)
+    def __str__(self) -> str:
+        return f"<{self.source_name} #{self.source_id} - {self.name} ({self.location.lon},{self.location.lat})>"
 
-    # @abstractmethod
-    # def get_name(self) -> str:
-    #    return self.name
-
-    # @abstractmethod
-    # def get_point(self) -> Point:
-    #    return Point(lat=0, lon=0)
-
-    ## @abstractmethod
-    ## def get_hut(self, include_refs: bool = True) -> Hut:
-    ##    # _convert = HutSourceConvert(**self.dict())
-    ##    _convert = self
-    ##    hut = Hut.from_orm(_convert)
-    ##    if include_refs:
-    ##        hut.refs = []
-    ##    return hut
-
-    # @classmethod
-    # def get_fields(cls, alias=False):
-    #    return list(cls.schema(alias).get("properties").keys())
-
-    # @classmethod
-    # def get_printable_fields(cls, alias=False):
-    #    return list(cls.schema(alias).get("properties").keys())
-
-    # def rich(self, fields="printable", hide_none: bool = False):
-    #    obj = benedict(self.model_dump())
-    #    if fields == "printable":
-    #        fields = self.get_printable_fields()
-    #    elif fields == "all":
-    #        fields = self.get_fields()
-    #    elif not isinstance(fields, (list, tuple)):
-    #        raise UserWarning("'fields' neet to be either 'printable', 'all', or a list with fileds")
-    #    content = [Text("")]
-    #    for field in fields:
-    #        # value = getattr(self,field)
-    #        value = obj.get(field)
-    #        if not value and hide_none:
-    #            continue
-    #        value = str(value) if value else ("x", "magenta")
-    #        _text = Text.assemble(f"{field}", (f" {'.'*(25-len(field))} ", "green"), value, overflow="crop")
-    #        content.append(_text)
-    #    content = Text("\n").join(content)
-    #    output = Panel(
-    #        content, title_align="left", title=f"[green]{self.get_id()}[/green] ──── [bold]{self.get_name()}[/bold]"
-    #    )
-    #    return output
-
-    class Config:
-        # orm_mode = True
-        # validate_assignment = True
-        populate_by_name = True
-        from_attributes = True
-        # underscore_attrs_are_private = True
+    def show(
+        self,
+        source_id: bool = True,
+        location: bool = True,
+        elevation: bool = True,
+        source_name: bool = True,
+        version: bool = False,
+        created: bool = False,
+    ) -> str:
+        """Returns a formated string with the hut information which can be printed."""
+        out = [f"{self.name}"]
+        if source_id:
+            out.append(f"  id:        {self.source_id}")
+        if location:
+            out.append(f"  location:  {self.location.lon},{self.location.lat}")
+        if elevation:
+            out.append(f"  elevation: {self.location.ele}")
+        if source_name:
+            out.append(f"  source:    {self.source_name}")
+        if version:
+            out.append(f"  version:   {self.version}")
+        if created:
+            out.append(f"  created:   {self.created}")
+        return "\n".join(out)

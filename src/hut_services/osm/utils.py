@@ -23,7 +23,7 @@ def guess_hut_type(
     if osm_tag is None:
         osm_tag = ""
 
-    def _in(patterns: list, target: str):
+    def _in(patterns: list, target: str) -> bool:
         return any(re.search(pat.lower(), target.lower()) for pat in patterns)
 
     name = name.lower()

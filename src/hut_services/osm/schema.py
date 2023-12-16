@@ -6,8 +6,6 @@ from typing import Literal, Optional
 # from typing_extensions import TypedDict
 # from .point import Elevation, Latitude, Longitude, Point
 # from .point import Point
-from geojson_pydantic import Point
-
 # from django.contrib.gis.geos import Point as dbPoint
 from pydantic import BaseModel, Field, computed_field
 
@@ -15,6 +13,8 @@ from pydantic import BaseModel, Field, computed_field
 # from app.models.ref import HutRefLink
 # from .hut_base import HutBaseSource
 from hut_services.core.schema import HutBaseSource
+from hut_services.core.schema.geo import Location
+from hut_services.core.schema.geo.types import Elevation, Latitude, Longitude
 from hut_services.core.schema.locale import TranslationSchema
 
 # from sqlmodel import Field, SQLModel
@@ -50,7 +50,7 @@ class OSMTags(BaseModel):
     reservation: Optional[str] = None
 
     # ele: Optional[Elevation]
-    ele: Optional[float] = None
+    ele: Optional[Elevation] = None
 
 
 class HutOsm(BaseModel):
@@ -62,11 +62,11 @@ class HutOsm(BaseModel):
     # convert_class: str = Field(default_factory=lambda: __class__.__name__.replace("Source", "Convert"))
 
     osm_type: Optional[Literal["node", "way", "area"]] = None
-    id: int  # TODO: use different name and set in Field
-    lat: float | None = None
-    lon: float | None = None
-    center_lat: float | None = None
-    center_lon: float | None = None
+    osm_id: int = Field(..., alias="id")
+    lat: Latitude | None = None
+    lon: Longitude | None = None
+    center_lat: Latitude | None = None
+    center_lon: Longitude | None = None
     # lat: Optional[Latitude]
     # lon: Optional[Longitude]
     # center_lat: Optional[Latitude]
@@ -74,16 +74,16 @@ class HutOsm(BaseModel):
     tags: OSMTags
 
     def get_id(self) -> str:
-        return str(self.id)
+        return str(self.osm_id)
 
     def get_name(self) -> str:
         return self.tags.name
 
-    def get_point(self) -> Point:
-        if self.lat:
-            return Point(coordinates=(self.lat, self.lon), type="Point")
-        elif self.center_lat:
-            return Point(coordinates=(self.center_lat, self.center_lon), type="Point")
+    def get_location(self) -> Location:
+        if self.lat and self.lon:
+            return Location(lat=self.lat, lon=self.lon, ele=self.tags.ele)
+        elif self.center_lat and self.center_lon:
+            return Location(lat=self.center_lat, lon=self.center_lon, ele=self.tags.ele)
         else:
             msg = "OSM coordinates are missing."
             raise UserWarning(msg)
@@ -110,7 +110,9 @@ class HutOsm(BaseModel):
     #    return properties
 
 
-HutOsmSource = HutBaseSource[HutOsm]
+# HutOsmSource = HutBaseSource[HutOsm]
+class HutOsmSource(HutBaseSource):
+    source_name: str = "osm"
 
 
 class HutOsm0Convert(BaseModel):
@@ -120,32 +122,27 @@ class HutOsm0Convert(BaseModel):
     def _tags(self) -> OSMTags:
         return self.source.tags
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
     def name(self) -> dict[str, str]:
         return TranslationSchema(de=self._tags.name[:69]).model_dump()
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
     def description(self) -> dict[str, str]:
         return TranslationSchema(en=self._tags.note or "").model_dump()
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
     def note(self) -> dict[str, str]:
         return self.description
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
-    def point(self) -> Point:
-        lat = self.source.lat or self.source.center_lat
-        lon = self.source.lon or self.source.center_lon
-        if not (lat and lon):
-            msg = f"OSM coordinates are missing: {self._tags.name} (#{self.source.id})"
-            raise UserWarning(msg)
-        return Point(lat=lat, lon=lon)
+    def location(self) -> Location:
+        return self.source.get_location()
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
     def url(self) -> str:
         url = ""
@@ -157,33 +154,34 @@ class HutOsm0Convert(BaseModel):
             url = ""
         return url
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
-    def elevation(self) -> float | None:
+    def elevation(self) -> Elevation | None:
         if self._tags.ele:
             return self._tags.ele
         else:
             return None
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
     def capacity(self) -> Optional[int]:
         tags = self._tags
-        cap = None
+        cap: int | None = None
+        cap_str: str | None = None
         if tags.capacity:
-            cap = tags.capacity
+            cap_str = tags.capacity
         elif tags.beds:
-            cap = tags.beds
+            cap_str = tags.beds
         elif tags.bed:
-            cap = tags.bed
+            cap_str = tags.bed
         try:
-            if cap is not None:
-                cap = int(cap)
+            if cap_str is not None:
+                cap = int(cap_str)
         except ValueError:
             cap = None
         return cap
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
     def capacity_shelter(self) -> Optional[int]:
         if self._tags.winter_room:
@@ -195,9 +193,9 @@ class HutOsm0Convert(BaseModel):
             return self.capacity
         return None
 
-    @computed_field
+    @computed_field(alias="type")  # type: ignore[misc]
     @property
-    def type(self) -> str:
+    def hut_type(self) -> str:
         """Returns type slug"""
         _orgs = ""
         if self._tags.operator:
@@ -211,7 +209,7 @@ class HutOsm0Convert(BaseModel):
             osm_tag=self._tags.tourism,
         )
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
     def owner(self) -> str:
         owner = self._tags.operator or ""
@@ -221,14 +219,14 @@ class HutOsm0Convert(BaseModel):
         #    owner = owner[:100]
         return owner
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
     def is_active(self) -> bool:
         if self._tags.access:
             return self._tags.access in ["yes", "public", "customers", "permissive"]
         return True
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
     def props(self) -> dict[str, str]:
         return {"osm_type": self.source.osm_type or "node"}
