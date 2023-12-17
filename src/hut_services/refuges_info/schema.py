@@ -73,7 +73,7 @@ class Type(ValeurID):
 
 
 class Etat(ValeurID):
-    ident: Literal["ouverture", "fermeture", "cle_a_recuperer", "detruit"] | None = Field(..., alias="id")
+    ident: Literal["ouverture", "fermeture", "cle_a_recuperer", "detruit"] | None = Field(..., alias="id")  # type: ignore[assignment]
 
 
 class Date(BaseModel):

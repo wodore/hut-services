@@ -4,7 +4,7 @@ import json
 import logging
 from typing import Any, Literal, Sequence
 
-import requests
+import httpx
 import xmltodict
 from easydict import EasyDict  # type: ignore[import-untyped]
 
@@ -44,7 +44,7 @@ def refuges_info_request(
     params["format"] = output_format
     params["format_texte"] = text_format
     params["detail"] = "complet" if detail else "simple"
-    r = requests.get(url, params=params, timeout=10)
+    r = httpx.get(url, params=params, timeout=10)
     logger.debug(f"request url: {r.url}")
     if output_format == "geojson":
         data = json.loads(r.content)
