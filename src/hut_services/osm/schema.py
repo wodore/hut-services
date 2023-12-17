@@ -1,10 +1,15 @@
 import logging
 from typing import Any, Literal, Optional
 
-import phonenumbers
 from pydantic import BaseModel, Field, computed_field
 
-from hut_services.core.schema import BaseHutConverterSchema, BaseHutSourceSchema, CapacitySchema, ContactSchema
+from hut_services.core.schema import (
+    BaseHutConverterSchema,
+    BaseHutSourceSchema,
+    BaseSourceProperties,
+    CapacitySchema,
+    ContactSchema,
+)
 from hut_services.core.schema.geo import LocationSchema
 from hut_services.core.schema.geo.types import Elevation, Latitude, Longitude
 from hut_services.core.schema.locale import TranslationSchema
@@ -15,7 +20,7 @@ from .utils import guess_hut_type
 logger = logging.getLogger(__name__)
 
 
-class OSMTags(BaseModel):
+class _OSMTags(BaseModel):
     tourism: Literal["alpine_hut", "wilderness_hut"]
     wikidata: Optional[str] = None
 
@@ -53,7 +58,7 @@ class OsmHut(BaseModel):
     lon: Longitude | None = None
     center_lat: Latitude | None = None
     center_lon: Longitude | None = None
-    tags: OSMTags
+    tags: _OSMTags
 
     def get_id(self) -> str:
         return str(self.osm_id)
@@ -70,7 +75,7 @@ class OsmHut(BaseModel):
             raise OSMCoordinatesError(self.osm_id, self.get_name())
 
 
-class OsmProperties(BaseModel):
+class OsmProperties(BaseSourceProperties):
     osm_type: Literal["node", "way", "area"] = Field(..., description="osm object type: node, way, or area")
 
 
@@ -78,9 +83,9 @@ class OsmHutSource(BaseHutSourceSchema[OsmHut, OsmProperties]):
     source_name: str = "osm"
 
 
-class HutOsm0Convert(BaseHutConverterSchema[OsmHut]):
+class OsmHut0Convert(BaseHutConverterSchema[OsmHut]):
     @property
-    def _tags(self) -> OSMTags:
+    def _tags(self) -> _OSMTags:
         return self.source.tags
 
     @computed_field  # type: ignore[misc]
@@ -215,13 +220,7 @@ class HutOsm0Convert(BaseHutConverterSchema[OsmHut]):
             phone = self._tags.contact_phone
         phones = []
         if phone:
-            _matches = phonenumbers.PhoneNumberMatcher(phone, "CH")
-            if not _matches:
-                logger.warning(f"Could not match phone CH number: '{phone}'")
-            phone_match: phonenumbers.PhoneNumberMatch
-            for phone_match in _matches:
-                phone_fmt = phonenumbers.format_number(phone_match.number, phonenumbers.PhoneNumberFormat.INTERNATIONAL)
-                phones.append(phone_fmt)
+            phones += ContactSchema.format_phone_numbers(phone)
         return phones
 
     @computed_field  # type: ignore[misc]
@@ -230,11 +229,7 @@ class HutOsm0Convert(BaseHutConverterSchema[OsmHut]):
         contacts = []
         emails = self._email
         for phone in self._phones:
-            is_mobile = phonenumbers.number_type(phonenumbers.parse(phone)) == phonenumbers.PhoneNumberType.MOBILE
-            mobile = ""
-            if is_mobile:
-                mobile = phone
-                phone = ""
+            phone, mobile = ContactSchema.number_to_phone_or_mobile(phone)
             contacts.append(
                 ContactSchema(phone=phone, email=emails, mobile=mobile, name="", function="", is_public=True)
             )

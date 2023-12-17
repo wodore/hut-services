@@ -1,10 +1,14 @@
+import logging
 from enum import Enum
 from typing import Annotated, Any
 
+import phonenumbers
 from pydantic import BaseModel, Field
 
 from .geo import LocationSchema
 from .locale import TranslationSchema
+
+logger = logging.getLogger(__name__)
 
 NaturalInt = Annotated[int, Field(strict=True, ge=0)]
 
@@ -22,6 +26,26 @@ class ContactSchema(BaseModel):
     note: TranslationSchema = Field(default_factory=TranslationSchema)
     is_active: bool = True
     is_public: bool = False
+
+    @classmethod
+    def format_phone_numbers(cls, number: str, countery: str = "CH") -> list[str]:
+        phones = []
+        _matches = phonenumbers.PhoneNumberMatcher(number, "CH")
+        if not _matches:
+            logger.warning(f"Could not match phone CH number: '{number}'")
+        phone_match: phonenumbers.PhoneNumberMatch
+        for phone_match in _matches:
+            phone_fmt = phonenumbers.format_number(phone_match.number, phonenumbers.PhoneNumberFormat.INTERNATIONAL)
+            phones.append(phone_fmt)
+        return phones
+
+    @classmethod
+    def number_to_phone_or_mobile(cls, number: str) -> tuple[str, str]:
+        """retrns tuple (phone, mobile) depending on 'number'"""
+        is_mobile = phonenumbers.number_type(phonenumbers.parse(number)) == phonenumbers.PhoneNumberType.MOBILE
+        mobile = number if is_mobile else ""
+        phone = number if not is_mobile else ""
+        return (phone, mobile)
 
 
 # T = TypeVar("T")

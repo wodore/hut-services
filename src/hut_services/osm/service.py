@@ -9,7 +9,7 @@ import overpy  # type: ignore[import-untyped]
 from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
 from hut_services.core.service import BaseService
-from hut_services.osm.schema import HutOsm0Convert, OsmHut, OsmHutSource, OsmProperties
+from hut_services.osm.schema import OsmHut, OsmHut0Convert, OsmHutSource, OsmProperties
 
 if __name__ == "__main__":  # only for testing
     from rich import print as rprint  # noqa: F401, RUF100
@@ -89,7 +89,7 @@ class OsmService(BaseService[OsmHutSource]):
             if src.source_data is None:
                 err_msg = f"Conversion for '{src.source_name}' version {src.version} without 'source_data' not allowed."
                 raise AttributeError(err_msg)
-            return HutOsm0Convert(source=src.source_data).get_hut()
+            return OsmHut0Convert(source=src.source_data).get_hut()
         else:
             err_msg = f"Conversion for '{src.source_name}' version {src.version} not implemented."
             raise NotImplementedError(err_msg)

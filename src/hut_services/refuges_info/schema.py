@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, computed_field
 from hut_services.core.schema import (
     BaseHutConverterSchema,
     BaseHutSourceSchema,
+    BaseSourceProperties,
     CapacitySchema,
     HutTypeEnum,
 )
@@ -39,102 +40,102 @@ WODORE_HUT_TYPES: dict[int, HutTypeEnum] = {
 }
 
 
-class RefugesInfoProperties(BaseModel):
+class RefugesInfoProperties(BaseSourceProperties):
     """Properties save together with the source data."""
 
     slug: str = Field(..., description="hut slug by refuges.info")
     hut_type: HutTypeRefugesEnum = Field(..., description="hut type by refuges.info.")
 
 
-class Coord(BaseModel):
+class _Coord(BaseModel):
     alt: float
     long: float
     lat: float
     precision: dict[str, str]
 
 
-class ValeurNom(BaseModel):
+class _ValeurNom(BaseModel):
     nom: str
     valeur: str | None
 
 
-class ValeurID(BaseModel):
+class _ValeurID(BaseModel):
     ident: int = Field(..., alias="id")
     valeur: str | None
 
 
-class NomID(BaseModel):
+class _NomID(BaseModel):
     ident: int = Field(..., alias="id")
     nom: str | None
 
 
-class Type(ValeurID):
+class _Type(_ValeurID):
     icone: str
 
 
-class Etat(ValeurID):
+class _Etat(_ValeurID):
     ident: Literal["ouverture", "fermeture", "cle_a_recuperer", "detruit"] | None = Field(..., alias="id")  # type: ignore[assignment]
 
 
-class Date(BaseModel):
+class _Date(BaseModel):
     derniere_modif: str
     creation: str
 
 
-class Article(BaseModel):
+class _Article(BaseModel):
     demonstratif: str
     defini: str
     partitif: str
 
 
-class SiteOfficiel(ValeurNom):
+class _SiteOfficiel(_ValeurNom):
     url: str | None
 
 
-class PlacesMatelas(ValeurNom):
+class _PlacesMatelas(_ValeurNom):
     nb: int | None
 
 
-class InfoComp(BaseModel):
-    site_officiel: SiteOfficiel
-    manque_un_mur: ValeurNom
-    cheminee: ValeurNom
-    poele: ValeurNom
-    couvertures: ValeurNom
-    places_matelas: PlacesMatelas
-    latrines: ValeurNom
-    bois: ValeurNom
-    eau: ValeurNom
+class _InfoComp(BaseModel):
+    site_officiel: _SiteOfficiel
+    manque_un_mur: _ValeurNom
+    cheminee: _ValeurNom
+    poele: _ValeurNom
+    couvertures: _ValeurNom
+    places_matelas: _PlacesMatelas
+    latrines: _ValeurNom
+    bois: _ValeurNom
+    eau: _ValeurNom
 
 
-class Description(BaseModel):
+class _Description(BaseModel):
     valeur: str
 
 
-class RefugesInfoFeatureProperties(BaseModel):
+class _RefugesInfoFeatureProperties(BaseModel):
     ident: int = Field(..., alias="id")
     lien: str  # link
     nom: str
     sym: str
-    coord: Coord
-    hut_type: Type = Field(..., alias="type")
-    places: ValeurNom
-    etat: Etat
-    date: Date
-    remarque: ValeurNom
-    acces: ValeurNom
-    proprio: ValeurNom
-    createur: NomID
-    article: Article
-    info_comp: InfoComp
-    description: Description
+    coord: _Coord
+    hut_type: _Type = Field(..., alias="type")
+    places: _ValeurNom
+    etat: _Etat
+    date: _Date
+    remarque: _ValeurNom
+    acces: _ValeurNom
+    proprio: _ValeurNom
+    createur: _NomID
+    article: _Article
+    info_comp: _InfoComp
+    description: _Description
 
 
 class RefugesInfoFeature(Feature):
     """RefugesInfo Feature Model with required properties and geometry."""
 
     geometry: Point
-    properties: RefugesInfoFeatureProperties
+    properties: _RefugesInfoFeatureProperties
 
     def get_id(self) -> str:
         return str(self.properties.ident)
@@ -173,7 +174,7 @@ class RefugesInfoHutSource(BaseHutSourceSchema[RefugesInfoFeature, RefugesInfoPr
 
 class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @property
-    def _props(self) -> RefugesInfoFeatureProperties:
+    def _props(self) -> _RefugesInfoFeatureProperties:
         return self.source.properties
 
     @computed_field  # type: ignore[misc]

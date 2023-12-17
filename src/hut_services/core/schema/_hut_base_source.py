@@ -5,8 +5,13 @@ from pydantic import BaseModel, Field
 
 from .geo import LocationSchema
 
+
+class BaseSourceProperties(BaseModel):
+    """Properties saved together with the source data."""
+
+
 DataT = TypeVar("DataT", bound=BaseModel)
-PropertiesT = TypeVar("PropertiesT", bound=BaseModel)
+PropertiesT = TypeVar("PropertiesT", bound=BaseSourceProperties)
 
 
 class BaseHutSourceSchema(BaseModel, Generic[DataT, PropertiesT]):
