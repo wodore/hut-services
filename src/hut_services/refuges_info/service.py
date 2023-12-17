@@ -31,7 +31,8 @@ def refuges_info_request(
     url: str,
     limit: str | int = "all",
     type_points: Sequence[int] = [7, 10, 9, 28],
-    massif: Sequence[int] = [12, 339, 407, 45, 342, 20, 29, 343, 412, 8, 344, 408, 432, 406, 52, 9],
+    massif: Sequence[int] | None = [12, 339, 407, 45, 342, 20, 29, 343, 412, 8, 344, 408, 432, 406, 52, 9],
+    bbox: BBox | None = None,
     text_format: Literal["texte", "markdown"] = "markdown",
     output_format: Literal["geojson", "xml", "csv"] = "geojson",
     detail: bool = True,
@@ -40,10 +41,19 @@ def refuges_info_request(
     # https://www.refuges.info/api/massif?nb_points=all&format=xml&type_points=7,10,9,28&massif=12,339,407,45,342,20,29,343,412,8,344,408,432,406,52,9
     params["nb_points"] = limit
     params["type_points"] = ",".join([str(t) for t in type_points])
-    params["massif"] = ",".join([str(m) for m in massif])
     params["format"] = output_format
     params["format_texte"] = text_format
     params["detail"] = "complet" if detail else "simple"
+    if massif and bbox:
+        raise NotImplementedError("Either 'massif', or 'bbox' required, both together are not supported.")
+    if massif:
+        params["massif"] = ",".join([str(m) for m in massif])
+        url = url + "/massif"
+    elif bbox:
+        params["bbox"] = ",".join([str(m) for m in bbox])
+        url = url + "/bbox"
+    else:
+        raise NotImplementedError("Either 'massif', or 'bbox' required.")
     r = httpx.get(url, params=params, timeout=10)
     logger.debug(f"request url: {r.url}")
     if output_format == "geojson":
@@ -55,8 +65,8 @@ def refuges_info_request(
 
 
 class RefugesInfoService(BaseService[RefugesInfoHutSource]):
-    def __init__(self, request_url: str = "https://www.refuges.info/api/massif"):
-        super().__init__(support_bbox=False, support_limit=True, support_offset=False, support_convert=True)
+    def __init__(self, request_url: str = "https://www.refuges.info/api"):
+        super().__init__(support_bbox=True, support_limit=True, support_offset=False, support_convert=True)
         self.request_url = request_url
 
     def get_huts_from_source(
@@ -69,12 +79,12 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
         **kwargs: Any,
     ) -> list[RefugesInfoHutSource]:
         type_points: Sequence[int] = kwargs.get("type_points", [7, 10, 9, 28])
-        massif: Sequence[int] = kwargs.get(
-            "massif", [12, 339, 407, 45, 342, 20, 29, 343, 412, 8, 344, 408, 432, 406, 52, 9]
+        massif: Sequence[int] | None = kwargs.get(
+            "massif", [12, 339, 407, 45, 342, 20, 29, 343, 412, 8, 344, 408, 432, 406, 52, 9] if not bbox else None
         )
         logger.info(f"get refuges.info data from {self.request_url}")
         fc: RefugesInfoFeatureCollection = refuges_info_request(
-            url=self.request_url, limit=limit, type_points=type_points, massif=massif, detail=True, **kwargs
+            url=self.request_url, bbox=bbox, limit=limit, type_points=type_points, massif=massif, detail=True, **kwargs
         )  # type: ignore  # noqa: PGH003
         huts = []
         for feature in fc.features:
@@ -102,12 +112,13 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
 
 if __name__ == "__main__":
     logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
-    limit = 2
-    osm_service = RefugesInfoService()
-    huts = osm_service.get_huts_from_source(limit=limit)
+    limit = 10000
+    service = RefugesInfoService()
+    bbox_ch = (6.02260949059, 45.7769477403, 10.4427014502, 47.8308275417)
+    huts = service.get_huts_from_source(limit=limit, bbox=bbox_ch)
     for h in huts:
         # rprint(h)
-        hut = osm_service.convert(h)
+        hut = service.convert(h)
         rprint(hut)
         # rprint(h.source_properties_schema)
         # rprint(h)

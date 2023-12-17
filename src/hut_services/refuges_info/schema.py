@@ -232,7 +232,8 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @computed_field  # type: ignore[misc]
     @property
     def owner(self) -> str:
-        return self._props.proprio.valeur or ""
+        owner = self._props.proprio.valeur or ""
+        return owner[:100]
 
     @computed_field  # type: ignore[misc]
     @property
