@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # from functools import lru_cache
-from typing import IO, Any, AnyStr, List, Optional
+import logging
+import textwrap
 
-import click
 import overpy  # type: ignore[import-untyped]
 
 from hut_services.core.schema import HutSchema
@@ -16,28 +16,19 @@ if __name__ == "__main__":  # only for testing
     install(show_locals=False)
 
 
+logger = logging.getLogger(__name__)
+
+
 class OsmService:
     def __init__(self, request_url: str = "https://overpass.osm.ch/api/", log: bool = False):
         self.request_url = request_url
         self._log = log
-        self._cache: dict = {}
-
-    def _echo(
-        self,
-        message: Optional[Any] = None,
-        file: Optional[IO[AnyStr]] = None,
-        nl: bool = True,
-        err: bool = False,
-        color: Optional[bool] = None,
-        **styles: Any,
-    ) -> None:
-        if self._log:
-            click.secho(message=message, file=file, nl=nl, err=err, color=color, **styles)
+        # self._cache: dict = {}
 
     # @lru_cache(10)
     def get_huts_from_source(
         self, bbox: BBox | None = None, limit: int = 1, offset: int = 0, **kwargs: dict
-    ) -> List[HutOsmSource]:
+    ) -> list[HutOsmSource]:
         """Get all huts from openstreet map."""
         api = overpy.Overpass(url=self.request_url)
         if bbox is None:
@@ -58,8 +49,7 @@ class OsmService:
         area = ",".join(
             [str(b) for b in bbox]
         )  # f"{lon_start},{lat_start},{lon_start+lon_range},{lat_start+lat_range}"
-        self._echo(f"  .. get osm data from {self.request_url} with query:", dim=True)
-        self._echo("     --------------------------", dim=True)
+        logger.info(f"get osm data from {self.request_url} with bbox: ({area})")
         query = f"""
                 [out:json];
                 (
@@ -68,13 +58,12 @@ class OsmService:
                 );
                 out qt center {limit};
             """
-        self._echo(query, dim=True)
-        self._echo("     --------------------------", dim=True, nl=False)
+        logger.debug(f"query:\n{'-'*20}\n{textwrap.dedent(query).strip()}\n{'-'*20}")
         try:
             result = api.query(query)
         except overpy.exception.OverpassGatewayTimeout as e:
-            self._echo(" ... failed", fg="red")
-            self._echo(e, dim=True)
+            logger.warning("overpy execution failed")
+            logger.debug(str(e))
             return []
         huts = []
         for key, res in {"node": result.nodes, "way": result.ways}.items():
@@ -89,7 +78,7 @@ class OsmService:
                 )
                 huts.append(hut)
                 # huts.append(h)
-        self._echo("  ... done", fg="green")
+        logger.info(f"succesfully got {len(huts)} huts")
         return huts
 
     def convert(self, src: HutOsmSource) -> HutSchema:
@@ -101,23 +90,24 @@ class OsmService:
         else:
             err_msg = f"Conversion for '{src.source_name}' version {src.version} not implemented."
             raise NotImplementedError(err_msg)
-        return hut
 
-    # @lru_cache(10)
-    # def get_hut_list(self, limit: int = 5000, lang: str = "de") -> List[Hut]:
-    #    huts = []
-    #    osm_huts = self.get_osm_hut_list(limit=limit, lang=lang)
-    #    huts = [h.get_hut() for h in osm_huts]
-    #    return huts
+    def get_hut_list(
+        self, bbox: BBox | None = None, limit: int = 1, offset: int = 0, **kwargs: dict
+    ) -> list[HutSchema]:
+        huts = []
+        src_huts = self.get_huts_from_source(bbox=bbox, limit=limit, offset=offset, **kwargs)
+        huts = [self.convert(h) for h in src_huts]
+        return huts
 
 
 if __name__ == "__main__":
-    limit = 30
+    logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
+    limit = 2
     osm_service = OsmService(log=True)
-    huts = osm_service.get_huts_from_source(limit=limit)
+    huts = osm_service.get_hut_list(limit=limit)
     for h in huts:
         # rprint(h)
-        hut = osm_service.convert(h)
-        rprint(hut)
+        # hut = osm_service.convert(h)
         rprint(h)
+        # rprint(h)
         # print(h.show(source_name=False))

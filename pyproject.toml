@@ -15,7 +15,6 @@ python = ">=3.8,<4.0"
 pydantic = "^2.5.2"
 overpy = "^0.7"
 geojson-pydantic = "^1.0.1"
-click = "^8.1.7"
 phonenumbers = "^8.13.26"
 
 [tool.poetry.group.dev.dependencies]

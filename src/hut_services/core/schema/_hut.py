@@ -41,6 +41,11 @@ class HutType(str, Enum):
     restaurant = "restaurant"
 
 
+class Capacity(BaseModel):
+    opened: NaturalInt | None = Field(None, description="Capacity when the hut is open")
+    closed: NaturalInt | None = Field(None, description="Capacity when the hut is cloes (shelter, winterroom, ...)")
+
+
 class HutSchema(BaseModel):
     slug: str | None = None
     name: TranslationSchema = Field(..., description="Original hut name.")
@@ -56,8 +61,7 @@ class HutSchema(BaseModel):
     # photos:        List[Photo] = Field(default_factory=list, sa_column=Column(PydanticType(List[Photo])))
 
     country: str | None = Field("ch", max_length=2, min_length=2)
-    capacity: NaturalInt | None = Field(None)
-    capacity_shelter: NaturalInt | None = Field(None)
+    capacity: Capacity
 
     # infrastructure:       dict = Field(default_factory=dict, sa_column=Column(JSON)) # TODO, better name. Maybe use infra and service separated, external table
     # access:             Access = Field(default_factory=Access, sa_column=Access.get_sa_column())
