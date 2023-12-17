@@ -3,13 +3,13 @@ from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
 
-from .geo import Location
+from .geo import LocationSchema
 from .locale import TranslationSchema
 
 NaturalInt = Annotated[int, Field(strict=True, ge=0)]
 
 
-class Contact(BaseModel):
+class ContactSchema(BaseModel):
     # i18n = TranslationField(fields=("note",))
 
     name: str = Field("", max_length=70)
@@ -25,7 +25,7 @@ class Contact(BaseModel):
 
 
 # T = TypeVar("T")
-class HutType(str, Enum):
+class HutTypeEnum(str, Enum):
     unknown = "unknown"
     campground = "campground"  # possible to camp
     basic_shelter = "basic-shelter"  # only roof, nothing inside
@@ -41,7 +41,7 @@ class HutType(str, Enum):
     restaurant = "restaurant"
 
 
-class Capacity(BaseModel):
+class CapacitySchema(BaseModel):
     opened: NaturalInt | None = Field(None, description="Capacity when the hut is open")
     closed: NaturalInt | None = Field(None, description="Capacity when the hut is cloes (shelter, winterroom, ...)")
 
@@ -49,19 +49,19 @@ class Capacity(BaseModel):
 class HutSchema(BaseModel):
     slug: str | None = None
     name: TranslationSchema = Field(..., description="Original hut name.")
-    location: Location = Field(..., description="Location of the hut.")
+    location: LocationSchema = Field(..., description="Location of the hut.")
 
     description: TranslationSchema = Field(default_factory=TranslationSchema)
     notes: list[TranslationSchema] = Field(..., description="Additional notes to the hut.")
     owner: str | None = Field(None, max_length=100)
-    contacts: list[Contact] = Field(default_factory=list)
+    contacts: list[ContactSchema] = Field(default_factory=list)
     url: str = Field("", max_length=200)
     comment: str = Field("", max_length=2000)
 
     # photos:        List[Photo] = Field(default_factory=list, sa_column=Column(PydanticType(List[Photo])))
 
     country: str | None = Field("ch", max_length=2, min_length=2)
-    capacity: Capacity
+    capacity: CapacitySchema
 
     # infrastructure:       dict = Field(default_factory=dict, sa_column=Column(JSON)) # TODO, better name. Maybe use infra and service separated, external table
     # access:             Access = Field(default_factory=Access, sa_column=Access.get_sa_column())
@@ -70,7 +70,7 @@ class HutSchema(BaseModel):
     is_public: bool = Field(default=True)
 
     # monthly:            Monthly = Field(default_factory=Monthly, sa_column=Monthly.get_sa_column())
-    hut_type: HutType = Field(alias="type")
+    hut_type: HutTypeEnum = Field(alias="type")
 
     extras: dict[str, Any] = Field(default_factory=dict, description="Additional information.")
 

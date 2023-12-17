@@ -2,19 +2,19 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field, computed_field
 
-from hut_services.core.schema import Capacity, Contact, HutSchema
+from hut_services.core.schema import CapacitySchema, ContactSchema, HutSchema
 from hut_services.core.schema.locale import TranslationSchema
 
-from .geo import Location
+from .geo import LocationSchema
 
 T = TypeVar("T")
 
 
-class HutBaseConverter(BaseModel, Generic[T]):
+class BaseHutConverterSchema(BaseModel, Generic[T]):
     source: T = Field(..., exclude=True)
 
     class FieldNotImplementedError(Exception):
-        def __init__(self, obj: "HutBaseConverter", field: str):
+        def __init__(self, obj: "BaseHutConverterSchema", field: str):
             class_name = str(obj.__class__).replace("<class '", "").replace("'>", "")
             message = f"Converter '{class_name}' field '{field}' is not implemented."
             super().__init__(message)
@@ -57,7 +57,7 @@ class HutBaseConverter(BaseModel, Generic[T]):
 
     @computed_field  # type: ignore[misc]
     @property
-    def location(self) -> Location:
+    def location(self) -> LocationSchema:
         if hasattr(self.source, "get_location"):
             return self.source.get_location()  # type: ignore  # noqa: PGH003
         raise self.FieldNotImplementedError(self, "location")
@@ -69,8 +69,8 @@ class HutBaseConverter(BaseModel, Generic[T]):
 
     @computed_field  # type: ignore[misc]
     @property
-    def capacity(self) -> Capacity:
-        return Capacity(opened=None, closed=None)
+    def capacity(self) -> CapacitySchema:
+        return CapacitySchema(opened=None, closed=None)
 
     @computed_field(alias="type")  # type: ignore[misc]
     @property
@@ -95,5 +95,5 @@ class HutBaseConverter(BaseModel, Generic[T]):
 
     @computed_field  # type: ignore[misc]
     @property
-    def contacts(self) -> list[Contact]:
+    def contacts(self) -> list[ContactSchema]:
         return []

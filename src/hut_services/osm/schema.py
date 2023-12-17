@@ -4,8 +4,8 @@ from typing import Any, Literal, Optional
 import phonenumbers
 from pydantic import BaseModel, Field, computed_field
 
-from hut_services.core.schema import Capacity, Contact, HutBaseConverter, HutBaseSource
-from hut_services.core.schema.geo import Location
+from hut_services.core.schema import BaseHutConverterSchema, BaseHutSourceSchema, CapacitySchema, ContactSchema
+from hut_services.core.schema.geo import LocationSchema
 from hut_services.core.schema.geo.types import Elevation, Latitude, Longitude
 from hut_services.core.schema.locale import TranslationSchema
 
@@ -44,10 +44,10 @@ class OSMTags(BaseModel):
     ele: Optional[Elevation] = None
 
 
-class HutOsm(BaseModel):
+class OsmHut(BaseModel):
     """data from OSM database"""
 
-    osm_type: Optional[Literal["node", "way", "area"]] = None
+    osm_type: Literal["node", "way", "area"] | None = None
     osm_id: int = Field(..., alias="id")
     lat: Latitude | None = None
     lon: Longitude | None = None
@@ -61,20 +61,24 @@ class HutOsm(BaseModel):
     def get_name(self) -> str:
         return self.tags.name
 
-    def get_location(self) -> Location:
+    def get_location(self) -> LocationSchema:
         if self.lat and self.lon:
-            return Location(lat=self.lat, lon=self.lon, ele=self.tags.ele)
+            return LocationSchema(lat=self.lat, lon=self.lon, ele=self.tags.ele)
         elif self.center_lat and self.center_lon:
-            return Location(lat=self.center_lat, lon=self.center_lon, ele=self.tags.ele)
+            return LocationSchema(lat=self.center_lat, lon=self.center_lon, ele=self.tags.ele)
         else:
             raise OSMCoordinatesError(self.osm_id, self.get_name())
 
 
-class HutOsmSource(HutBaseSource[HutOsm]):
+class OsmProperties(BaseModel):
+    osm_type: Literal["node", "way", "area"] = Field(..., description="osm object type: node, way, or area")
+
+
+class OsmHutSource(BaseHutSourceSchema[OsmHut, OsmProperties]):
     source_name: str = "osm"
 
 
-class HutOsm0Convert(HutBaseConverter[HutOsm]):
+class HutOsm0Convert(BaseHutConverterSchema[OsmHut]):
     @property
     def _tags(self) -> OSMTags:
         return self.source.tags
@@ -153,8 +157,8 @@ class HutOsm0Convert(HutBaseConverter[HutOsm]):
 
     @computed_field  # type: ignore[misc]
     @property
-    def capacity(self) -> Capacity:
-        return Capacity(opened=self._capacity_opened, closed=self._capacity_closed)
+    def capacity(self) -> CapacitySchema:
+        return CapacitySchema(opened=self._capacity_opened, closed=self._capacity_closed)
 
     @computed_field(alias="type")  # type: ignore[misc]
     @property
@@ -222,7 +226,7 @@ class HutOsm0Convert(HutBaseConverter[HutOsm]):
 
     @computed_field  # type: ignore[misc]
     @property
-    def contacts(self) -> list[Contact]:
+    def contacts(self) -> list[ContactSchema]:
         contacts = []
         emails = self._email
         for phone in self._phones:
@@ -231,10 +235,12 @@ class HutOsm0Convert(HutBaseConverter[HutOsm]):
             if is_mobile:
                 mobile = phone
                 phone = ""
-            contacts.append(Contact(phone=phone, email=emails, mobile=mobile, name="", function="", is_public=True))
+            contacts.append(
+                ContactSchema(phone=phone, email=emails, mobile=mobile, name="", function="", is_public=True)
+            )
             if emails:
                 emails = None
         if emails:
             for email in emails.split(";"):
-                contacts.append(Contact(email=email.strip(), is_public=True))
+                contacts.append(ContactSchema(email=email.strip(), is_public=True))
         return contacts

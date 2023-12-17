@@ -1,5 +1,5 @@
-from ._hut import Capacity, Contact, HutSchema
-from ._hut_base_converter import HutBaseConverter
-from ._hut_base_source import HutBaseSource
+from ._hut import CapacitySchema, ContactSchema, HutSchema
+from ._hut_base_converter import BaseHutConverterSchema
+from ._hut_base_source import BaseHutSourceSchema
 
-__all__ = ["HutBaseSource", "HutBaseConverter", "HutSchema", "Contact"]
+__all__ = ["BaseHutSourceSchema", "BaseHutConverterSchema", "HutSchema", "ContactSchema"]
