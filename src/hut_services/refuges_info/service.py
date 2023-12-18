@@ -65,6 +65,15 @@ def refuges_info_request(
 
 
 class RefugesInfoService(BaseService[RefugesInfoHutSource]):
+    """Service to get huts from
+    [refuges.info](https://www.refuges.info)
+    with [its api](https://www.refuges.info/api).
+
+    Note:
+        The methods are descriebed in [`BaseService`][hut_services.BaseService].
+
+    """
+
     def __init__(self, request_url: str = "https://www.refuges.info/api"):
         super().__init__(support_bbox=True, support_limit=True, support_offset=False, support_convert=True)
         self.request_url = request_url

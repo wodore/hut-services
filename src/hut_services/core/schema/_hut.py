@@ -1,4 +1,5 @@
 import logging
+from collections import namedtuple
 from enum import Enum
 from typing import Annotated, Any
 
@@ -12,9 +13,24 @@ logger = logging.getLogger(__name__)
 
 NaturalInt = Annotated[int, Field(strict=True, ge=0)]
 
+PhoneMobile = namedtuple("PhoneMobile", ["phone", "mobile"])
+
 
 class ContactSchema(BaseModel):
-    # i18n = TranslationField(fields=("note",))
+    """Schema for a contact.
+
+    Attributes:
+        name: Contact name (persion or organization), can also be empty.
+        email: E-mail address.
+        phone: Phone number.
+        mobile: Mobule phone number.
+        function: Function, e.g. hut warden.
+        url: Additional url for this contact (not the hut website).
+        address: Address (street, city).
+        note: Additional note/information.
+        is_active: Contact is active.
+        is_public: Show contact public.
+    """
 
     name: str = Field("", max_length=70)
     email: str = Field("", max_length=70)
@@ -28,11 +44,22 @@ class ContactSchema(BaseModel):
     is_public: bool = False
 
     @classmethod
-    def format_phone_numbers(cls, number: str, countery: str = "CH") -> list[str]:
+    def extract_phone_numbers(cls, numbers_string: str, region: str | None = "CH") -> list[str]:
+        """Extracts phone numbers from a string and returns them formatted
+        with international code.
+        Uses the [`phonenumbers`](https://github.com/daviddrysdale/python-phonenumbers) package.
+
+        Args:
+            numbers_string: A string with phone numbers in it.
+            region: Country code.
+
+        Returns:
+            A list with formatted phone numbers.
+        """
         phones = []
-        _matches = phonenumbers.PhoneNumberMatcher(number, "CH")
+        _matches = phonenumbers.PhoneNumberMatcher(numbers_string, region=region)
         if not _matches:
-            logger.warning(f"Could not match phone CH number: '{number}'")
+            logger.warning(f"Could not match phone CH number: '{numbers_string}'")
         phone_match: phonenumbers.PhoneNumberMatch
         for phone_match in _matches:
             phone_fmt = phonenumbers.format_number(phone_match.number, phonenumbers.PhoneNumberFormat.INTERNATIONAL)
@@ -40,37 +67,81 @@ class ContactSchema(BaseModel):
         return phones
 
     @classmethod
-    def number_to_phone_or_mobile(cls, number: str) -> tuple[str, str]:
-        """retrns tuple (phone, mobile) depending on 'number'"""
-        is_mobile = phonenumbers.number_type(phonenumbers.parse(number)) == phonenumbers.PhoneNumberType.MOBILE
+    def number_to_phone_or_mobile(cls, number: str, region: str | None = None) -> PhoneMobile:
+        """Given a phone number it returns it eihter as `phone` or `mobile` number.
+        Uses the [`phonenumbers`](https://github.com/daviddrysdale/python-phonenumbers) package.
+
+        Args:
+            number: Any phone numbers.
+            region: Country code.
+
+        Returns:
+            Tuple with `phone` and `mobile` number (`(phone, mobile)`).
+        """
+
+        is_mobile = (
+            phonenumbers.number_type(phonenumbers.parse(number, region=region)) == phonenumbers.PhoneNumberType.MOBILE
+        )
         mobile = number if is_mobile else ""
         phone = number if not is_mobile else ""
-        return (phone, mobile)
+        return PhoneMobile(phone=phone, mobile=mobile)
 
 
 # T = TypeVar("T")
 class HutTypeEnum(str, Enum):
+    """Enum with hut types."""
+
     unknown = "unknown"
     campground = "campground"  # possible to camp
     basic_shelter = "basic-shelter"  # only roof, nothing inside
     camping = "camping"  # attended
-    bivouac = "bivouac"  # simple bivouac, not much
+    bivouac = "bivouac"  # simple bivouac, not much, high up ...
     unattended_hut = "unattended-hut"
     hut = "hut"
     alp = "alp"
     basic_hotel = "basic-hotel"  # simple, not luxiouris hotel, usally with tourist camp
     hostel = "hostel"
     hotel = "hotel"
-    special = "special"
+    special = "special"  # something special, like in a plane or so ...
     restaurant = "restaurant"
 
 
 class CapacitySchema(BaseModel):
+    """Hut capacities.
+
+    Hint:
+        For unattended accomodations the `opened` attribute should be used.
+
+    Attributes:
+        opened: Capacity when the hut is open
+        closed: Capacity when the hut is closed (shelter, winterroom, ...)
+    """
+
     opened: NaturalInt | None = Field(None, description="Capacity when the hut is open")
-    closed: NaturalInt | None = Field(None, description="Capacity when the hut is cloes (shelter, winterroom, ...)")
+    closed: NaturalInt | None = Field(None, description="Capacity when the hut is closed (shelter, winterroom, ...)")
 
 
 class HutSchema(BaseModel):
+    """Hut schema.
+
+    Attributes:
+        slug: Slug.
+        name: Original hut name
+        location: Location of the hut
+        description: Description.
+        notes: Additional public notes to the hut
+        owner: Hut owner.
+        contacts: Hut contacts.
+        url: Hut website.
+        comment: Additional private comment to the hut.
+        country: Country.
+        capacity: Cpacities of the hut.
+        is_active: Hut is active.
+        is_public: Show hut public.
+        hut_type: Hut type (e.g. `unattended-hut`)
+        extras: Additional information to the hut as dictionary
+    """
+
     slug: str | None = None
     name: TranslationSchema = Field(..., description="Original hut name.")
     location: LocationSchema = Field(..., description="Location of the hut.")

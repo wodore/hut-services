@@ -8,9 +8,9 @@ from pydantic import BaseModel, Field, computed_field
 from hut_services.core.schema import (
     BaseHutConverterSchema,
     BaseHutSourceSchema,
-    BaseSourceProperties,
     CapacitySchema,
     HutTypeEnum,
+    SourcePropertiesSchema,
 )
 from hut_services.core.schema.geo import LocationSchema
 from hut_services.core.schema.locale import TranslationSchema
@@ -40,7 +40,7 @@ WODORE_HUT_TYPES: dict[int, HutTypeEnum] = {
 }
 
 
-class RefugesInfoProperties(BaseSourceProperties):
+class RefugesInfoProperties(SourcePropertiesSchema):
     """Properties save together with the source data."""
 
     slug: str = Field(..., description="hut slug by refuges.info")
@@ -167,7 +167,7 @@ class RefugesInfoFeatureCollection(FeatureCollection):
 
 
 class RefugesInfoHutSource(BaseHutSourceSchema[RefugesInfoFeature, RefugesInfoProperties]):
-    """data from refuges.info database"""
+    """Data from refuges.info database."""
 
     source_name: str = "refuges_info"
 
@@ -220,7 +220,6 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @computed_field(alias="type")  # type: ignore[misc]
     @property
     def hut_type(self) -> str:
-        """Returns type slug"""
         _type = WODORE_HUT_TYPES.get(self._props.hut_type.ident, "unknown")
         if _type == "unattended-hut":
             if self._props.info_comp.manque_un_mur.valeur or "0" != "0":

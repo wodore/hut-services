@@ -9,7 +9,7 @@ import overpy  # type: ignore[import-untyped]
 from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
 from hut_services.core.service import BaseService
-from hut_services.osm.schema import OsmHut, OsmHut0Convert, OsmHutSource, OsmProperties
+from hut_services.osm.schema import OsmHut0Convert, OsmHutSchema, OsmHutSource, OsmProperties
 
 if __name__ == "__main__":  # only for testing
     from rich import print as rprint  # noqa: F401, RUF100
@@ -22,6 +22,14 @@ logger = logging.getLogger(__name__)
 
 
 class OsmService(BaseService[OsmHutSource]):
+    """Service to get huts from
+    [Open Street Map](https://www.openstreetmap.org/)
+    with [overpass api](https://wiki.openstreetmap.org/wiki/Overpass_API).
+
+    Note:
+        The methods are descriebed in [`BaseService`][hut_services.BaseService].
+    """
+
     def __init__(self, request_url: str = "https://overpass.osm.ch/api/"):
         super().__init__(support_bbox=True, support_limit=True, support_offset=True, support_convert=True)
         self.request_url = request_url
@@ -30,7 +38,6 @@ class OsmService(BaseService[OsmHutSource]):
     def get_huts_from_source(
         self, bbox: BBox | None = None, limit: int = 1, offset: int = 0, **kwargs: dict
     ) -> list[OsmHutSource]:
-        """Get all huts from openstreet map."""
         api = overpy.Overpass(url=self.request_url)
         if bbox is None:
             # fetch all ways and nodes
@@ -70,7 +77,7 @@ class OsmService(BaseService[OsmHutSource]):
         for _osm_type, res in {"node": result.nodes, "way": result.ways}.items():
             osm_type: Literal["node", "way", "area"] = _osm_type  # type: ignore  # noqa: PGH003 # ignore pyright and mypy str to literal assigment
             for h in res:
-                osm_hut = OsmHut.model_validate(h, from_attributes=True)
+                osm_hut = OsmHutSchema.model_validate(h, from_attributes=True)
                 osm_hut.osm_type = osm_type
                 hut = OsmHutSource(
                     name=osm_hut.get_name(),

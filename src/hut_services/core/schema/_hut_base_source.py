@@ -6,15 +6,39 @@ from pydantic import BaseModel, Field
 from .geo import LocationSchema
 
 
-class BaseSourceProperties(BaseModel):
-    """Properties saved together with the source data."""
+class SourcePropertiesSchema(BaseModel):
+    """Properties saved together with the source data.
+
+    Examples:
+        See [`OsmProperties`][hut_services.osm.schema.OsmProperties]."""
 
 
-DataT = TypeVar("DataT", bound=BaseModel)
-PropertiesT = TypeVar("PropertiesT", bound=BaseSourceProperties)
+TSourceData = TypeVar("TSourceData", bound=BaseModel)
+TProperties = TypeVar("TProperties", bound=SourcePropertiesSchema)
 
 
-class BaseHutSourceSchema(BaseModel, Generic[DataT, PropertiesT]):
+class BaseHutSourceSchema(BaseModel, Generic[TSourceData, TProperties]):
+    """Base class for a hut source.
+
+    Attributes:
+        source_name: Name of the source (e.g. osm, wikipedia, ...).
+        name: Original hut name.
+        location: Location of the hut.
+        source_id: Originial source id of the hut.
+        source_data: Source data for this hut.
+        source_properties: Additinal source data properties.
+        version: Version of the service when this entry was created.
+        created: Created.
+
+    Examples:
+        ``` py
+        class MyHutSource(BaseHutSourceSchema[MyHutSchema, SourcePropertiesSchema]):
+            source_name: str = "my"
+        ```
+
+        Or with different properties: [`OsmHutSource`][hut_services.osm.schema.OsmHutSource].
+    """
+
     source_name: str = Field(..., description="Name of the source (e.g. osm, wikipedia, ...).")
 
     # hut information
@@ -23,8 +47,8 @@ class BaseHutSourceSchema(BaseModel, Generic[DataT, PropertiesT]):
 
     # source information
     source_id: str = Field(..., description="Originial source id of the hut.")
-    source_data: DataT | None = Field(None, description="Source data for this hut.")
-    source_properties: PropertiesT | None = Field(None, description="Additinal source data properties.")
+    source_data: TSourceData | None = Field(None, description="Source data for this hut.")
+    source_properties: TProperties | None = Field(None, description="Additinal source data properties.")
 
     # create information
     version: int = Field(default=0, description="Version of the service when this entry was created.")
@@ -37,7 +61,10 @@ class BaseHutSourceSchema(BaseModel, Generic[DataT, PropertiesT]):
 
     @property
     def source_properties_schema(self) -> dict:
-        """Returns JSON schema for the 'source_properties' fields."""
+        """Returns JSON schema for the 'source_properties' fields.
+
+        Returns:
+            JSON schema."""
         if self.source_properties is not None:
             return self.source_properties.model_json_schema(by_alias=True)
         return {}
@@ -51,7 +78,20 @@ class BaseHutSourceSchema(BaseModel, Generic[DataT, PropertiesT]):
         version: bool = False,
         created: bool = False,
     ) -> str:
-        """Returns a formated string with the hut information which can be printed."""
+        """Returns a formatted string with the hut information which can be printed.
+
+        Args:
+            source_id: Show source ID.
+            location:  Show location.
+            elevation: Show elevation.
+            source_name: Show source name.
+            version: Show verions.
+            created: Show created date.
+
+        Returns:
+            Formatted string.
+
+        """
         out = [f"{self.name}"]
         if source_id:
             out.append(f"  id:        {self.source_id}")
@@ -66,3 +106,8 @@ class BaseHutSourceSchema(BaseModel, Generic[DataT, PropertiesT]):
         if created:
             out.append(f"  created:   {self.created}")
         return "\n".join(out)
+
+
+class HutSourceSchema(BaseHutSourceSchema[BaseModel, SourcePropertiesSchema]):
+    """Hut source schema, used for typing.
+    With pydantic `BaseModel` and [`SourcePrpertiesSchema`][hut_services.core.schema.SourcePropertiesSchema]."""

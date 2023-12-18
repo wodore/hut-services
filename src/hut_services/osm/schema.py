@@ -6,9 +6,9 @@ from pydantic import BaseModel, Field, computed_field
 from hut_services.core.schema import (
     BaseHutConverterSchema,
     BaseHutSourceSchema,
-    BaseSourceProperties,
     CapacitySchema,
     ContactSchema,
+    SourcePropertiesSchema,
 )
 from hut_services.core.schema.geo import LocationSchema
 from hut_services.core.schema.geo.types import Elevation, Latitude, Longitude
@@ -20,7 +20,9 @@ from .utils import guess_hut_type
 logger = logging.getLogger(__name__)
 
 
-class _OSMTags(BaseModel):
+class OSMTags(BaseModel):
+    """Open street map tags."""
+
     tourism: Literal["alpine_hut", "wilderness_hut"]
     wikidata: Optional[str] = None
 
@@ -49,8 +51,8 @@ class _OSMTags(BaseModel):
     ele: Optional[Elevation] = None
 
 
-class OsmHut(BaseModel):
-    """data from OSM database"""
+class OsmHutSchema(BaseModel):
+    """Open street map schema."""
 
     osm_type: Literal["node", "way", "area"] | None = None
     osm_id: int = Field(..., alias="id")
@@ -58,15 +60,18 @@ class OsmHut(BaseModel):
     lon: Longitude | None = None
     center_lat: Latitude | None = None
     center_lon: Longitude | None = None
-    tags: _OSMTags
+    tags: OSMTags
 
     def get_id(self) -> str:
+        """Get open street map `id`."""
         return str(self.osm_id)
 
     def get_name(self) -> str:
+        """Get open street map hut name."""
         return self.tags.name
 
     def get_location(self) -> LocationSchema:
+        """Get open street map location."""
         if self.lat and self.lon:
             return LocationSchema(lat=self.lat, lon=self.lon, ele=self.tags.ele)
         elif self.center_lat and self.center_lon:
@@ -75,17 +80,17 @@ class OsmHut(BaseModel):
             raise OSMCoordinatesError(self.osm_id, self.get_name())
 
 
-class OsmProperties(BaseSourceProperties):
+class OsmProperties(SourcePropertiesSchema):
     osm_type: Literal["node", "way", "area"] = Field(..., description="osm object type: node, way, or area")
 
 
-class OsmHutSource(BaseHutSourceSchema[OsmHut, OsmProperties]):
+class OsmHutSource(BaseHutSourceSchema[OsmHutSchema, OsmProperties]):
     source_name: str = "osm"
 
 
-class OsmHut0Convert(BaseHutConverterSchema[OsmHut]):
+class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
     @property
-    def _tags(self) -> _OSMTags:
+    def _tags(self) -> OSMTags:
         return self.source.tags
 
     @computed_field  # type: ignore[misc]
@@ -168,7 +173,6 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHut]):
     @computed_field(alias="type")  # type: ignore[misc]
     @property
     def hut_type(self) -> str:
-        """Returns type slug"""
         _orgs = ""
         if self._tags.operator:
             _orgs = "sac" if "sac" in self._tags.operator else ""
@@ -220,7 +224,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHut]):
             phone = self._tags.contact_phone
         phones = []
         if phone:
-            phones += ContactSchema.format_phone_numbers(phone)
+            phones += ContactSchema.extract_phone_numbers(phone)
         return phones
 
     @computed_field  # type: ignore[misc]

@@ -7,19 +7,40 @@ from hut_services.core.schema.locale import TranslationSchema
 
 from .geo import LocationSchema
 
-T = TypeVar("T")
+TSourceData = TypeVar("TSourceData")
 
 
-class BaseHutConverterSchema(BaseModel, Generic[T]):
-    source: T = Field(..., exclude=True)
+class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
+    """Base class used for a converter schema.
+
+    Attributes:
+        source: Source data
+
+    All attributes as in [`HutSchema`][hut_services.core.schema.HutSchema] either as
+    attribute or pydantic `computed_field`.
+
+    Examples:
+        See [`OsmHut0Convert`][hut_services.osm.schema.OsmHut0Convert]."""
+
+    source: TSourceData = Field(..., exclude=True)
 
     class FieldNotImplementedError(Exception):
+        """Field is not implemented.
+
+        Args:
+            obj: Current object.
+            field: Field which is not implementd."""
+
         def __init__(self, obj: "BaseHutConverterSchema", field: str):
             class_name = str(obj.__class__).replace("<class '", "").replace("'>", "")
             message = f"Converter '{class_name}' field '{field}' is not implemented."
             super().__init__(message)
 
     def get_hut(self) -> HutSchema:
+        """Convert to hut.
+
+        Returns:
+            Converted hut."""
         hut_dict = self.model_dump(by_alias=True)
         return HutSchema(**hut_dict)
 
@@ -75,7 +96,6 @@ class BaseHutConverterSchema(BaseModel, Generic[T]):
     @computed_field(alias="type")  # type: ignore[misc]
     @property
     def hut_type(self) -> str:
-        """Returns hut type slug"""
         return "unknown"
 
     @computed_field  # type: ignore[misc]

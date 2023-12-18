@@ -1,4 +1,4 @@
-site_name: hut-services
+site_name: Hut Services
 repo_url: https://github.com/wodore/hut-services
 site_url: https://wodore.github.io/hut-services
 site_description: Services to retrieve information about (mountain) huts.
@@ -11,7 +11,10 @@ copyright: Maintained by <a href="tb@wodore.com">TBxy</a>.
 
 nav:
   - Home: index.md
-  - Modules: modules.md
+  - References:
+      - Core: api/core.md
+      - "Open Street Map": api/osm.md
+      - "Refuges.info": api/refuges_info.md
 plugins:
   - search
   - mkdocstrings:
@@ -19,13 +22,28 @@ plugins:
         python:
           paths: [src]
           load_external_modules: true
-          #setup_commands:
-          #  - import sys
-          #  - sys.path.append('../src')
+          options:
+            #show_bases: false
+            show_source: false
+            #show_root_heading: false
+            #show_root_full_path: false
+            members_order: source
+            separate_signature: true
+            filters: ["!^_"]
+            #docstring_options:
+            #  ignore_init_summary: true
+            #merge_init_into_class: true
+            docstring_section_style: list
+            show_root_toc_entry: false
+            #heading_level: 2
+watch:
+  - src
 theme:
   name: material
   feature:
     tabs: true
+  features:
+    #- content.code.copy
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -56,3 +74,10 @@ markdown_extensions:
       permalink: true
   - pymdownx.arithmatex:
       generic: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences

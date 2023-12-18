@@ -10,7 +10,13 @@ from .types import Elevation, Latitude, Longitude
 
 
 class LocationSchema(BaseModel):
-    """Location with longitude, latitude and optional elevation in WSG84"""
+    """Location with longitude, latitude and optional elevation in WSG84.
+
+    Attributes:
+        lat: Latitude.
+        lon: Longitude.
+        ele: Elevation in meter.
+    """
 
     lat: Latitude
     lon: Longitude
@@ -18,10 +24,16 @@ class LocationSchema(BaseModel):
 
     @classmethod
     def from_swiss(cls, ch_lat: float, ch_lon: float, ele: float | None) -> "LocationSchema":
-        """
-        Takes LV03 or LV95 (newest) coordiates.
-        More information:
-            https://en.wikipedia.org/wiki/Swiss_coordinate_system
+        """Takes LV03 or LV95 (newest) coordiates.
+        [More information](https://en.wikipedia.org/wiki/Swiss_coordinate_system).
+
+        Args:
+            ch_lat: Latitude in swiss format (east).
+            ch_lon: Longitude in swiss format (north).
+            ele: Elevation in meter.
+
+        Returns:
+            `LocationSchema` object.
         """
         if ele is None:
             ele = 0
@@ -35,16 +47,25 @@ class LocationSchema(BaseModel):
 
     @property
     def lon_lat(self) -> Tuple[Longitude, Latitude]:
+        """Tuple with (`longitude`, `latitude`).
+
+        Returns:
+            Longitude and latitude.
+        """
         return (self.lon, self.lat)
 
     @property
     def lon_lat_ele(self) -> Tuple[Longitude, Latitude, Elevation]:
-        """Return tuple with longitude, latitude and elevation. If elevation is not defined it returns 0."""
+        """Tuple with longitude, latitude and elevation. If elevation is not defined it returns 0.
+
+        Returns:
+            Longitude, latitude and elevation."""
         ele = self.ele if self.ele else 0
         return (self.lon, self.lat, ele)
 
     @property
     def geojson(self) -> Point:
+        """Retuns as geojson point."""
         if self.ele:
             return Point(coordinates=self.lon_lat_ele, type="Point")
         return Point(coordinates=self.lon_lat, type="Point")
