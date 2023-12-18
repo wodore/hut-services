@@ -1,4 +1,17 @@
+from typing import Annotated
+
 from pydantic import BaseModel  # , Field
+from pydantic.functional_validators import BeforeValidator
+
+
+def none_to_str(v: str | None) -> str:
+    """Convert a `None` to an empty string."""
+    if v is None:
+        return ""
+    return v
+
+
+NoneStr = Annotated[str, BeforeValidator(none_to_str)]
 
 
 class TranslationSchema(BaseModel):
@@ -10,10 +23,10 @@ class TranslationSchema(BaseModel):
         fr: French
     """
 
-    de: str = ""
-    en: str = ""
-    fr: str = ""
-    it: str = ""
+    de: NoneStr = ""
+    en: NoneStr = ""
+    fr: NoneStr = ""
+    it: NoneStr = ""
 
     @property
     def i18n(self) -> str:
