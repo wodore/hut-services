@@ -13,11 +13,11 @@ class SourcePropertiesSchema(BaseModel):
         See [`OsmProperties`][hut_services.osm.schema.OsmProperties]."""
 
 
-TSourceData = TypeVar("TSourceData", bound=BaseModel)
-TProperties = TypeVar("TProperties", bound=SourcePropertiesSchema)
+TSourceData_co = TypeVar("TSourceData_co", bound=BaseModel, covariant=True)
+TProperties_co = TypeVar("TProperties_co", bound=SourcePropertiesSchema, covariant=True)
 
 
-class BaseHutSourceSchema(BaseModel, Generic[TSourceData, TProperties]):
+class BaseHutSourceSchema(BaseModel, Generic[TSourceData_co, TProperties_co]):
     """Base class for a hut source.
 
     Attributes:
@@ -47,8 +47,8 @@ class BaseHutSourceSchema(BaseModel, Generic[TSourceData, TProperties]):
 
     # source information
     source_id: str = Field(..., description="Originial source id of the hut.")
-    source_data: TSourceData | None = Field(None, description="Source data for this hut.")
-    source_properties: TProperties | None = Field(None, description="Additinal source data properties.")
+    source_data: TSourceData_co | None = Field(None, description="Source data for this hut.")
+    source_properties: TProperties_co | None = Field(None, description="Additinal source data properties.")
 
     # create information
     version: int = Field(default=0, description="Version of the service when this entry was created.")

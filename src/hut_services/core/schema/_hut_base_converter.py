@@ -7,7 +7,7 @@ from hut_services.core.schema.locale import TranslationSchema
 
 from .geo import LocationSchema
 
-TSourceData = TypeVar("TSourceData")
+TSourceData = TypeVar("TSourceData", bound=BaseModel)
 
 
 class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
