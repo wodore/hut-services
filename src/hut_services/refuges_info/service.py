@@ -110,7 +110,9 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
 
     def convert(self, src: t.Mapping | t.Any) -> HutSchema:
         hut_src = (
-            RefugesInfoHutSource(**src) if isinstance(src, t.Mapping) else RefugesInfoHutSource.model_validate(src)
+            RefugesInfoHutSource(**src)
+            if isinstance(src, t.Mapping)
+            else RefugesInfoHutSource.model_validate(src, from_attributes=True)
         )
         if hut_src.version >= 0:
             if hut_src.source_data is None:

@@ -92,7 +92,9 @@ class OsmService(BaseService[OsmHutSource]):
         return huts
 
     def convert(self, src: Mapping | Any) -> HutSchema:
-        hut_src = OsmHutSource(**src) if isinstance(src, Mapping) else OsmHutSource.model_validate(src)
+        hut_src = (
+            OsmHutSource(**src) if isinstance(src, Mapping) else OsmHutSource.model_validate(src, from_attributes=True)
+        )
         if hut_src.version >= 0:
             if hut_src.source_data is None:
                 err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} without 'source_data' not allowed."
