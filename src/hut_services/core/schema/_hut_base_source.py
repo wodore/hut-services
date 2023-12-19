@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Generic, TypeVar
+from typing import Generic, TypeAlias, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -38,6 +38,8 @@ class BaseHutSourceSchema(BaseModel, Generic[TSourceData_co, TProperties_co]):
 
         Or with different properties: [`OsmHutSource`][hut_services.osm.schema.OsmHutSource].
     """
+
+    # model_config = ConfigDict()
 
     source_name: str = Field(..., description="Name of the source (e.g. osm, wikipedia, ...).")
 
@@ -108,6 +110,10 @@ class BaseHutSourceSchema(BaseModel, Generic[TSourceData_co, TProperties_co]):
         return "\n".join(out)
 
 
-class HutSourceSchema(BaseHutSourceSchema[BaseModel, SourcePropertiesSchema]):
-    """Hut source schema, used for typing.
-    With pydantic `BaseModel` and [`SourcePrpertiesSchema`][hut_services.core.schema.SourcePropertiesSchema]."""
+HutSourceSchema: TypeAlias = BaseHutSourceSchema[BaseModel, SourcePropertiesSchema]
+"""Hut source schema, used for typing.
+With pydantic `BaseModel` and [`SourcePrpertiesSchema`][hut_services.core.schema.SourcePropertiesSchema]."""
+
+# class HutSourceSchema(BaseHutSourceSchema[BaseModel, SourcePropertiesSchema]):
+#    """Hut source schema, used for typing.
+#    With pydantic `BaseModel` and [`SourcePrpertiesSchema`][hut_services.core.schema.SourcePropertiesSchema]."""

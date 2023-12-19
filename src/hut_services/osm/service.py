@@ -2,7 +2,7 @@
 # from functools import lru_cache
 import logging
 import textwrap
-from typing import Literal
+from typing import Any, Literal, Mapping
 
 import overpy  # type: ignore[import-untyped]
 
@@ -91,14 +91,15 @@ class OsmService(BaseService[OsmHutSource]):
         logger.info(f"succesfully got {len(huts)} huts")
         return huts
 
-    def convert(self, src: OsmHutSource) -> HutSchema:
-        if src.version >= 0:
-            if src.source_data is None:
-                err_msg = f"Conversion for '{src.source_name}' version {src.version} without 'source_data' not allowed."
+    def convert(self, src: Mapping | Any) -> HutSchema:
+        hut_src = OsmHutSource(**src) if isinstance(src, Mapping) else OsmHutSource.model_validate(src)
+        if hut_src.version >= 0:
+            if hut_src.source_data is None:
+                err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} without 'source_data' not allowed."
                 raise AttributeError(err_msg)
-            return OsmHut0Convert(source=src.source_data).get_hut()
+            return OsmHut0Convert(source=hut_src.source_data).get_hut()
         else:
-            err_msg = f"Conversion for '{src.source_name}' version {src.version} not implemented."
+            err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} not implemented."
             raise NotImplementedError(err_msg)
 
 
@@ -109,7 +110,7 @@ if __name__ == "__main__":
     huts = osm_service.get_huts_from_source(limit=limit)
     for h in huts:
         # rprint(h)
-        hut = osm_service.convert(h)
+        hut = osm_service.convert(h.model_dump(by_alias=True))
         rprint(h)
         rprint(h.source_properties_schema)
         # rprint(h)

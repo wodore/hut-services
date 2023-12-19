@@ -14,6 +14,7 @@ from .core.service import BaseService
 from .osm import OsmService
 from .osm.utils import guess_hut_type
 from .refuges_info import RefugesInfoService
+from .services import SERVICES
 
 __all__ = [
     "BaseHutConverterSchema",
@@ -30,4 +31,5 @@ __all__ = [
     "OsmService",
     "RefugesInfoService",
     "guess_hut_type",
+    "SERVICES",
 ]

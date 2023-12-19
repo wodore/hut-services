@@ -1,11 +1,10 @@
 import typing as t
 
-from pydantic import BaseModel
-
+from hut_services import HutSourceSchema
 from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
 
-THutSourceSchema = t.TypeVar("THutSourceSchema", bound=BaseModel)
+THutSourceSchema = t.TypeVar("THutSourceSchema", bound=HutSourceSchema, covariant=True)
 
 
 class BaseService(t.Generic[THutSourceSchema]):
@@ -86,7 +85,7 @@ class BaseService(t.Generic[THutSourceSchema]):
         """
         raise self.MethodNotImplementedError(self, "get_huts_from_source")
 
-    def convert(self, src: THutSourceSchema) -> HutSchema:
+    def convert(self, src: t.Mapping | t.Any) -> HutSchema:
         """Convert one hut from source to [`HutSchema`][hut_services.HutSchema].
 
         Args:
@@ -95,7 +94,8 @@ class BaseService(t.Generic[THutSourceSchema]):
         Returns:
             Converted hut.
         """
-
+        # example:
+        # hut_src = OsmHutSource(**src) if isinstance(src, t.Mapping) else OsmHutSource.model_validate(src)
         raise self.MethodNotImplementedError(self, "convert")
 
     def get_huts(self, bbox: BBox | None = None, limit: int = 1, offset: int = 0, **kwargs: t.Any) -> list[HutSchema]:

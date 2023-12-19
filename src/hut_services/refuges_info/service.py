@@ -2,7 +2,7 @@
 # from functools import lru_cache
 import json
 import logging
-from typing import Any, Literal, Sequence
+import typing as t
 
 import httpx
 import xmltodict
@@ -30,14 +30,14 @@ logger = logging.getLogger(__name__)
 def refuges_info_request(
     url: str,
     limit: str | int = "all",
-    type_points: Sequence[int] = [7, 10, 9, 28],
-    massif: Sequence[int] | None = [12, 339, 407, 45, 342, 20, 29, 343, 412, 8, 344, 408, 432, 406, 52, 9],
+    type_points: t.Sequence[int] = [7, 10, 9, 28],
+    massif: t.Sequence[int] | None = [12, 339, 407, 45, 342, 20, 29, 343, 412, 8, 344, 408, 432, 406, 52, 9],
     bbox: BBox | None = None,
-    text_format: Literal["texte", "markdown"] = "markdown",
-    output_format: Literal["geojson", "xml", "csv"] = "geojson",
+    text_format: t.Literal["texte", "markdown"] = "markdown",
+    output_format: t.Literal["geojson", "xml", "csv"] = "geojson",
     detail: bool = True,
-    **params: Any,
-) -> RefugesInfoFeatureCollection | Any | bytes:
+    **params: t.Any,
+) -> RefugesInfoFeatureCollection | t.Any | bytes:
     # https://www.refuges.info/api/massif?nb_points=all&format=xml&type_points=7,10,9,28&massif=12,339,407,45,342,20,29,343,412,8,344,408,432,406,52,9
     params["nb_points"] = limit
     params["type_points"] = ",".join([str(t) for t in type_points])
@@ -85,10 +85,10 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
         offset: int = 0,
         # type_points: Sequence[int] = [7, 10, 9, 28],
         # massif: Sequence[int] = [12, 339, 407, 45, 342, 20, 29, 343, 412, 8, 344, 408, 432, 406, 52, 9],
-        **kwargs: Any,
+        **kwargs: t.Any,
     ) -> list[RefugesInfoHutSource]:
-        type_points: Sequence[int] = kwargs.get("type_points", [7, 10, 9, 28])
-        massif: Sequence[int] | None = kwargs.get(
+        type_points: t.Sequence[int] = kwargs.get("type_points", [7, 10, 9, 28])
+        massif: t.Sequence[int] | None = kwargs.get(
             "massif", [12, 339, 407, 45, 342, 20, 29, 343, 412, 8, 344, 408, 432, 406, 52, 9] if not bbox else None
         )
         logger.info(f"get refuges.info data from {self.request_url}")
@@ -108,14 +108,17 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
         logger.info(f"succesfully got {len(huts)} huts")
         return huts
 
-    def convert(self, src: RefugesInfoHutSource) -> HutSchema:
-        if src.version >= 0:
-            if src.source_data is None:
-                err_msg = f"Conversion for '{src.source_name}' version {src.version} without 'source_data' not allowed."
+    def convert(self, src: t.Mapping | t.Any) -> HutSchema:
+        hut_src = (
+            RefugesInfoHutSource(**src) if isinstance(src, t.Mapping) else RefugesInfoHutSource.model_validate(src)
+        )
+        if hut_src.version >= 0:
+            if hut_src.source_data is None:
+                err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} without 'source_data' not allowed."
                 raise AttributeError(err_msg)
-            return RefugesInfoHut0Convert(source=src.source_data).get_hut()
+            return RefugesInfoHut0Convert(source=hut_src.source_data).get_hut()
         else:
-            err_msg = f"Conversion for '{src.source_name}' version {src.version} not implemented."
+            err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} not implemented."
             raise NotImplementedError(err_msg)
 
 
