@@ -1,8 +1,8 @@
-from typing import Tuple
+import typing as t
 
 from geojson_pydantic import Feature, FeatureCollection, Point  # noqa: F401
 from geojson_pydantic.types import BBox, Position  # noqa: F401
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, model_validator
 
 from hut_services.core.utils import GPSConverter
 
@@ -18,9 +18,19 @@ class LocationSchema(BaseModel):
         ele: Elevation in meter.
     """
 
-    lat: Latitude = Field(..., alias="x")
+    lat: Latitude
     lon: Longitude
     ele: Elevation | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_field_aliases(cls, data: t.Any) -> t.Any:
+        for field, alias in [("lat", "x"), ("lon", "y"), ("ele", "z")]:
+            if isinstance(data, dict) and alias in data and field not in data:
+                data[field] = data[alias]
+            elif hasattr(data, alias) and not hasattr(data, field):
+                setattr(data, field, getattr(data, alias))
+        return data
 
     @classmethod
     def from_swiss(cls, ch_lat: float, ch_lon: float, ele: float | None) -> "LocationSchema":
@@ -46,7 +56,7 @@ class LocationSchema(BaseModel):
         return cls(lat=ch_lat, lon=ch_lon, ele=ele)
 
     @property
-    def lon_lat(self) -> Tuple[Longitude, Latitude]:
+    def lon_lat(self) -> tuple[Longitude, Latitude]:
         """Tuple with (`longitude`, `latitude`).
 
         Returns:
@@ -55,7 +65,7 @@ class LocationSchema(BaseModel):
         return (self.lon, self.lat)
 
     @property
-    def lon_lat_ele(self) -> Tuple[Longitude, Latitude, Elevation]:
+    def lon_lat_ele(self) -> tuple[Longitude, Latitude, Elevation]:
         """Tuple with longitude, latitude and elevation. If elevation is not defined it returns 0.
 
         Returns:
