@@ -2,7 +2,7 @@ from typing import Tuple
 
 from geojson_pydantic import Feature, FeatureCollection, Point  # noqa: F401
 from geojson_pydantic.types import BBox, Position  # noqa: F401
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from hut_services.core.utils import GPSConverter
 
@@ -18,7 +18,7 @@ class LocationSchema(BaseModel):
         ele: Elevation in meter.
     """
 
-    lat: Latitude
+    lat: Latitude = Field(..., alias="x")
     lon: Longitude
     ele: Elevation | None = None
 
