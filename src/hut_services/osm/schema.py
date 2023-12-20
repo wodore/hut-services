@@ -234,7 +234,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
     @property
     def contacts(self) -> list[ContactSchema]:
         contacts = []
-        emails = self._email
+        emails = self._email or ""
         for phone in self._phones:
             phone, mobile = ContactSchema.number_to_phone_or_mobile(phone, region="CH", formatted=True)
             contacts.append(
@@ -244,5 +244,5 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
                 emails = None
         if emails:
             for email in emails.split(";"):
-                contacts.append(ContactSchema(email=email.strip(), is_public=True))
+                contacts.append(ContactSchema(email=email.strip(), function="contact", is_public=True))
         return contacts
