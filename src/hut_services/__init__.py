@@ -22,6 +22,7 @@ __all__ = [
     "BaseHutSourceSchema",
     "CapacitySchema",
     "ContactSchema",
+    "OwnerSchema",
     "HutSchema",
     "HutSourceSchema",
     "HutTypeEnum",

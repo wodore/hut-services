@@ -13,4 +13,4 @@ options:
 show_bases: false
 heading_level: 3
 show_source: true
-members: [HutSchema, HutTypeEnum, LocationSchema, ContactSchema, CapacitySchema, TranslationSchema, SourcePropertiesSchema, HutSourceSchema, BaseHutSourceSchema, BaseHutConverterSchema]
+members: [HutSchema, HutTypeEnum, LocationSchema, ContactSchema, OwnerSchema, CapacitySchema, TranslationSchema, SourcePropertiesSchema, HutSourceSchema, BaseHutSourceSchema, BaseHutConverterSchema]
