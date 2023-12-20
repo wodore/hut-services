@@ -1,7 +1,7 @@
 import logging
 from collections import namedtuple
 from enum import Enum
-from typing import Annotated, Any
+from typing import Annotated, Any, Sequence
 
 import phonenumbers
 from pydantic import BaseModel, Field
@@ -44,7 +44,7 @@ class ContactSchema(BaseModel):
     is_public: bool = False
 
     @classmethod
-    def extract_phone_numbers(cls, numbers_string: str, region: str | None = "CH") -> list[str]:
+    def extract_phone_numbers(cls, numbers_string: str, region: str | None) -> list[str]:
         """Extracts phone numbers from a string and returns them formatted
         with international code.
         Uses the [`phonenumbers`](https://github.com/daviddrysdale/python-phonenumbers) package.
@@ -67,23 +67,40 @@ class ContactSchema(BaseModel):
         return phones
 
     @classmethod
-    def number_to_phone_or_mobile(cls, number: str, region: str | None = None) -> PhoneMobile:
+    def number_to_phone_or_mobile(
+        cls, numbers: str | Sequence[str], region: str | None, formatted: bool = False
+    ) -> PhoneMobile:
         """Given a phone number it returns it eihter as `phone` or `mobile` number.
         Uses the [`phonenumbers`](https://github.com/daviddrysdale/python-phonenumbers) package.
 
         Args:
-            number: Any phone numbers.
+            numbers: List or string of phone numbers, they are extraced and the two assigned to phone and mobile.
             region: Country code.
+            formatted: Phone list is alreaad formatted
 
         Returns:
             Tuple with `phone` and `mobile` number (`(phone, mobile)`).
         """
+        numbers_fmt: Sequence[str] = []
+        if formatted:
+            numbers_fmt = [n.strip() for n in numbers.split(",")] if isinstance(numbers, str) else numbers
+        else:
+            if not isinstance(numbers, str):
+                numbers = " and ".join(numbers)
+            numbers_fmt = cls.extract_phone_numbers(numbers, region=region)
 
-        is_mobile = (
-            phonenumbers.number_type(phonenumbers.parse(number, region=region)) == phonenumbers.PhoneNumberType.MOBILE
-        )
-        mobile = number if is_mobile else ""
-        phone = number if not is_mobile else ""
+        mobiles: list[str] = []
+        phones: list[str] = []
+        for num in numbers_fmt:
+            is_mobile = (
+                phonenumbers.number_type(phonenumbers.parse(num, region=region)) == phonenumbers.PhoneNumberType.MOBILE
+            )
+            if is_mobile:
+                mobiles.append(num)
+            else:
+                phones.append(num)
+        mobile = mobiles[0] if mobiles else ""
+        phone = phones[0] if phones else ""
         return PhoneMobile(phone=phone, mobile=mobile)
 
 

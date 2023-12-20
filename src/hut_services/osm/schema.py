@@ -227,7 +227,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
             phone = self._tags.contact_phone
         phones = []
         if phone:
-            phones += ContactSchema.extract_phone_numbers(phone)
+            phones += ContactSchema.extract_phone_numbers(phone, region="CH")
         return phones
 
     @computed_field  # type: ignore[misc]
@@ -236,9 +236,9 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
         contacts = []
         emails = self._email
         for phone in self._phones:
-            phone, mobile = ContactSchema.number_to_phone_or_mobile(phone)
+            phone, mobile = ContactSchema.number_to_phone_or_mobile(phone, region="CH", formatted=True)
             contacts.append(
-                ContactSchema(phone=phone, email=emails, mobile=mobile, name="", function="", is_public=True)
+                ContactSchema(phone=phone, email=emails, mobile=mobile, name="", function="contact", is_public=True)
             )
             if emails:
                 emails = None
