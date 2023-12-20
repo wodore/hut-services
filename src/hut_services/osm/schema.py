@@ -211,7 +211,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
         return True
 
     @property
-    def _email(self) -> str | None:
+    def _email(self) -> str:
         if self._tags.email:
             return self._tags.email.strip()
         elif self._tags.contact_email:
@@ -234,14 +234,16 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
     @property
     def contacts(self) -> list[ContactSchema]:
         contacts = []
-        emails = self._email or ""
+        emails = self._email
         for phone in self._phones:
             phone, mobile = ContactSchema.number_to_phone_or_mobile(phone, region="CH", formatted=True)
             contacts.append(
-                ContactSchema(phone=phone, email=emails, mobile=mobile, name="", function="contact", is_public=True)
+                ContactSchema(
+                    phone=phone, email=emails.strip(), mobile=mobile, name="", function="contact", is_public=True
+                )
             )
             if emails:
-                emails = None
+                emails = ""
         if emails:
             for email in emails.split(";"):
                 contacts.append(ContactSchema(email=email.strip(), function="contact", is_public=True))

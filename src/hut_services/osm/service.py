@@ -107,7 +107,7 @@ class OsmService(BaseService[OsmHutSource]):
 
 if __name__ == "__main__":
     logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
-    limit = 2
+    limit = 2000
     osm_service = OsmService()
     huts = osm_service.get_huts_from_source(limit=limit)
     for h in huts:
