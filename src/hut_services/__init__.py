@@ -6,6 +6,7 @@ from .core.schema import (
     HutSchema,
     HutSourceSchema,
     HutTypeEnum,
+    OwnerSchema,
     SourcePropertiesSchema,
 )
 from .core.schema.geo import LocationSchema

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Generic, TypeAlias, TypeVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .geo import LocationSchema
 
@@ -39,13 +39,13 @@ class BaseHutSourceSchema(BaseModel, Generic[TSourceData_co, TProperties_co]):
         Or with different properties: [`OsmHutSource`][hut_services.osm.schema.OsmHutSource].
     """
 
-    # model_config = ConfigDict()
+    model_config = ConfigDict(coerce_numbers_to_str=True)
 
-    source_name: str = Field(..., description="Name of the source (e.g. osm, wikipedia, ...).")
+    source_name: str = Field("unknown", description="Name of the source (e.g. osm, wikipedia, ...).")
 
     # hut information
     name: str = Field(..., description="Original hut name.")
-    location: LocationSchema = Field(..., description="Location of the hut.")
+    location: LocationSchema | None = Field(None, description="Location of the hut.")
 
     # source information
     source_id: str = Field(..., description="Originial source id of the hut.")
@@ -59,7 +59,8 @@ class BaseHutSourceSchema(BaseModel, Generic[TSourceData_co, TProperties_co]):
     )
 
     def __str__(self) -> str:
-        return f"<{self.source_name} #{self.source_id} - {self.name} ({self.location.lon},{self.location.lat})>"
+        loc = f"({self.location.lon},{self.location.lat})" if self.location is not None else "(no location)"
+        return f"<{self.source_name} #{self.source_id} - {self.name} {loc}>"
 
     @property
     def source_properties_schema(self) -> dict:
@@ -98,9 +99,11 @@ class BaseHutSourceSchema(BaseModel, Generic[TSourceData_co, TProperties_co]):
         if source_id:
             out.append(f"  id:        {self.source_id}")
         if location:
-            out.append(f"  location:  {self.location.lon},{self.location.lat}")
+            loc = f"{self.location.lon},{self.location.lat}" if self.location is not None else "not set"
+            out.append(f"  location:  {loc}")
         if elevation:
-            out.append(f"  elevation: {self.location.ele}")
+            ele = self.location.ele if self.location is not None else "not set"
+            out.append(f"  elevation: {ele}")
         if source_name:
             out.append(f"  source:    {self.source_name}")
         if version:

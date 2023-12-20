@@ -87,6 +87,26 @@ class ContactSchema(BaseModel):
         return PhoneMobile(phone=phone, mobile=mobile)
 
 
+class OwnerSchema(BaseModel):
+    """Schema for the owner.
+
+    Attributes:
+        slug: Owner slug, can also be empty.
+        name: Owner name, required.
+        url: Owners URL (not the hut website).
+        note: Additonal (public) note to the owner.
+        comment: Private comment to the owner.
+        contacts: Contacts used for the owner.
+    """
+
+    slug: str = Field("", max_length=100)
+    name: str = Field(..., max_length=100)
+    url: str = Field("", max_length=200)
+    note: TranslationSchema = Field(default_factory=TranslationSchema)
+    comment: str = ""
+    contacts: ContactSchema | None = None
+
+
 # T = TypeVar("T")
 class HutTypeEnum(str, Enum):
     """Enum with hut types."""
@@ -148,7 +168,7 @@ class HutSchema(BaseModel):
 
     description: TranslationSchema = Field(default_factory=TranslationSchema)
     notes: list[TranslationSchema] = Field(..., description="Additional notes to the hut.")
-    owner: str | None = Field(None, max_length=100)
+    owner: OwnerSchema | None = Field(None)
     contacts: list[ContactSchema] = Field(default_factory=list)
     url: str = Field("", max_length=200)
     comment: str = Field("", max_length=2000)

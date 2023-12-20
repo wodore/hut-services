@@ -8,6 +8,7 @@ from hut_services.core.schema import (
     BaseHutSourceSchema,
     CapacitySchema,
     ContactSchema,
+    OwnerSchema,
     SourcePropertiesSchema,
 )
 from hut_services.core.schema.geo import LocationSchema
@@ -187,13 +188,15 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
 
     @computed_field  # type: ignore[misc]
     @property
-    def owner(self) -> str:
-        owner = self._tags.operator or ""
-        if owner:
-            if len(owner) > 100:
-                logger.warning(f"warning: owner too long: '{owner}'")
-            owner = owner[:100]
-        return owner
+    def owner(self) -> OwnerSchema | None:
+        name = self._tags.operator or ""
+        comment = ""
+        if name:
+            comment = f"Full name: {name}"
+            name = name[:100]
+        if name:
+            return OwnerSchema(name=name, comment=comment)
+        return None
 
     @computed_field  # type: ignore[misc]
     @property

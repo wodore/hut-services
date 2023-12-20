@@ -2,7 +2,7 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field, computed_field
 
-from hut_services.core.schema import CapacitySchema, ContactSchema, HutSchema
+from hut_services.core.schema import CapacitySchema, ContactSchema, HutSchema, OwnerSchema
 from hut_services.core.schema.locale import TranslationSchema
 
 from .geo import LocationSchema
@@ -100,8 +100,8 @@ class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
 
     @computed_field  # type: ignore[misc]
     @property
-    def owner(self) -> str:
-        return ""
+    def owner(self) -> OwnerSchema | None:
+        return None
 
     @computed_field  # type: ignore[misc]
     @property
