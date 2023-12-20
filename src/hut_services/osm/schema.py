@@ -191,9 +191,9 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
     def owner(self) -> OwnerSchema | None:
         name = self._tags.operator or ""
         comment = ""
-        if name:
+        if len(name) > 60:
             comment = f"Full name: {name}"
-            name = name[:100]
+            name = name[:60]
         if name:
             return OwnerSchema(name=name, comment=comment)
         return None
