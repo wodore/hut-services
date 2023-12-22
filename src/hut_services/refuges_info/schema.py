@@ -232,13 +232,13 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @computed_field  # type: ignore[misc]
     @property
     def owner(self) -> OwnerSchema | None:
-        name = self._props.proprio.valeur or ""
-        comment = ""
-        if len(name) > 60:
-            comment = f"Full name: {name}"
-            name = name[:60]
-        if name:
-            return OwnerSchema(name=name, comment=comment)
+        # name = self._props.proprio.valeur or ""
+        # comment = ""
+        # if len(name) > 60:
+        #    comment = f"Full name: {name}"
+        #    name = name[:60]
+        # if name:
+        #    return OwnerSchema(name=name, comment=comment)
         return None
 
     @computed_field  # type: ignore[misc]
