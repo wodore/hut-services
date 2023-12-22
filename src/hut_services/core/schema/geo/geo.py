@@ -2,7 +2,7 @@ import typing as t
 
 from geojson_pydantic import Feature, FeatureCollection, Point  # noqa: F401
 from geojson_pydantic.types import BBox, Position  # noqa: F401
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from hut_services.core.utils import GPSConverter
 
@@ -18,9 +18,11 @@ class LocationSchema(BaseModel):
         ele: Elevation in meter.
     """
 
+    model_config = ConfigDict(from_attributes=True)
+
     lat: Latitude
     lon: Longitude
-    ele: Elevation | None = None
+    # ele: Elevation | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -53,7 +55,9 @@ class LocationSchema(BaseModel):
             ch_lon -= 1000000
         converter = GPSConverter()
         ch_lat, ch_lon, ele = converter.LV03toWGS84(ch_lat, ch_lon, ele)
-        return cls(lat=ch_lat, lon=ch_lon, ele=ele)
+        if isinstance(cls, LocationEleSchema):
+            return cls(lat=ch_lat, lon=ch_lon, ele=ele)
+        return cls(lat=ch_lat, lon=ch_lon)
 
     @property
     def lon_lat(self) -> tuple[Longitude, Latitude]:
@@ -63,6 +67,28 @@ class LocationSchema(BaseModel):
             Longitude and latitude.
         """
         return (self.lon, self.lat)
+
+    @property
+    def geojson(self) -> Point:
+        """Retuns as geojson point."""
+        return Point(coordinates=self.lon_lat, type="Point")
+
+    def __str__(self) -> str:
+        return f"lon={self.lon},lat={self.lat}"
+
+
+class LocationEleSchema(LocationSchema):
+    """Location with longitude, latitude and (optional) elevation in WSG84.
+
+    Attributes:
+        lat: Latitude.
+        lon: Longitude.
+        ele: Elevation in meter.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    ele: Elevation | None = None
 
     @property
     def lon_lat_ele(self) -> tuple[Longitude, Latitude, Elevation]:
@@ -76,9 +102,7 @@ class LocationSchema(BaseModel):
     @property
     def geojson(self) -> Point:
         """Retuns as geojson point."""
-        if self.ele:
-            return Point(coordinates=self.lon_lat_ele, type="Point")
-        return Point(coordinates=self.lon_lat, type="Point")
+        return Point(coordinates=self.lon_lat_ele, type="Point")
 
     def __str__(self) -> str:
         return f"lon={self.lon},lat={self.lat},ele={self.ele}"

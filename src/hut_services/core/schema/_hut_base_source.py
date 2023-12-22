@@ -3,7 +3,7 @@ from typing import Generic, TypeAlias, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .geo import LocationSchema
+from .geo import LocationEleSchema
 
 
 class SourcePropertiesSchema(BaseModel):
@@ -45,7 +45,7 @@ class BaseHutSourceSchema(BaseModel, Generic[TSourceData_co, TProperties_co]):
 
     # hut information
     name: str = Field(..., description="Original hut name.")
-    location: LocationSchema | None = Field(None, description="Location of the hut.")
+    location: LocationEleSchema | None = Field(None, description="Location of the hut.")
 
     # source information
     source_id: str = Field(..., description="Originial source id of the hut.")

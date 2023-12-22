@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, computed_field
 from hut_services.core.schema import CapacitySchema, ContactSchema, HutSchema, OwnerSchema
 from hut_services.core.schema.locale import TranslationSchema
 
-from .geo import LocationSchema
+from .geo import LocationEleSchema
 
 TSourceData = TypeVar("TSourceData", bound=BaseModel)
 
@@ -78,7 +78,7 @@ class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
 
     @computed_field  # type: ignore[misc]
     @property
-    def location(self) -> LocationSchema:
+    def location(self) -> LocationEleSchema:
         if hasattr(self.source, "get_location"):
             return self.source.get_location()  # type: ignore  # noqa: PGH003
         raise self.FieldNotImplementedError(self, "location")

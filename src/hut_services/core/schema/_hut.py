@@ -7,7 +7,7 @@ import phonenumbers
 from pydantic import BaseModel, Field, model_validator
 from slugify import slugify
 
-from .geo import LocationSchema
+from .geo import LocationEleSchema
 from .locale import TranslationSchema
 
 logger = logging.getLogger(__name__)
@@ -188,7 +188,7 @@ class HutSchema(BaseModel):
 
     slug: str = Field("", max_length=50)
     name: TranslationSchema = Field(..., description="Original hut name.")
-    location: LocationSchema = Field(..., description="Location of the hut.")
+    location: LocationEleSchema = Field(..., description="Location of the hut.")
 
     description: TranslationSchema = Field(default_factory=TranslationSchema)
     notes: list[TranslationSchema] = Field(..., description="Additional notes to the hut.")

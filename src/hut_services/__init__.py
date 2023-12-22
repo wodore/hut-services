@@ -8,6 +8,7 @@ __all__ = [
     "HutSourceSchema",
     "HutTypeEnum",
     "SourcePropertiesSchema",
+    "LocationEleSchema",
     "LocationSchema",
     "TranslationSchema",
     "BaseService",
@@ -28,7 +29,7 @@ from .core.schema import (
     OwnerSchema,
     SourcePropertiesSchema,
 )
-from .core.schema.geo import LocationSchema
+from .core.schema.geo import LocationEleSchema, LocationSchema
 from .core.schema.locale import TranslationSchema
 from .core.service import BaseService
 from .osm import OsmService

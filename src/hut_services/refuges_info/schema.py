@@ -13,7 +13,7 @@ from hut_services.core.schema import (
     OwnerSchema,
     SourcePropertiesSchema,
 )
-from hut_services.core.schema.geo import LocationSchema
+from hut_services.core.schema.geo import LocationEleSchema
 from hut_services.core.schema.locale import TranslationSchema
 
 logger = logging.getLogger(__name__)
@@ -144,9 +144,9 @@ class RefugesInfoFeature(Feature):
     def get_name(self) -> str:
         return str(self.properties.nom)
 
-    def get_location(self) -> LocationSchema:
+    def get_location(self) -> LocationEleSchema:
         # coords = self.geometry.coordinates
-        return LocationSchema(
+        return LocationEleSchema(
             lat=self.properties.coord.lat, lon=self.properties.coord.long, ele=self.properties.coord.alt
         )
 

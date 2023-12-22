@@ -12,7 +12,7 @@ from hut_services.core.schema import (
     OwnerSchema,
     SourcePropertiesSchema,
 )
-from hut_services.core.schema.geo import LocationSchema
+from hut_services.core.schema.geo import LocationEleSchema
 from hut_services.core.schema.geo.types import Elevation, Latitude, Longitude
 from hut_services.core.schema.locale import TranslationSchema
 
@@ -72,12 +72,12 @@ class OsmHutSchema(BaseModel):
         """Get open street map hut name."""
         return self.tags.name
 
-    def get_location(self) -> LocationSchema:
+    def get_location(self) -> LocationEleSchema:
         """Get open street map location."""
         if self.lat and self.lon:
-            return LocationSchema(lat=self.lat, lon=self.lon, ele=self.tags.ele)
+            return LocationEleSchema(lat=self.lat, lon=self.lon, ele=self.tags.ele)
         elif self.center_lat and self.center_lon:
-            return LocationSchema(lat=self.center_lat, lon=self.center_lon, ele=self.tags.ele)
+            return LocationEleSchema(lat=self.center_lat, lon=self.center_lon, ele=self.tags.ele)
         else:
             raise OSMCoordinatesError(self.osm_id, self.get_name())
 
