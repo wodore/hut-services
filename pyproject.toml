@@ -21,6 +21,7 @@ types-xmltodict = "^0.13.0.3"
 xmltodict = "^0.13.0"
 httpx = "^0.25.2"
 python-slugify = "^8.0.1"
+types-python-slugify = "^8.0.0.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"
@@ -116,4 +117,4 @@ preview = true
 [tool.deptry.per_rule_ignores]
 DEP004 = ["rich"] # only in dev
 DEP003 = ["hut_services"] # transitive dependencies
-DEP002 = ["types-xmltodict"] # not used
+DEP002 = ["types-xmltodict", "types-python-slugify"] # not used

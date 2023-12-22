@@ -169,7 +169,7 @@ class HutSchema(BaseModel):
     """Hut schema.
 
     Attributes:
-        slug: Slug.
+        slug: Hut slug, if empty it is replaced by slugified `name`.
         name: Original hut name
         location: Location of the hut
         description: Description.
@@ -186,7 +186,7 @@ class HutSchema(BaseModel):
         extras: Additional information to the hut as dictionary
     """
 
-    slug: str | None = None
+    slug: str = Field("", max_length=50)
     name: TranslationSchema = Field(..., description="Original hut name.")
     location: LocationSchema = Field(..., description="Location of the hut.")
 
@@ -216,6 +216,12 @@ class HutSchema(BaseModel):
     def __str__(self) -> str:
         slug = self.slug if self.slug else self.name.i18n.lower().replace(" ", "-")[:8]
         return f"<{slug} {self.name.i18n} ({self.location.lon},{self.location.lat})>"
+
+    @model_validator(mode="after")
+    def add_slug(self) -> "HutSchema":
+        if not self.slug:
+            self.slug = slugify(self.name.i18n, max_length=50, word_boundary=True)
+        return self
 
     # def show(
     #    self,
