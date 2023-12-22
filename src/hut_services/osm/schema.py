@@ -1,4 +1,5 @@
 import logging
+import textwrap
 from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field, computed_field
@@ -193,7 +194,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
         comment = ""
         if len(name) > 60:
             comment = f"Full name: {name}"
-            name = name[:60]
+            name = textwrap.shorten(name, width=57, placeholder="...")
         if name:
             return OwnerSchema(name=name, comment=comment)
         return None

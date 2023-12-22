@@ -4,7 +4,8 @@ from enum import Enum
 from typing import Annotated, Any, Sequence
 
 import phonenumbers
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+from slugify import slugify
 
 from .geo import LocationSchema
 from .locale import TranslationSchema
@@ -108,7 +109,7 @@ class OwnerSchema(BaseModel):
     """Schema for the owner.
 
     Attributes:
-        slug: Owner slug, can also be empty.
+        slug: Owner slug, if empty it is replaced by slugified `name`.
         name: Owner name, required.
         url: Owners URL (not the hut website).
         note: Additonal (public) note to the owner.
@@ -116,12 +117,18 @@ class OwnerSchema(BaseModel):
         contacts: Contacts used for the owner.
     """
 
-    slug: str = Field("", max_length=100)
+    slug: str = Field("", max_length=50)
     name: str = Field(..., max_length=100)
     url: str = Field("", max_length=200)
     note: TranslationSchema = Field(default_factory=TranslationSchema)
     comment: str = ""
     contacts: ContactSchema | None = None
+
+    @model_validator(mode="after")
+    def add_slug(self) -> "OwnerSchema":
+        if not self.slug:
+            self.slug = slugify(self.name, max_length=50, word_boundary=True)
+        return self
 
 
 # T = TypeVar("T")
