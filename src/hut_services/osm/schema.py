@@ -236,7 +236,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
         return guess_hut_type(
             name=self.name.i18n or "",
             capacity=self.capacity.if_open,
-            capacity_shelter=self.capacity.if_close,
+            capacity_shelter=self.capacity.if_closed,
             elevation=self.location.ele,
             organization=_orgs,
             osm_tag=self._tags.tourism,
@@ -244,7 +244,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
 
     @property
     def _hut_type_closed(self) -> HutTypeEnum | None:
-        if self._hut_type_open == "hut" and self.capacity.if_close:
+        if self._hut_type_open == "hut" and self.capacity.if_closed:
             if (self.location.ele or 0) < 2500:
                 return HutTypeEnum.unattended_hut
             else:

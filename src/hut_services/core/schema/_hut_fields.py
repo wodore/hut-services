@@ -72,7 +72,7 @@ class CapacitySchema(BaseSchema):
     """
 
     if_open: NaturalInt | None = Field(None, alias="open", description="Capacity when the hut is open")
-    if_close: NaturalInt | None = Field(
+    if_closed: NaturalInt | None = Field(
         None, alias="close", description="Capacity when the hut is closed (shelter, winterroom, ...)"
     )
 
