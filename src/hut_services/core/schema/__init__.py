@@ -4,10 +4,10 @@ from ._hut import HutSchema
 from ._hut_base_converter import BaseHutConverterSchema
 from ._hut_base_source import BaseHutSourceSchema, HutSourceSchema, SourcePropertiesSchema
 from ._hut_fields import (
+    AnswerEnum,
     CapacitySchema,
     HutTypeEnum,
     HutTypeSchema,
-    OpenMonthlyEnum,
     OpenMonthlySchema,
     OwnerSchema,
     PhotoSchema,
@@ -25,5 +25,5 @@ __all__ = [
     "CapacitySchema",
     "SourcePropertiesSchema",
     "OpenMonthlySchema",
-    "OpenMonthlyEnum",
+    "AnswerEnum",
 ]

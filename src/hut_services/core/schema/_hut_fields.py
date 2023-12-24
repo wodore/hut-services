@@ -112,12 +112,12 @@ class PhotoSchema(BaseSchema):
     is_public: bool = Field(default=True)
 
 
-class OpenMonthlyEnum(str, Enum):
+class AnswerEnum(str, Enum):
     """Enum with open values."""
 
     yes = "yes"
-    partial = "partial"
-    closed = "closed"
+    maybe = "maybe"
+    no = "no"
     unknown = "unknown"
 
 
@@ -129,32 +129,32 @@ class OpenMonthlySchema(BaseSchema):
         month_mm (OpenMonthly): Month (starting with 01)."""
 
     url: str = Field("", description="URL which shows if it is open or not.")
-    month_01: OpenMonthlyEnum = OpenMonthlyEnum.unknown
-    month_02: OpenMonthlyEnum = OpenMonthlyEnum.unknown
-    month_03: OpenMonthlyEnum = OpenMonthlyEnum.unknown
-    month_04: OpenMonthlyEnum = OpenMonthlyEnum.unknown
-    month_05: OpenMonthlyEnum = OpenMonthlyEnum.unknown
-    month_06: OpenMonthlyEnum = OpenMonthlyEnum.unknown
-    month_07: OpenMonthlyEnum = OpenMonthlyEnum.unknown
-    month_08: OpenMonthlyEnum = OpenMonthlyEnum.unknown
-    month_09: OpenMonthlyEnum = OpenMonthlyEnum.unknown
-    month_10: OpenMonthlyEnum = OpenMonthlyEnum.unknown
-    month_11: OpenMonthlyEnum = OpenMonthlyEnum.unknown
-    month_12: OpenMonthlyEnum = OpenMonthlyEnum.unknown
+    month_01: AnswerEnum = AnswerEnum.unknown
+    month_02: AnswerEnum = AnswerEnum.unknown
+    month_03: AnswerEnum = AnswerEnum.unknown
+    month_04: AnswerEnum = AnswerEnum.unknown
+    month_05: AnswerEnum = AnswerEnum.unknown
+    month_06: AnswerEnum = AnswerEnum.unknown
+    month_07: AnswerEnum = AnswerEnum.unknown
+    month_08: AnswerEnum = AnswerEnum.unknown
+    month_09: AnswerEnum = AnswerEnum.unknown
+    month_10: AnswerEnum = AnswerEnum.unknown
+    month_11: AnswerEnum = AnswerEnum.unknown
+    month_12: AnswerEnum = AnswerEnum.unknown
 
-    def __getitem__(self, month: int) -> OpenMonthlyEnum:
+    def __getitem__(self, month: int) -> AnswerEnum:
         if month > 0 and month <= 12:
             return getattr(self, f"month_{month:02d}")  # type: ignore[no-any-return]
         else:
             raise IndexError
 
-    def __setitem__(self, month: int, value: OpenMonthlyEnum) -> None:
+    def __setitem__(self, month: int, value: AnswerEnum) -> None:
         if month > 0 and month <= 12:
             setattr(self, f"month_{month:02d}", value)
         else:
             raise IndexError
 
-    def set_month(self, month: int, value: OpenMonthlyEnum) -> None:
+    def set_month(self, month: int, value: AnswerEnum) -> None:
         if month > 0 and month <= 12:
             setattr(self, f"month_{month:02d}", value)
         else:

@@ -10,7 +10,7 @@ __all__ = [
     "HutTypeSchema",
     "PhotoSchema",
     "OpenMonthlySchema",
-    "OpenMonthlyEnum",
+    "AnswerEnum",
     "SourcePropertiesSchema",
     "LocationEleSchema",
     "LocationSchema",
@@ -23,6 +23,7 @@ __all__ = [
 ]
 
 from .core.schema import (
+    AnswerEnum,
     BaseHutConverterSchema,
     BaseHutSourceSchema,
     CapacitySchema,
@@ -31,7 +32,6 @@ from .core.schema import (
     HutSourceSchema,
     HutTypeEnum,
     HutTypeSchema,
-    OpenMonthlyEnum,
     OpenMonthlySchema,
     OwnerSchema,
     PhotoSchema,
