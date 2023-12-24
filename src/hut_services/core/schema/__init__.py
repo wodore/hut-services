@@ -1,5 +1,29 @@
-from ._hut import CapacitySchema, ContactSchema, HutSchema, HutTypeEnum, OwnerSchema
+from ._base import BaseSchema
+from ._contact import ContactSchema
+from ._hut import HutSchema
 from ._hut_base_converter import BaseHutConverterSchema
 from ._hut_base_source import BaseHutSourceSchema, HutSourceSchema, SourcePropertiesSchema
+from ._hut_fields import (
+    CapacitySchema,
+    HutTypeEnum,
+    HutTypeSchema,
+    OpenMonthlyEnum,
+    OpenMonthlySchema,
+    OwnerSchema,
+    PhotoSchema,
+)
 
-__all__ = ["BaseHutSourceSchema", "BaseHutConverterSchema", "HutSchema", "ContactSchema", "HutTypeEnum"]
+__all__ = [
+    "BaseHutSourceSchema",
+    "BaseHutConverterSchema",
+    "HutSchema",
+    "ContactSchema",
+    "HutTypeEnum",
+    "OwnerSchema",
+    "HutTypeSchema",
+    "PhotoSchema",
+    "CapacitySchema",
+    "SourcePropertiesSchema",
+    "OpenMonthlySchema",
+    "OpenMonthlyEnum",
+]

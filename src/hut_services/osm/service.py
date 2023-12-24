@@ -30,8 +30,9 @@ class OsmService(BaseService[OsmHutSource]):
         The methods are descriebed in [`BaseService`][hut_services.BaseService].
     """
 
-    def __init__(self, request_url: str = "https://overpass.osm.ch/api/"):
+    def __init__(self, request_url: str = "https://overpass.osm.ch/api/", get_wikidata_photos: bool = True):
         super().__init__(support_bbox=True, support_limit=True, support_offset=True, support_convert=True)
+        self.get_wikidata_photos = get_wikidata_photos
         self.request_url = request_url
 
     # @lru_cache(10)
@@ -99,21 +100,25 @@ class OsmService(BaseService[OsmHutSource]):
             if hut_src.source_data is None:
                 err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} without 'source_data' not allowed."
                 raise AttributeError(err_msg)
-            return OsmHut0Convert(source=hut_src.source_data).get_hut()
+            return OsmHut0Convert(get_wikidata_photos=self.get_wikidata_photos, source=hut_src.source_data).get_hut()
         else:
             err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} not implemented."
             raise NotImplementedError(err_msg)
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
-    limit = 2000
+    logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
+    limit = 50
+    wikidata_photos = True
     osm_service = OsmService()
+    osm_service.get_wikidata_photos = wikidata_photos
     huts = osm_service.get_huts_from_source(limit=limit)
     for h in huts:
         # rprint(h)
         hut = osm_service.convert(h.model_dump(by_alias=True))
-        rprint(h)
-        rprint(h.source_properties_schema)
+        rprint(hut.name.i18n)
+        rprint(hut.extras.get("wikidata"))
+        rprint(hut.photos)
+        # rprint(h.source_properties_schema)
         # rprint(h)
         # print(h.show(source_name=False))

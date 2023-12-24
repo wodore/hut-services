@@ -1,5 +1,7 @@
 import re
 
+from hut_services import HutTypeEnum
+
 
 def guess_hut_type(
     name: str = "",
@@ -9,7 +11,7 @@ def guess_hut_type(
     organization: str | None = "",
     osm_tag: str | None = "",
     # ) -> HutType:
-) -> str:
+) -> HutTypeEnum:
     if name is None:
         name = ""
     if capacity is None:
@@ -35,27 +37,27 @@ def guess_hut_type(
     _hostel_names = [r"hostel", r"jugendherberg"]
     _restaurant_names = [r"restaurant", r"ristorante", r"beizli"]
     _possible_hut = _in(_hut_names, name)
-    _slug = "unknown"
+    _slug = HutTypeEnum.unknown
     if _in(_basic_hotel_names, name):
-        _slug = "basic-hotel"
+        _slug = HutTypeEnum.basic_hotel
     elif _in(_hotel_names, name):
-        _slug = "hotel"
+        _slug = HutTypeEnum.hotel
     elif _in(_hostel_names, name):
-        _slug = "hostel"
+        _slug = HutTypeEnum.hostel
     elif _in(_restaurant_names, name):
-        _slug = "restaurant"
+        _slug = HutTypeEnum.restaurant
     elif _in(_camping_names, name):
-        _slug = "camping"
+        _slug = HutTypeEnum.camping
     elif osm_tag == "wilderness_hut":
-        _slug = "bivouac" if elevation > 2500 and not _possible_hut else "basic-shelter"
+        _slug = HutTypeEnum.bivouac if elevation > 2500 and not _possible_hut else HutTypeEnum.basic_shelter
     elif (capacity == capacity_shelter or capacity < 22) and capacity > 0:
-        _slug = "bivouac" if elevation > 2500 and not _possible_hut else "unattended-hut"
+        _slug = HutTypeEnum.bivouac if elevation > 2500 and not _possible_hut else HutTypeEnum.unattended_hut
     elif _possible_hut:
-        _slug = "hut"
+        _slug = HutTypeEnum.hut
     elif _in(_bivi_names, name):
-        _slug = "bivouac"
+        _slug = HutTypeEnum.bivouac
     elif _in(["alp", "alm", "hof"], name) and elevation < 2000:
-        _slug = "alp"
+        _slug = HutTypeEnum.alp
     elif organization in ["sac", "dav"] or osm_tag == "alpine_hut":
-        _slug = "hut"
+        _slug = HutTypeEnum.hut
     return _slug

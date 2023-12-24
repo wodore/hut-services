@@ -7,6 +7,10 @@ __all__ = [
     "HutSchema",
     "HutSourceSchema",
     "HutTypeEnum",
+    "HutTypeSchema",
+    "PhotoSchema",
+    "OpenMonthlySchema",
+    "OpenMonthlyEnum",
     "SourcePropertiesSchema",
     "LocationEleSchema",
     "LocationSchema",
@@ -26,7 +30,11 @@ from .core.schema import (
     HutSchema,
     HutSourceSchema,
     HutTypeEnum,
+    HutTypeSchema,
+    OpenMonthlyEnum,
+    OpenMonthlySchema,
     OwnerSchema,
+    PhotoSchema,
     SourcePropertiesSchema,
 )
 from .core.schema.geo import LocationEleSchema, LocationSchema

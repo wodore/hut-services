@@ -5,11 +5,12 @@ from typing import Literal
 from geojson_pydantic import Feature, FeatureCollection, Point
 from pydantic import BaseModel, Field, computed_field
 
-from hut_services.core.schema import (
+from hut_services import (
     BaseHutConverterSchema,
     BaseHutSourceSchema,
     CapacitySchema,
     HutTypeEnum,
+    HutTypeSchema,
     OwnerSchema,
     SourcePropertiesSchema,
 )
@@ -207,6 +208,11 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
 
     @computed_field  # type: ignore[misc]
     @property
+    def owner(self) -> OwnerSchema | None:
+        return None
+
+    @computed_field  # type: ignore[misc]
+    @property
     def url(self) -> str:
         return self._props.info_comp.site_officiel.url or ""
 
@@ -214,32 +220,20 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @property
     def capacity(self) -> CapacitySchema:
         try:
-            return CapacitySchema(opened=int(self._props.places.valeur))  # type: ignore  # noqa: PGH003
+            return CapacitySchema(open=int(self._props.places.valeur), close=None)  # type: ignore  # noqa: PGH003
         except TypeError:
-            return CapacitySchema(opened=None, closed=None)
+            return CapacitySchema(open=None, close=None)
 
     @computed_field(alias="type")  # type: ignore[misc]
     @property
-    def hut_type(self) -> str:
-        _type = WODORE_HUT_TYPES.get(self._props.hut_type.ident, "unknown")
-        if _type == "unattended-hut":
+    def hut_type(self) -> HutTypeSchema:
+        _type = WODORE_HUT_TYPES.get(self._props.hut_type.ident, HutTypeEnum.unknown)
+        if _type == HutTypeEnum.unattended_hut:
             if self._props.info_comp.manque_un_mur.valeur or "0" != "0":
-                _type = "basic-shelter"
+                _type = HutTypeEnum.basic_shelter
             elif self.location.ele or 0 > 2500:
-                _type = "bivouac"
-        return _type
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def owner(self) -> OwnerSchema | None:
-        # name = self._props.proprio.valeur or ""
-        # comment = ""
-        # if len(name) > 60:
-        #    comment = f"Full name: {name}"
-        #    name = name[:60]
-        # if name:
-        #    return OwnerSchema(name=name, comment=comment)
-        return None
+                _type = HutTypeEnum.bivouac
+        return HutTypeSchema(open=_type, close=None)
 
     @computed_field  # type: ignore[misc]
     @property

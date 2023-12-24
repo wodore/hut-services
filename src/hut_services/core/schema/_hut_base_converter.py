@@ -2,10 +2,22 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field, computed_field
 
-from hut_services.core.schema import CapacitySchema, ContactSchema, HutSchema, OwnerSchema
 from hut_services.core.schema.locale import TranslationSchema
 
+from ._contact import ContactSchema
+from ._hut import HutSchema
+from ._hut_fields import (
+    CapacitySchema,
+    HutTypeEnum,
+    HutTypeSchema,
+    OpenMonthlySchema,
+    OwnerSchema,
+    PhotoSchema,
+)
 from .geo import LocationEleSchema
+
+if __name__ == "__main__":  # only for testing
+    from icecream import ic  # type: ignore[import-untyped] # noqa: F401, RUF100 , PGH003
 
 TSourceData = TypeVar("TSourceData", bound=BaseModel)
 
@@ -58,6 +70,13 @@ class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
 
     @computed_field  # type: ignore[misc]
     @property
+    def location(self) -> LocationEleSchema:
+        if hasattr(self.source, "get_location"):
+            return self.source.get_location()  # type: ignore  # noqa: PGH003
+        raise self.FieldNotImplementedError(self, "location")
+
+    @computed_field  # type: ignore[misc]
+    @property
     def description(self) -> TranslationSchema:
         raise self.FieldNotImplementedError(self, "description")
 
@@ -68,20 +87,8 @@ class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
 
     @computed_field  # type: ignore[misc]
     @property
-    def comment(self) -> str:
-        return ""
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def extras(self) -> dict[str, Any]:
-        return {}
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def location(self) -> LocationEleSchema:
-        if hasattr(self.source, "get_location"):
-            return self.source.get_location()  # type: ignore  # noqa: PGH003
-        raise self.FieldNotImplementedError(self, "location")
+    def owner(self) -> OwnerSchema | None:
+        return None
 
     @computed_field  # type: ignore[misc]
     @property
@@ -90,18 +97,37 @@ class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
 
     @computed_field  # type: ignore[misc]
     @property
-    def capacity(self) -> CapacitySchema:
-        return CapacitySchema(opened=None, closed=None)
-
-    @computed_field(alias="type")  # type: ignore[misc]
-    @property
-    def hut_type(self) -> str:
-        return "unknown"
+    def contacts(self) -> list[ContactSchema]:
+        return []
 
     @computed_field  # type: ignore[misc]
     @property
-    def owner(self) -> OwnerSchema | None:
+    def country_code(self) -> str | None:
         return None
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def comment(self) -> str:
+        return ""
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def capacity(self) -> CapacitySchema:
+        return CapacitySchema(open=None, close=None)
+
+    @computed_field(alias="type")  # type: ignore[misc]
+    @property
+    def hut_type(self) -> HutTypeSchema:
+        return HutTypeSchema(open=HutTypeEnum.unknown, close=None)
+
+    @property
+    def photos(self) -> list[PhotoSchema]:
+        return []
+
+    @computed_field()  # type: ignore[misc]
+    @property
+    def open_monthly(self) -> OpenMonthlySchema:
+        return OpenMonthlySchema()  # pyright: ignore  # noqa: PGH003
 
     @computed_field  # type: ignore[misc]
     @property
@@ -115,5 +141,5 @@ class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
 
     @computed_field  # type: ignore[misc]
     @property
-    def contacts(self) -> list[ContactSchema]:
-        return []
+    def extras(self) -> dict[str, Any]:
+        return {}

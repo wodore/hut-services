@@ -4,17 +4,23 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field, computed_field
 
-from hut_services.core.schema import (
+from hut_services import (
     BaseHutConverterSchema,
     BaseHutSourceSchema,
     CapacitySchema,
     ContactSchema,
+    HutTypeEnum,
+    HutTypeSchema,
+    LocationEleSchema,
     OwnerSchema,
+    PhotoSchema,
     SourcePropertiesSchema,
+    TranslationSchema,
 )
-from hut_services.core.schema.geo import LocationEleSchema
 from hut_services.core.schema.geo.types import Elevation, Latitude, Longitude
-from hut_services.core.schema.locale import TranslationSchema
+
+# from hut_services.wikidata import WikidataService
+from hut_services.wikidata.service import WikidataEntity, wikidata_service
 
 from .exceptions import OSMCoordinatesError
 from .utils import guess_hut_type
@@ -87,10 +93,13 @@ class OsmProperties(SourcePropertiesSchema):
 
 
 class OsmHutSource(BaseHutSourceSchema[OsmHutSchema, OsmProperties]):
+    version: int = 0
     source_name: str = "osm"
 
 
 class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
+    get_wikidata_photos: bool = False
+
     @property
     def _tags(self) -> OSMTags:
         return self.source.tags
@@ -112,19 +121,15 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
 
     @computed_field  # type: ignore[misc]
     @property
-    def comment(self) -> str:
-        note = ""
-        if self._tags.note:
-            note = f"OSM note: {self._tags.note}\n"
-        return note
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def extras(self) -> dict[str, Any]:
-        extras = {}
-        if self._tags.wikidata:
-            extras["wikidata"] = self._tags.wikidata
-        return extras
+    def owner(self) -> OwnerSchema | None:
+        name = self._tags.operator or ""
+        comment = ""
+        if len(name) > 60:
+            comment = f"Full name: {name}"
+            name = textwrap.shorten(name, width=57, placeholder="...")
+        if name:
+            return OwnerSchema(name=name, comment=comment)
+        return None
 
     @computed_field  # type: ignore[misc]
     @property
@@ -138,79 +143,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
             url = ""
         return url
 
-    @property
-    def _capacity_opened(self) -> Optional[int]:
-        tags = self._tags
-        cap: int | None = None
-        cap_str: str | None = None
-        if tags.capacity:
-            cap_str = tags.capacity
-        elif tags.beds:
-            cap_str = tags.beds
-        elif tags.bed:
-            cap_str = tags.bed
-        try:
-            if cap_str is not None:
-                cap = int(cap_str)
-        except ValueError:
-            cap = None
-        return cap
-
-    @property
-    def _capacity_closed(self) -> Optional[int]:
-        if self._tags.winter_room:
-            try:
-                return int(self._tags.winter_room)  # capacity in tag
-            except ValueError:
-                pass
-        # if self._tags.tourism == "wilderness_hut":
-        #    return self._capacity_opened
-        return None
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def capacity(self) -> CapacitySchema:
-        return CapacitySchema(opened=self._capacity_opened, closed=self._capacity_closed)
-
-    @computed_field(alias="type")  # type: ignore[misc]
-    @property
-    def hut_type(self) -> str:
-        _orgs = ""
-        if self._tags.operator:
-            _orgs = "sac" if "sac" in self._tags.operator else ""
-        return guess_hut_type(
-            name=self.name.i18n or "",
-            capacity=self.capacity.opened,
-            capacity_shelter=self.capacity.closed,
-            elevation=self.location.ele,
-            organization=_orgs,
-            osm_tag=self._tags.tourism,
-        )
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def owner(self) -> OwnerSchema | None:
-        name = self._tags.operator or ""
-        comment = ""
-        if len(name) > 60:
-            comment = f"Full name: {name}"
-            name = textwrap.shorten(name, width=57, placeholder="...")
-        if name:
-            return OwnerSchema(name=name, comment=comment)
-        return None
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def is_active(self) -> bool:
-        return True
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def is_public(self) -> bool:
-        if self._tags.access:
-            return self._tags.access in ["yes", "public", "customers", "permissive"]
-        return True
-
+    ## Contact
     @property
     def _email(self) -> str:
         if self._tags.email:
@@ -249,3 +182,109 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
             for email in emails.split(";"):
                 contacts.append(ContactSchema(email=email.strip(), function="contact", is_public=True))
         return contacts
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def comment(self) -> str:
+        note = ""
+        if self._tags.note:
+            note = f"OSM note: {self._tags.note}\n"
+        return note
+
+    @property
+    def _capacity_opened(self) -> Optional[int]:
+        tags = self._tags
+        cap: int | None = None
+        cap_str: str | None = None
+        if tags.capacity:
+            cap_str = tags.capacity
+        elif tags.beds:
+            cap_str = tags.beds
+        elif tags.bed:
+            cap_str = tags.bed
+        try:
+            if cap_str is not None:
+                cap = int(cap_str)
+        except ValueError:
+            cap = None
+        return cap
+
+    @property
+    def _capacity_closed(self) -> Optional[int]:
+        if self._tags.winter_room:
+            number = None
+            try:
+                number = int(self._tags.winter_room)  # capacity in tag
+            except ValueError:
+                return None
+            if number != self._capacity_opened:
+                return number
+        # if self._tags.tourism == "wilderness_hut":
+        #    return self._capacity_opened
+        return None
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def capacity(self) -> CapacitySchema:
+        return CapacitySchema(open=self._capacity_opened, close=self._capacity_closed)
+
+    @property
+    def _hut_type_open(self) -> HutTypeEnum:
+        _orgs = ""
+        if self._tags.operator:
+            _orgs = "sac" if "sac" in self._tags.operator else ""
+        return guess_hut_type(
+            name=self.name.i18n or "",
+            capacity=self.capacity.if_open,
+            capacity_shelter=self.capacity.if_close,
+            elevation=self.location.ele,
+            organization=_orgs,
+            osm_tag=self._tags.tourism,
+        )
+
+    @property
+    def _hut_type_closed(self) -> HutTypeEnum | None:
+        if self._hut_type_open == "hut" and self.capacity.if_close:
+            if (self.location.ele or 0) < 2500:
+                return HutTypeEnum.unattended_hut
+            else:
+                return HutTypeEnum.bivouac
+        return None
+
+    @computed_field(alias="type")  # type: ignore[misc]
+    @property
+    def hut_type(self) -> HutTypeSchema:
+        return HutTypeSchema(open=self._hut_type_open, close=self._hut_type_closed)
+
+    @property
+    def wikidata_entity(self) -> WikidataEntity | None:
+        if self._tags.wikidata and self.get_wikidata_photos:
+            return wikidata_service.get_entity(self._tags.wikidata)
+        return None
+
+    @computed_field()  # type: ignore[misc]
+    @property
+    def photos(self) -> list[PhotoSchema]:
+        if self.wikidata_entity is not None:
+            return self.wikidata_entity.get_photos()
+        return []
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def is_active(self) -> bool:
+        return True
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def is_public(self) -> bool:
+        if self._tags.access:
+            return self._tags.access in ["yes", "public", "customers", "permissive"]
+        return True
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def extras(self) -> dict[str, Any]:
+        extras = {}
+        if self._tags.wikidata:
+            extras["wikidata"] = self._tags.wikidata
+        return extras

@@ -1,217 +1,62 @@
-import logging
-from collections import namedtuple
-from enum import Enum
-from typing import Annotated, Any, Sequence
+from typing import Any, Mapping, Sequence
 
-import phonenumbers
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
 from slugify import slugify
 
+from ._base import BaseSchema
+from ._contact import ContactSchema
+from ._hut_fields import CapacitySchema, HutTypeSchema, OpenMonthlySchema, OwnerSchema, PhotoSchema
 from .geo import LocationEleSchema
 from .locale import TranslationSchema
 
-logger = logging.getLogger(__name__)
-
-NaturalInt = Annotated[int, Field(strict=True, ge=0)]
-
-PhoneMobile = namedtuple("PhoneMobile", ["phone", "mobile"])
+# import logging
+# logger = logging.getLogger(__name__)
 
 
-class ContactSchema(BaseModel):
-    """Schema for a contact.
-
-    Attributes:
-        name: Contact name (persion or organization), can also be empty.
-        email: E-mail address.
-        phone: Phone number.
-        mobile: Mobule phone number.
-        function: Function, e.g. hut warden.
-        url: Additional url for this contact (not the hut website).
-        address: Address (street, city).
-        note: Additional note/information.
-        is_active: Contact is active.
-        is_public: Show contact public.
-    """
-
-    name: str = Field("", max_length=70)
-    email: str = Field("", max_length=70)
-    phone: str = Field("", max_length=30)
-    mobile: str = Field("", max_length=30)
-    function: str = Field("", max_length=20)
-    url: str = Field("", max_length=200)
-    address: str = Field("", max_length=200)
-    note: TranslationSchema = Field(default_factory=TranslationSchema)
-    is_active: bool = True
-    is_public: bool = False
-
-    @classmethod
-    def extract_phone_numbers(cls, numbers_string: str, region: str | None) -> list[str]:
-        """Extracts phone numbers from a string and returns them formatted
-        with international code.
-        Uses the [`phonenumbers`](https://github.com/daviddrysdale/python-phonenumbers) package.
-
-        Args:
-            numbers_string: A string with phone numbers in it.
-            region: Country code.
-
-        Returns:
-            A list with formatted phone numbers.
-        """
-        phones = []
-        _matches = phonenumbers.PhoneNumberMatcher(numbers_string, region=region)
-        if not _matches:
-            logger.warning(f"Could not match phone CH number: '{numbers_string}'")
-        phone_match: phonenumbers.PhoneNumberMatch
-        for phone_match in _matches:
-            phone_fmt = phonenumbers.format_number(phone_match.number, phonenumbers.PhoneNumberFormat.INTERNATIONAL)
-            phones.append(phone_fmt)
-        return phones
-
-    @classmethod
-    def number_to_phone_or_mobile(
-        cls, numbers: str | Sequence[str], region: str | None, formatted: bool = False
-    ) -> PhoneMobile:
-        """Given a phone number it returns it eihter as `phone` or `mobile` number.
-        Uses the [`phonenumbers`](https://github.com/daviddrysdale/python-phonenumbers) package.
-
-        Args:
-            numbers: List or string of phone numbers, they are extraced and the two assigned to phone and mobile.
-            region: Country code.
-            formatted: Phone list is alreaad formatted
-
-        Returns:
-            Tuple with `phone` and `mobile` number (`(phone, mobile)`).
-        """
-        numbers_fmt: Sequence[str] = []
-        if formatted:
-            numbers_fmt = [n.strip() for n in numbers.split(",")] if isinstance(numbers, str) else numbers
-        else:
-            if not isinstance(numbers, str):
-                numbers = " and ".join(numbers)
-            numbers_fmt = cls.extract_phone_numbers(numbers, region=region)
-
-        mobiles: list[str] = []
-        phones: list[str] = []
-        for num in numbers_fmt:
-            is_mobile = (
-                phonenumbers.number_type(phonenumbers.parse(num, region=region)) == phonenumbers.PhoneNumberType.MOBILE
-            )
-            if is_mobile:
-                mobiles.append(num)
-            else:
-                phones.append(num)
-        mobile = mobiles[0] if mobiles else ""
-        phone = phones[0] if phones else ""
-        return PhoneMobile(phone=phone, mobile=mobile)
-
-
-class OwnerSchema(BaseModel):
-    """Schema for the owner.
-
-    Attributes:
-        slug: Owner slug, if empty it is replaced by slugified `name`.
-        name: Owner name, required.
-        url: Owners URL (not the hut website).
-        note: Additonal (public) note to the owner.
-        comment: Private comment to the owner.
-        contacts: Contacts used for the owner.
-    """
-
-    slug: str = Field("", max_length=50)
-    name: str = Field(..., max_length=100)
-    url: str = Field("", max_length=200)
-    note: TranslationSchema = Field(default_factory=TranslationSchema)
-    comment: str = ""
-    contacts: ContactSchema | None = None
-
-    @model_validator(mode="after")
-    def add_slug(self) -> "OwnerSchema":
-        if not self.slug:
-            self.slug = slugify(self.name, max_length=50, word_boundary=True)
-        return self
-
-
-# T = TypeVar("T")
-class HutTypeEnum(str, Enum):
-    """Enum with hut types."""
-
-    unknown = "unknown"
-    campground = "campground"  # possible to camp
-    basic_shelter = "basic-shelter"  # only roof, nothing inside
-    camping = "camping"  # attended
-    bivouac = "bivouac"  # simple bivouac, not much, high up ...
-    unattended_hut = "unattended-hut"
-    hut = "hut"
-    alp = "alp"
-    basic_hotel = "basic-hotel"  # simple, not luxiouris hotel, usally with tourist camp
-    hostel = "hostel"
-    hotel = "hotel"
-    special = "special"  # something special, like in a plane or so ...
-    restaurant = "restaurant"
-
-
-class CapacitySchema(BaseModel):
-    """Hut capacities.
-
-    Hint:
-        For unattended accomodations the `opened` attribute should be used.
-
-    Attributes:
-        opened: Capacity when the hut is open
-        closed: Capacity when the hut is closed (shelter, winterroom, ...)
-    """
-
-    opened: NaturalInt | None = Field(None, description="Capacity when the hut is open")
-    closed: NaturalInt | None = Field(None, description="Capacity when the hut is closed (shelter, winterroom, ...)")
-
-
-class HutSchema(BaseModel):
+class HutSchema(BaseSchema):
     """Hut schema.
 
     Attributes:
         slug: Hut slug, if empty it is replaced by slugified `name`.
-        name: Original hut name
-        location: Location of the hut
+        name: Original hut name.
+        location: Location of the hut.
         description: Description.
-        notes: Additional public notes to the hut
+        notes: Additional public notes to the hut.
         owner: Hut owner.
-        contacts: Hut contacts.
         url: Hut website.
+        contacts: Hut contacts.
+        country_code: Country.
         comment: Additional private comment to the hut.
-        country: Country.
         capacity: Cpacities of the hut.
+        type: Hut type (e.g. `unattended-hut`).
+        photos: Hut photos.
+        open_monthly: Monthly value if open, closed or partially open.
         is_active: Hut is active.
         is_public: Show hut public.
-        hut_type: Hut type (e.g. `unattended-hut`)
         extras: Additional information to the hut as dictionary
     """
 
     slug: str = Field("", max_length=50)
     name: TranslationSchema = Field(..., description="Original hut name.")
-    location: LocationEleSchema = Field(..., description="Location of the hut.")
+    location: LocationEleSchema = Field(..., description="Location of the hut with optional elevation.")
 
     description: TranslationSchema = Field(default_factory=TranslationSchema)
-    notes: list[TranslationSchema] = Field(..., description="Additional notes to the hut.")
+    notes: Sequence[TranslationSchema] = Field(..., description="Additional notes to the hut.")
     owner: OwnerSchema | None = Field(None)
-    contacts: list[ContactSchema] = Field(default_factory=list)
     url: str = Field("", max_length=200)
-    comment: str = Field("", max_length=2000)
-
-    # photos:        List[Photo] = Field(default_factory=list, sa_column=Column(PydanticType(List[Photo])))
-
-    country: str | None = Field("ch", max_length=2, min_length=2)
+    contacts: Sequence[ContactSchema] = Field(default_factory=list)
+    country_code: str | None = Field(None, max_length=2, min_length=2)
+    comment: str = Field("", max_length=20000, description="Additional private comment, e.g for review.")
     capacity: CapacitySchema
+    hut_type: HutTypeSchema = Field(..., alias="type")
+    photos: list[PhotoSchema] = Field(default_factory=list)
+    open_monthly: OpenMonthlySchema
+    is_active: bool = Field(default=True)
+    is_public: bool = Field(default=True)
+    extras: Mapping[str, Any] = Field(default_factory=dict, description="Additional information as dictionary.")
 
     # infrastructure:       dict = Field(default_factory=dict, sa_column=Column(JSON)) # TODO, better name. Maybe use infra and service separated, external table
     # access:             Access = Field(default_factory=Access, sa_column=Access.get_sa_column())
-
-    is_active: bool = Field(default=True)
-    is_public: bool = Field(default=True)
-
-    # monthly:            Monthly = Field(default_factory=Monthly, sa_column=Monthly.get_sa_column())
-    hut_type: HutTypeEnum = Field(alias="type")
-
-    extras: dict[str, Any] = Field(default_factory=dict, description="Additional information.")
 
     def __str__(self) -> str:
         slug = self.slug if self.slug else self.name.i18n.lower().replace(" ", "-")[:8]
@@ -222,28 +67,3 @@ class HutSchema(BaseModel):
         if not self.slug:
             self.slug = slugify(self.name.i18n, max_length=50, word_boundary=True)
         return self
-
-    # def show(
-    #    self,
-    #    source_id: bool = True,
-    #    location: bool = True,
-    #    elevation: bool = True,
-    #    source_name: bool = True,
-    #    version: bool = False,
-    #    created: bool = False,
-    # ) -> str:
-    #    """Returns a formated string with the hut information which can be printed."""
-    #    out = [f"{self.name}"]
-    #    if source_id:
-    #        out.append(f"  id:        {self.source_id}")
-    #    if location:
-    #        out.append(f"  location:  {self.location.lon},{self.location.lat}")
-    #    if elevation:
-    #        out.append(f"  elevation: {self.location.ele}")
-    #    if source_name:
-    #        out.append(f"  source:    {self.source_name}")
-    #    if version:
-    #        out.append(f"  version:   {self.version}")
-    #    if created:
-    #        out.append(f"  created:   {self.created}")
-    #    return "\n".join(out)
