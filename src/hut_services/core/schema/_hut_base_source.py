@@ -10,7 +10,9 @@ class SourcePropertiesSchema(BaseModel):
     """Properties saved together with the source data.
 
     Examples:
-        See [`OsmProperties`][hut_services.osm.schema.OsmProperties]."""
+        See `hut_services.osm.schema.OsmProperties`."""
+
+    # See [`OsmProperties`][hut_services.osm.schema.OsmProperties]."""
 
 
 TSourceData_co = TypeVar("TSourceData_co", bound=BaseModel, covariant=True)
@@ -36,8 +38,10 @@ class BaseHutSourceSchema(BaseModel, Generic[TSourceData_co, TProperties_co]):
             source_name: str = "my"
         ```
 
-        Or with different properties: [`OsmHutSource`][hut_services.osm.schema.OsmHutSource].
+        Or with different properties: `hut_services.osm.schema.OsmHutSource`.
     """
+
+    # Or with different properties: [`OsmHutSource`][hut_services.osm.schema.OsmHutSource].
 
     model_config = ConfigDict(coerce_numbers_to_str=True)
 

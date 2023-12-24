@@ -32,7 +32,9 @@ class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
     attribute or pydantic `computed_field`.
 
     Examples:
-        See [`OsmHut0Convert`][hut_services.osm.schema.OsmHut0Convert]."""
+        See `hut_services.osm.schema.OsmHut0Convert`."""
+
+    # See [`OsmHut0Convert`][hut_services.osm.schema.OsmHut0Convert].
 
     source: TSourceData = Field(..., exclude=True)
 
