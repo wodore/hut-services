@@ -35,7 +35,7 @@ class LocationSchema(BaseModel):
         return data
 
     @classmethod
-    def from_swiss(cls, ch_lat: float, ch_lon: float, ele: float | None) -> "LocationSchema":
+    def from_swiss(cls, ch_lat: float, ch_lon: float, ele: float | None) -> "LocationSchema | LocationEleSchema":
         """Takes LV03 or LV95 (newest) coordiates.
         [More information](https://en.wikipedia.org/wiki/Swiss_coordinate_system).
 
