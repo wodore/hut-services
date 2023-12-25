@@ -8,12 +8,12 @@ __all__ = ["file_cache", "clear_file_cache"]
 
 
 cachedir = os.environ.get("HUT_SERVICE_CACHE_DIR", os.path.join(tempfile.gettempdir(), "py_file_cache"))
-default_days = int(os.environ.get("HUT_SERVICE_EXPIRE_DAYS", 2))
+default_seconds = int(os.environ.get("HUT_SERVICE_EXPIRE_SECONDS", 2 * 60 * 24))  # 2 days
 _memory = Memory(cachedir, verbose=0, compress=True)
 
 
-def file_cache(ignore: Sequence = [], days: int = default_days) -> Any:
-    return _memory.cache(ignore=ignore, cache_validation_callback=expires_after(days=days))
+def file_cache(ignore: Sequence = [], expire_in_seconds: int = default_seconds) -> Any:
+    return _memory.cache(ignore=ignore, cache_validation_callback=expires_after(seconds=expire_in_seconds))
 
 
 clear_file_cache = _memory.clear
