@@ -107,6 +107,7 @@ class WikidataService(BaseService[WikidataHutSource]):
             qid = tags.wikidata
             if not qid:
                 continue
+            logger.info(f" Wikidata entry {qid:<15} ({oh.name})")
             wikidata = wikidata_service.get_entity(qid)
             lon, lat = oh.location.lon_lat if oh.location else (None, None)
             wikidata_hut = WikidataHutSchema(
