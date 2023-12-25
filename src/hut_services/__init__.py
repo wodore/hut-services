@@ -42,8 +42,7 @@ from .core.schema import (
 )
 from .core.schema.geo import LocationEleSchema, LocationSchema
 from .core.schema.locale import TranslationSchema
-from .core.service import BaseService
+from .core.service import BaseService, guess_hut_type
 from .osm import OsmService
-from .osm.utils import guess_hut_type
 from .refuges_info import RefugesInfoService
 from .services import SERVICES

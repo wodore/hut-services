@@ -9,7 +9,6 @@ from hut_services import (
     BaseHutSourceSchema,
     CapacitySchema,
     ContactSchema,
-    HutTypeEnum,
     HutTypeSchema,
     LocationEleSchema,
     OwnerSchema,
@@ -19,10 +18,11 @@ from hut_services import (
 )
 from hut_services.core.schema.geo.types import Elevation, Latitude, Longitude
 
+from ..core.service._guess_hut_type import guess_hut_type
+
 # from hut_services.wikidata import WikidataService
 # from hut_services.wikidata.service import WikidataEntity  # , wikidata_service
 from .exceptions import OSMCoordinatesError
-from .utils import guess_hut_type
 
 logger = logging.getLogger(__name__)
 
@@ -227,33 +227,20 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
     def capacity(self) -> CapacitySchema:
         return CapacitySchema(open=self._capacity_opened, closed=self._capacity_closed)
 
+    @computed_field(alias="type")  # type: ignore[misc]
     @property
-    def _hut_type_open(self) -> HutTypeEnum:
+    def hut_type(self) -> HutTypeSchema:
         _orgs = ""
         if self._tags.operator:
             _orgs = "sac" if "sac" in self._tags.operator else ""
         return guess_hut_type(
             name=self.name.i18n or "",
-            capacity=self.capacity.if_open,
-            capacity_shelter=self.capacity.if_closed,
+            capacity_open=self.capacity.if_open,
+            capacity_closed=self.capacity.if_closed,
             elevation=self.location.ele,
-            organization=_orgs,
+            operator=_orgs,
             osm_tag=self._tags.tourism,
         )
-
-    @property
-    def _hut_type_closed(self) -> HutTypeEnum | None:
-        if self._hut_type_open == "hut" and self.capacity.if_closed:
-            if (self.location.ele or 0) < 2500:
-                return HutTypeEnum.unattended_hut
-            else:
-                return HutTypeEnum.bivouac
-        return None
-
-    @computed_field(alias="type")  # type: ignore[misc]
-    @property
-    def hut_type(self) -> HutTypeSchema:
-        return HutTypeSchema(open=self._hut_type_open, closed=self._hut_type_closed)
 
     @property
     def wikidata_entity(self) -> None:

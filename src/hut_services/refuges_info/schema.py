@@ -13,6 +13,7 @@ from hut_services import (
     HutTypeSchema,
     OwnerSchema,
     SourcePropertiesSchema,
+    guess_hut_type,
 )
 from hut_services.core.schema.geo import LocationEleSchema
 from hut_services.core.schema.locale import TranslationSchema
@@ -227,13 +228,19 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @computed_field(alias="type")  # type: ignore[misc]
     @property
     def hut_type(self) -> HutTypeSchema:
-        _type = WODORE_HUT_TYPES.get(self._props.hut_type.ident, HutTypeEnum.unknown)
-        if _type == HutTypeEnum.unattended_hut:
-            if self._props.info_comp.manque_un_mur.valeur or "0" != "0":
-                _type = HutTypeEnum.basic_shelter
-            elif self.location.ele or 0 > 2500:
-                _type = HutTypeEnum.bivouac
-        return HutTypeSchema(open=_type, closed=None)
+        guessed = guess_hut_type(
+            name=self.name.i18n or "",
+            capacity_open=self.capacity.if_open,
+            capacity_closed=self.capacity.if_closed,
+            elevation=self.location.ele,
+            operator=None,
+            missing_walls=self._props.info_comp.manque_un_mur.valeur or "0",
+        )
+        if guessed == HutTypeEnum.unknown:
+            return HutTypeSchema(
+                open=WODORE_HUT_TYPES.get(self._props.hut_type.ident, HutTypeEnum.unknown), closed=None
+            )
+        return guessed
 
     @computed_field  # type: ignore[misc]
     @property
