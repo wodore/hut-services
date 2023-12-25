@@ -1,6 +1,6 @@
 import typing as t
 
-from hut_services import HutSourceSchema
+from hut_services import HutSourceSchema, clear_file_cache
 from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
 
@@ -69,6 +69,11 @@ class BaseService(t.Generic[THutSourceSchema]):
         self._support_limit = support_limit
         self._support_offset = support_offset
         self._support_convert = support_convert
+
+    @classmethod
+    def clear_all_cache(cls) -> None:
+        """Clears the cache of all services!"""
+        clear_file_cache()
 
     def get_huts_from_source(
         self, bbox: BBox | None = None, limit: int = 1, offset: int = 0, **kwargs: t.Any

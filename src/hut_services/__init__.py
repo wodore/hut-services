@@ -20,8 +20,11 @@ __all__ = [
     "RefugesInfoService",
     "guess_hut_type",
     "SERVICES",
+    "file_cache",
+    "clear_file_cache",
 ]
 
+from .core.cache import clear_file_cache, file_cache
 from .core.schema import (
     AnswerEnum,
     BaseHutConverterSchema,

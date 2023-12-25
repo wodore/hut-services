@@ -20,8 +20,7 @@ from hut_services import (
 from hut_services.core.schema.geo.types import Elevation, Latitude, Longitude
 
 # from hut_services.wikidata import WikidataService
-from hut_services.wikidata.service import WikidataEntity, wikidata_service
-
+# from hut_services.wikidata.service import WikidataEntity  # , wikidata_service
 from .exceptions import OSMCoordinatesError
 from .utils import guess_hut_type
 
@@ -257,9 +256,9 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
         return HutTypeSchema(open=self._hut_type_open, close=self._hut_type_closed)
 
     @property
-    def wikidata_entity(self) -> WikidataEntity | None:
-        if self._tags.wikidata and self.get_wikidata_photos:
-            return wikidata_service.get_entity(self._tags.wikidata)
+    def wikidata_entity(self) -> None:
+        # if self._tags.wikidata and self.get_wikidata_photos:
+        #    return wikidata_service.get_entity(self._tags.wikidata)
         return None
 
     @computed_field()  # type: ignore[misc]
