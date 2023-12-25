@@ -235,8 +235,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
             _orgs = "sac" if "sac" in self._tags.operator else ""
         return guess_hut_type(
             name=self.name.i18n or "",
-            capacity_open=self.capacity.if_open,
-            capacity_closed=self.capacity.if_closed,
+            capacity=self.capacity,
             elevation=self.location.ele,
             operator=_orgs,
             osm_tag=self._tags.tourism,

@@ -1,33 +1,24 @@
 import re
 
-from hut_services import HutTypeEnum, HutTypeSchema
+from hut_services import CapacitySchema, HutTypeEnum, HutTypeSchema
 
 
 def guess_hut_type(
     name: str = "",
-    capacity_open: int | None = 0,
-    capacity_closed: int | None = 0,
+    capacity: CapacitySchema | None = None,
     elevation: float | None = 1500,
     operator: str | None = "",
     osm_tag: str | None = "",
     missing_walls: int | None | str = 0,
     # ) -> HutType:
 ) -> HutTypeSchema:
-    if name is None:
-        name = ""
-    if capacity_open is None:
-        capacity_open = 0
-    orig_capacity_shelter = capacity_closed
-    if capacity_closed is None:
-        capacity_closed = 0
-    if elevation is None:
-        elevation = 1500
-    if operator is None:
-        operator = ""
-    if osm_tag is None:
-        osm_tag = ""
-    if missing_walls is None:
-        missing_walls = 0
+    name = name or ""
+    capacity_open = capacity.if_open or 0 if capacity is not None else 0
+    capacity_closed = capacity.if_closed or 0 if capacity is not None else 0
+    elevation = elevation or 1500
+    operator = operator or ""
+    osm_tag = osm_tag or ""
+    missing_walls = missing_walls or 0
     if isinstance(missing_walls, str):
         try:
             missing_walls = int(missing_walls)
@@ -72,7 +63,7 @@ def guess_hut_type(
         slug_open = HutTypeEnum.hut
     slug_closed = None
     if slug_open == HutTypeEnum.hut and capacity_open > 0 and capacity_open != capacity_closed:
-        if orig_capacity_shelter is not None and orig_capacity_shelter == 0:
+        if (capacity is not None and capacity.if_closed is not None) and capacity.if_closed == 0:
             slug_closed = HutTypeEnum.closed
         else:
             slug_closed = HutTypeEnum.unattended_hut if elevation < 2500 else HutTypeEnum.bivouac

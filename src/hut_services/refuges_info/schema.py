@@ -230,8 +230,7 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     def hut_type(self) -> HutTypeSchema:
         guessed = guess_hut_type(
             name=self.name.i18n or "",
-            capacity_open=self.capacity.if_open,
-            capacity_closed=self.capacity.if_closed,
+            capacity=self.capacity,
             elevation=self.location.ele,
             operator=None,
             missing_walls=self._props.info_comp.manque_un_mur.valeur or "0",
