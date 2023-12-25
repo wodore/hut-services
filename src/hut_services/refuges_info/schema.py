@@ -220,9 +220,9 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @property
     def capacity(self) -> CapacitySchema:
         try:
-            return CapacitySchema(open=int(self._props.places.valeur), close=None)  # type: ignore  # noqa: PGH003
+            return CapacitySchema(open=int(self._props.places.valeur), closed=None)  # type: ignore  # noqa: PGH003
         except TypeError:
-            return CapacitySchema(open=None, close=None)
+            return CapacitySchema(open=None, closed=None)
 
     @computed_field(alias="type")  # type: ignore[misc]
     @property
@@ -233,7 +233,7 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
                 _type = HutTypeEnum.basic_shelter
             elif self.location.ele or 0 > 2500:
                 _type = HutTypeEnum.bivouac
-        return HutTypeSchema(open=_type, close=None)
+        return HutTypeSchema(open=_type, closed=None)
 
     @computed_field  # type: ignore[misc]
     @property

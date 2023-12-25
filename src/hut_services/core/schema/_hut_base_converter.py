@@ -115,12 +115,12 @@ class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
     @computed_field  # type: ignore[misc]
     @property
     def capacity(self) -> CapacitySchema:
-        return CapacitySchema(open=None, close=None)
+        return CapacitySchema(open=None, closed=None)
 
     @computed_field(alias="type")  # type: ignore[misc]
     @property
     def hut_type(self) -> HutTypeSchema:
-        return HutTypeSchema(open=HutTypeEnum.unknown, close=None)
+        return HutTypeSchema(open=HutTypeEnum.unknown, closed=None)
 
     @property
     def photos(self) -> list[PhotoSchema]:

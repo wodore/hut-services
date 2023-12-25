@@ -225,7 +225,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
     @computed_field  # type: ignore[misc]
     @property
     def capacity(self) -> CapacitySchema:
-        return CapacitySchema(open=self._capacity_opened, close=self._capacity_closed)
+        return CapacitySchema(open=self._capacity_opened, closed=self._capacity_closed)
 
     @property
     def _hut_type_open(self) -> HutTypeEnum:
@@ -253,7 +253,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
     @computed_field(alias="type")  # type: ignore[misc]
     @property
     def hut_type(self) -> HutTypeSchema:
-        return HutTypeSchema(open=self._hut_type_open, close=self._hut_type_closed)
+        return HutTypeSchema(open=self._hut_type_open, closed=self._hut_type_closed)
 
     @property
     def wikidata_entity(self) -> None:

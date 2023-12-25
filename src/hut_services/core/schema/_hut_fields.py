@@ -89,8 +89,8 @@ class HutTypeSchema(BaseSchema):
     """
 
     if_open: HutTypeEnum = Field(HutTypeEnum.unknown, alias="open", description="Type when the hut is open")
-    if_close: HutTypeEnum | None = Field(
-        None, alias="close", description="Type when the hut is closed (bivouac, unattended-hut, closed, ...)"
+    if_closed: HutTypeEnum | None = Field(
+        None, alias="closed", description="Type when the hut is closed (bivouac, unattended-hut, closed, ...)"
     )
 
 
