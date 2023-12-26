@@ -155,12 +155,12 @@ class OpenMonthlySchema(BaseSchema):
             raise IndexError
 
     def __iter__(self):  # type: ignore[no-untyped-def]
-        self._current: int = -1
+        self._current: int = 0
         return self
 
     def __next__(self) -> AnswerEnum:
         self._current += 1
-        if self._current < 12:
+        if self._current <= 12:
             return self[self._current]
         else:
             raise StopIteration
