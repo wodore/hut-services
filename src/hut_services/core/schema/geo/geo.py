@@ -55,8 +55,6 @@ class LocationSchema(BaseModel):
             ch_lon -= 1000000
         converter = GPSConverter()
         ch_lat, ch_lon, ele = converter.LV03toWGS84(ch_lat, ch_lon, ele)
-        if isinstance(cls, LocationEleSchema):
-            return cls(lat=ch_lat, lon=ch_lon, ele=ele)
         return cls(lat=ch_lat, lon=ch_lon)
 
     @property
@@ -89,6 +87,11 @@ class LocationEleSchema(LocationSchema):
     model_config = ConfigDict(from_attributes=True)
 
     ele: Elevation | None = None
+
+    @classmethod
+    def from_swiss(cls, ch_lat: float, ch_lon: float, ele: float | None) -> "LocationSchema | LocationEleSchema":
+        loc = super().from_swiss(ch_lat=ch_lat, ch_lon=ch_lon, ele=ele)
+        return LocationEleSchema(lat=loc.lat, lon=loc.lon, ele=ele)
 
     @property
     def lon_lat_ele(self) -> tuple[Longitude, Latitude, Elevation]:
