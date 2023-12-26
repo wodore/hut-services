@@ -1,6 +1,21 @@
 import re
 
+from slugify import slugify
+
 from hut_services import AnswerEnum, CapacitySchema, HutTypeEnum, HutTypeSchema, OpenMonthlySchema
+
+HUT_NAMES = [r"huette", r"r[ie]fug[ei]", r"h[iü]tt[ae]", r"camona", r"capanna", r"cabane", r"huisli"]
+BIVI_NAMES = [r"biwak", r"bivouac", r"bivacco"]
+BASIC_HOTEL_NAMES = [r"berghotel", r"berggasthaus", r"auberge", r"gasthaus", r"berghaus"]
+CAMPING_NAMES = [r"camping", r"zelt"]
+HOTEL_NAMES = [r"h[oô]tel"]
+HOSTEL_NAMES = [r"hostel", r"jugendherberg"]
+RESTAURANT_NAMES = [r"restaurant", r"ristorante", r"beizli"]
+_ALP_NAMES = ["alp", "alm", "hof"]
+
+
+def _in(patterns: list, target: str) -> bool:
+    return any(re.search(pat.lower(), target.lower()) for pat in patterns)
 
 
 def guess_hut_type(
@@ -31,31 +46,20 @@ def guess_hut_type(
         except ValueError:
             missing_walls = 0
 
-    def _in(patterns: list, target: str) -> bool:
-        return any(re.search(pat.lower(), target.lower()) for pat in patterns)
-
     name = name.lower()
-    _hut_names = [r"huette", r"r[ie]fug[ei]", r"h[iü]tt[ae]", r"camona", r"capanna", r"cabane", r"huisli"]
-    _bivi_names = [r"biwak", r"bivouac", r"bivacco"]
-    _basic_hotel_names = [r"berghotel", r"berggasthaus", r"auberge", r"gasthaus", r"berghaus"]
-    _camping_names = [r"camping", r"zelt"]
-    _hotel_names = [r"h[oô]tel"]
-    _hostel_names = [r"hostel", r"jugendherberg"]
-    _restaurant_names = [r"restaurant", r"ristorante", r"beizli"]
-    _alp_names = ["alp", "alm", "hof"]
-    _possible_hut = _in(_hut_names, name)
+    _possible_hut = _in(HUT_NAMES, name)
     slug_open = HutTypeEnum.unknown
     if is_closed:
         slug_open = HutTypeEnum.closed
-    elif _in(_basic_hotel_names, name):
+    elif _in(BASIC_HOTEL_NAMES, name):
         slug_open = HutTypeEnum.basic_hotel
-    elif _in(_hotel_names, name):
+    elif _in(HOTEL_NAMES, name):
         slug_open = HutTypeEnum.hotel
-    elif _in(_hostel_names, name):
+    elif _in(HOSTEL_NAMES, name):
         slug_open = HutTypeEnum.hostel
-    elif _in(_restaurant_names, name):
+    elif _in(RESTAURANT_NAMES, name):
         slug_open = HutTypeEnum.restaurant
-    elif _in(_camping_names, name):
+    elif _in(CAMPING_NAMES, name):
         slug_open = HutTypeEnum.camping
     elif osm_tag == "wilderness_hut" or missing_walls > 0:
         slug_open = HutTypeEnum.bivouac if elevation > 2500 and not _possible_hut else HutTypeEnum.basic_shelter
@@ -63,9 +67,9 @@ def guess_hut_type(
         slug_open = HutTypeEnum.bivouac if elevation > 2500 and not _possible_hut else HutTypeEnum.unattended_hut
     elif _possible_hut:
         slug_open = HutTypeEnum.hut
-    elif _in(_bivi_names, name):
+    elif _in(BIVI_NAMES, name):
         slug_open = HutTypeEnum.unattended_hut if elevation < 2200 else HutTypeEnum.bivouac
-    elif _in(_alp_names, name) and elevation < 2000:
+    elif _in(_ALP_NAMES, name) and elevation < 2000:
         slug_open = HutTypeEnum.alp
     elif operator in ["sac", "dav"] or osm_tag == "alpine_hut":
         slug_open = HutTypeEnum.hut
@@ -73,6 +77,51 @@ def guess_hut_type(
     if slug_open == HutTypeEnum.hut and capacity_open > 0 and capacity_open != capacity_closed:
         if (capacity is not None and capacity.if_closed is not None) and capacity.if_closed == 0:
             slug_closed = HutTypeEnum.closed
-        else:
+        elif (capacity is not None and capacity.if_closed is not None) and capacity.if_closed > 0:
             slug_closed = HutTypeEnum.unattended_hut if elevation < 3000 else HutTypeEnum.bivouac
     return HutTypeSchema(open=slug_open, closed=slug_closed)
+
+
+def guess_slug_name(hut_name: str, max_length: int = 25, min_length: int = 5) -> str:
+    REPLACE_IN_SLUG = [
+        "alpage",
+        "alpina",
+        "huette",
+        "cabanne",
+        "cabane",
+        "capanna",
+        "chamana",
+        "chamanna",
+        "chamonna",
+        "chalet",
+        "capanna",
+        "biwak",
+        "bivouac",
+        "bivacco",
+        "berghotel",
+        "chalets",
+        "camona",
+        "hotel",
+        "huette",
+        "berghuette",
+        "berggasthaus",
+        "berghaus",
+        "cascina",
+        "rifugio",
+        "refuge",
+        "citta",
+        "guide",
+    ]
+    NOT_IN_SLUG = [*REPLACE_IN_SLUG, "alp", "alpe", "gite", "casa", "sac", "cas", "caf", "cai", "del", "des"]
+
+    for r in ("ä", "ae"), ("ü", "ue"), ("ö", "oe"):
+        hut_name = hut_name.lower().replace(r[0], r[1])
+    slug = slugify(hut_name)
+    slug = slug.strip(" -")
+    slugs = slug.split("-")
+    slugl = [s for s in slugs if (s not in NOT_IN_SLUG and len(s) >= 3)]
+    for _replace in REPLACE_IN_SLUG:
+        slugl = [v.replace(_replace, "") for v in slugl if v.replace(_replace, "")]
+    if not slugl or len("-".join(slugl)) < min_length:
+        slugl = slugify(hut_name).split("-")
+    return slugify(" ".join(slugl), max_length=max_length, word_boundary=True)

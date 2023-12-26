@@ -18,7 +18,7 @@ from hut_services import (
 )
 from hut_services.core.schema.geo.types import Elevation, Latitude, Longitude
 
-from ..core.service._guess_hut_type import guess_hut_type
+from ..core.guess import guess_hut_type
 
 # from hut_services.wikidata import WikidataService
 # from hut_services.wikidata.service import WikidataEntity  # , wikidata_service
