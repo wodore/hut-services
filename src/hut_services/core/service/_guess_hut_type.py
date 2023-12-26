@@ -35,8 +35,8 @@ def guess_hut_type(
         return any(re.search(pat.lower(), target.lower()) for pat in patterns)
 
     name = name.lower()
-    _hut_names = [r"huette", r"h[iü]tt[ae]", r"camona", r"capanna", r"cabane", r"huisli"]
-    _bivi_names = [r"r[ie]fug[ei]", r"biwak", r"bivouac", r"bivacco"]
+    _hut_names = [r"huette", r"r[ie]fug[ei]", r"h[iü]tt[ae]", r"camona", r"capanna", r"cabane", r"huisli"]
+    _bivi_names = [r"biwak", r"bivouac", r"bivacco"]
     _basic_hotel_names = [r"berghotel", r"berggasthaus", r"auberge", r"gasthaus", r"berghaus"]
     _camping_names = [r"camping", r"zelt"]
     _hotel_names = [r"h[oô]tel"]
@@ -64,7 +64,7 @@ def guess_hut_type(
     elif _possible_hut:
         slug_open = HutTypeEnum.hut
     elif _in(_bivi_names, name):
-        slug_open = HutTypeEnum.bivouac
+        slug_open = HutTypeEnum.unattended_hut if elevation < 2200 else HutTypeEnum.bivouac
     elif _in(_alp_names, name) and elevation < 2000:
         slug_open = HutTypeEnum.alp
     elif operator in ["sac", "dav"] or osm_tag == "alpine_hut":
