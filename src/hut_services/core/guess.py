@@ -60,23 +60,23 @@ def guess_hut_type(
     if is_closed:
         slug_open = HutTypeEnum.closed
     elif _in(BASIC_HOTEL_NAMES, name):
-        slug_open = HutTypeEnum.basic_hotel
+        slug_open = HutTypeEnum.bhotel
     elif _in(HOTEL_NAMES, name):
         slug_open = HutTypeEnum.hotel
     elif _in(HOSTEL_NAMES, name):
         slug_open = HutTypeEnum.hostel
     elif _in(RESTAURANT_NAMES, name):
-        slug_open = HutTypeEnum.restaurant
+        slug_open = HutTypeEnum.resta
     elif _in(CAMPING_NAMES, name):
         slug_open = HutTypeEnum.camping
     elif osm_tag == "wilderness_hut" or missing_walls > 0:
-        slug_open = HutTypeEnum.bivouac if elevation > 2500 and not _possible_hut else HutTypeEnum.basic_shelter
+        slug_open = HutTypeEnum.bivouac if elevation > 2500 and not _possible_hut else HutTypeEnum.shelter
     elif (capacity_open == capacity_closed or capacity_open < 22) and capacity_open > 0:
-        slug_open = HutTypeEnum.bivouac if elevation > 2500 and not _possible_hut else HutTypeEnum.unattended_hut
+        slug_open = HutTypeEnum.bivouac if elevation > 2500 and not _possible_hut else HutTypeEnum.selfhut
     elif _possible_hut:
         slug_open = HutTypeEnum.hut
     elif _in(BIVI_NAMES, name):
-        slug_open = HutTypeEnum.unattended_hut if elevation < 2200 else HutTypeEnum.bivouac
+        slug_open = HutTypeEnum.selfhut if elevation < 2200 else HutTypeEnum.bivouac
     elif _in(_ALP_NAMES, name) and elevation < 2000:
         slug_open = HutTypeEnum.alp
     elif operator in ["sac", "dav"] or osm_tag == "alpine_hut":
@@ -86,7 +86,7 @@ def guess_hut_type(
         if (capacity is not None and capacity.if_closed is not None) and capacity.if_closed == 0:
             slug_closed = HutTypeEnum.closed
         elif (capacity is not None and capacity.if_closed is not None) and capacity.if_closed > 0:
-            slug_closed = HutTypeEnum.unattended_hut if elevation < 3000 else HutTypeEnum.bivouac
+            slug_closed = HutTypeEnum.selfhut if elevation < 3000 else HutTypeEnum.bivouac
     return HutTypeSchema(open=slug_open, closed=slug_closed)
 
 

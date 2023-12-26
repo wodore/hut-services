@@ -28,7 +28,7 @@ class HutSchema(BaseSchema):
         country_code: Country.
         comment: Additional private comment to the hut.
         capacity: Cpacities of the hut.
-        type: Hut type (e.g. `unattended-hut`).
+        type: Hut type (e.g. `selfhut`).
         photos: Hut photos.
         open_monthly: Monthly value if open, closed or partially open.
         is_active: Hut is active.

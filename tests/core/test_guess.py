@@ -10,7 +10,7 @@ from hut_services.core.guess import guess_hut_type, guess_slug_name
     [
         (
             {"name": "Waldhuette", "capacity": CapacitySchema(open=40, closed=12), "elevation": 2400.0},
-            HutTypeSchema(open=HutTypeEnum.hut, closed=HutTypeEnum.unattended_hut),
+            HutTypeSchema(open=HutTypeEnum.hut, closed=HutTypeEnum.selfhut),
         ),
         (
             {"name": "Berghuette", "capacity": CapacitySchema(open=40, closed=12), "elevation": 3400.0},
@@ -27,7 +27,7 @@ from hut_services.core.guess import guess_hut_type, guess_slug_name
         ),
         (
             {"name": "Ohne Beartung", "capacity": CapacitySchema(open=15, closed=None), "operator": "sac"},
-            HutTypeSchema(open=HutTypeEnum.unattended_hut, closed=None),
+            HutTypeSchema(open=HutTypeEnum.selfhut, closed=None),
         ),
         (
             {"name": "Musterbiwak", "capacity": CapacitySchema(open=20, closed=None), "elevation": 2800.0},
@@ -35,7 +35,7 @@ from hut_services.core.guess import guess_hut_type, guess_slug_name
         ),
         (
             {"name": "Tiefbiwak", "capacity": CapacitySchema(open=20, closed=None), "elevation": 2000.0},
-            HutTypeSchema(open=HutTypeEnum.unattended_hut, closed=None),
+            HutTypeSchema(open=HutTypeEnum.selfhut, closed=None),
         ),
     ],
 )

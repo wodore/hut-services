@@ -46,18 +46,18 @@ class HutTypeEnum(str, Enum):
 
     unknown = "unknown"
     closed = "closed"
-    campground = "campground"  # possible to camp
-    basic_shelter = "basic-shelter"  # only roof, nothing inside
+    campgr = "campgr"  # campground: possible to camp
+    shelter = "shelter"  # basic-shelter: only roof, nothing inside
     camping = "camping"  # attended
     bivouac = "bivouac"  # simple bivouac, not much, high up ...
-    unattended_hut = "unattended-hut"
+    selfhut = "selfhut"  # unattended hut
     hut = "hut"
     alp = "alp"
-    basic_hotel = "basic-hotel"  # simple, not luxiouris hotel, usally with tourist camp
+    bhotel = "bhotel"  # simple, not luxiouris hotel, usally with tourist camp
     hostel = "hostel"
     hotel = "hotel"
     special = "special"  # something special, like in a plane or so ...
-    restaurant = "restaurant"
+    resta = "resta"
 
 
 class CapacitySchema(BaseSchema):
@@ -80,17 +80,17 @@ class CapacitySchema(BaseSchema):
 class HutTypeSchema(BaseSchema):
     """Hut type schema.
 
-    Defines the type of the hut if it is open and closed. E.g. a hut can be a 'unattended-hut' if it is closed.
+    Defines the type of the hut if it is open and closed. E.g. a hut can be a 'selfhut' if it is closed.
     If a hut is always open do not add anything to `closed`. If it is specifcally closed, e.g. during winter ass `'closed'`.
 
     Attributes:
         open:   Type when the hut is open
-        closed: Type when the hut is closed (bivouac, unattended-hut, closed, ...)
+        closed: Type when the hut is closed (bivouac, selfhut, closed, ...)
     """
 
     if_open: HutTypeEnum = Field(HutTypeEnum.unknown, alias="open", description="Type when the hut is open")
     if_closed: HutTypeEnum | None = Field(
-        None, alias="closed", description="Type when the hut is closed (bivouac, unattended-hut, closed, ...)"
+        None, alias="closed", description="Type when the hut is closed (bivouac, selfhut, closed, ...)"
     )
 
 

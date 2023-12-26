@@ -36,10 +36,10 @@ REFUGES_HUT_TYPES: dict[int, HutTypeRefugesEnum] = {
     28: HutTypeRefugesEnum.batiment_en_montagne,
 }
 WODORE_HUT_TYPES: dict[int, HutTypeEnum] = {
-    7: HutTypeEnum.unattended_hut,
+    7: HutTypeEnum.selfhut,
     10: HutTypeEnum.hut,
     9: HutTypeEnum.hut,
-    28: HutTypeEnum.basic_hotel,
+    28: HutTypeEnum.bhotel,
 }
 
 
