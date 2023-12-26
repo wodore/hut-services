@@ -229,18 +229,14 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @computed_field(alias="type")  # type: ignore[misc]
     @property
     def hut_type(self) -> HutTypeSchema:
-        guessed = guess_hut_type(
+        return guess_hut_type(
             name=self.name.i18n or "",
+            default=WODORE_HUT_TYPES.get(self._props.hut_type.ident, HutTypeEnum.unknown),
             capacity=self.capacity,
             elevation=self.location.ele,
             operator=None,
             missing_walls=self._props.info_comp.manque_un_mur.valeur or "0",
         )
-        if guessed == HutTypeEnum.unknown:
-            return HutTypeSchema(
-                open=WODORE_HUT_TYPES.get(self._props.hut_type.ident, HutTypeEnum.unknown), closed=None
-            )
-        return guessed
 
     @computed_field  # type: ignore[misc]
     @property

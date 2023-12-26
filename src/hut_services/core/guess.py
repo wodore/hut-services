@@ -1,4 +1,5 @@
 import re
+from typing import Literal
 
 from slugify import slugify
 
@@ -28,14 +29,25 @@ def _in(patterns: list, target: str) -> bool:
 
 def guess_hut_type(
     name: str = "",
+    default: HutTypeEnum = HutTypeEnum.unknown,
     capacity: CapacitySchema | None = None,
     elevation: float | None = 1500,
-    operator: str | None = "",
+    operator: Literal["sac", "dav"] | None = None,
     osm_tag: str | None = "",
     missing_walls: int | None | str = 0,
     open_monthly: OpenMonthlySchema | None = None,
     # ) -> HutType:
 ) -> HutTypeSchema:
+    """Guess hut type based on some input parameters.
+
+    Args:
+        name: hut name
+        default: default type if nothing else fits
+        capacity: capacity for a open and closed hut
+        operator: who is operating the hut
+        osm_tag: osm toursm tag
+        missing_walls: missing_walls value from refuges.info
+        open_monthly: list which month it is open"""
     # check if every month is closed
     is_closed = False if open_monthly is None else all(o == AnswerEnum.no for o in open_monthly)
     # if capacity is not None and capacity.if_open == 0 and capacity.if_closed in (0, None):
@@ -45,7 +57,6 @@ def guess_hut_type(
     capacity_open = capacity.if_open or 0 if capacity is not None else 0
     capacity_closed = capacity.if_closed or 0 if capacity is not None else 0
     elevation = elevation or 1500
-    operator = operator or ""
     osm_tag = osm_tag or ""
     missing_walls = missing_walls or 0
     if isinstance(missing_walls, str):
@@ -56,7 +67,7 @@ def guess_hut_type(
 
     name = name.lower()
     _possible_hut = _in(HUT_NAMES, name)
-    slug_open = HutTypeEnum.unknown
+    slug_open = default
     if is_closed:
         slug_open = HutTypeEnum.closed
     elif _in(BASIC_HOTEL_NAMES, name):
