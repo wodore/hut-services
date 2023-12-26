@@ -10,11 +10,11 @@ def guess_hut_type(
     operator: str | None = "",
     osm_tag: str | None = "",
     missing_walls: int | None | str = 0,
-    opening_monthly: OpenMonthlySchema | None = None,
+    open_monthly: OpenMonthlySchema | None = None,
     # ) -> HutType:
 ) -> HutTypeSchema:
     # check if every month is closed
-    is_closed = False if opening_monthly is None else all(o == AnswerEnum.no for o in opening_monthly)
+    is_closed = False if open_monthly is None else all(o == AnswerEnum.no for o in open_monthly)
     name = name or ""
     capacity_open = capacity.if_open or 0 if capacity is not None else 0
     capacity_closed = capacity.if_closed or 0 if capacity is not None else 0
