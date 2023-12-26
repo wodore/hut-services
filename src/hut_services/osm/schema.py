@@ -231,15 +231,12 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
     @computed_field(alias="type")  # type: ignore[misc]
     @property
     def hut_type(self) -> HutTypeSchema:
-        _orgs = ""
-        if self._tags.operator:
-            _orgs = "sac" if "sac" in self._tags.operator else ""
         capacity = CapacitySchema(open=self._capacity_opened, closed=self._capacity_closed)
         return guess_hut_type(
             name=self.name.i18n or "",
             capacity=capacity,
             elevation=self.location.ele,
-            operator=_orgs,
+            operator="sac" if self._tags.operator and "sac" in self._tags.operator else None,
             osm_tag=self._tags.tourism,
         )
 
