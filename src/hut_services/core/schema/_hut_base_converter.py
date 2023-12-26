@@ -2,8 +2,7 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field, computed_field
 
-from hut_services.core.schema.locale import TranslationSchema
-
+from ..guess import guess_slug_name
 from ._contact import ContactSchema
 from ._hut import HutSchema
 from ._hut_fields import (
@@ -15,6 +14,7 @@ from ._hut_fields import (
     PhotoSchema,
 )
 from .geo import LocationEleSchema
+from .locale import TranslationSchema
 
 if __name__ == "__main__":  # only for testing
     from icecream import ic  # type: ignore[import-untyped] # noqa: F401, RUF100 , PGH003
@@ -61,7 +61,7 @@ class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
     @computed_field  # type: ignore[misc]
     @property
     def slug(self) -> str:
-        raise self.FieldNotImplementedError(self, "slug")
+        return guess_slug_name(self.name.i18n)
 
     @computed_field  # type: ignore[misc]
     @property

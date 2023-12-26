@@ -87,15 +87,6 @@ class WikidataHutSource(BaseHutSourceSchema[WikidataHutSchema, WikidataPropertie
 
 
 class WikidataHut0Convert(BaseHutConverterSchema[WikidataHutSchema]):
-    #    @property
-    #    def _tags(self) -> OSMTags:
-    #        return self.source.tags
-    #
-    @computed_field  # type: ignore[misc]
-    @property
-    def slug(self) -> str:
-        return f"wikidata-{self.source.get_id()}"
-
     @computed_field  # type: ignore[misc]
     @property
     def name(self) -> TranslationSchema:

@@ -13,8 +13,8 @@ from hut_services import (
     HutTypeSchema,
     OwnerSchema,
     SourcePropertiesSchema,
-    guess_hut_type,
 )
+from hut_services.core.guess import guess_hut_type
 from hut_services.core.schema.geo import LocationEleSchema
 from hut_services.core.schema.locale import TranslationSchema
 
@@ -180,10 +180,11 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     def _props(self) -> _RefugesInfoFeatureProperties:
         return self.source.properties
 
-    @computed_field  # type: ignore[misc]
-    @property
-    def slug(self) -> str:
-        return f"refuges-{self.source.get_id()}"
+    ## implemented in base
+    # @computed_field  # type: ignore[misc]
+    # @property
+    # def slug(self) -> str:
+    #    return f"refuges-{self.source.get_id()}"
 
     @computed_field  # type: ignore[misc]
     @property

@@ -103,10 +103,11 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
     def _tags(self) -> OSMTags:
         return self.source.tags
 
-    @computed_field  # type: ignore[misc]
-    @property
-    def slug(self) -> str:
-        return f"osm-{self.source.get_id()}"
+    # implemented in base
+    # @computed_field  # type: ignore[misc]
+    # @property
+    # def slug(self) -> str:
+    #    return f"osm-{self.source.get_id()}"
 
     @computed_field  # type: ignore[misc]
     @property

@@ -2,7 +2,15 @@ import re
 
 from slugify import slugify
 
-from hut_services import AnswerEnum, CapacitySchema, HutTypeEnum, HutTypeSchema, OpenMonthlySchema
+__all__ = ["guess_slug_name", "guess_hut_type"]
+
+from hut_services.core.schema._hut_fields import (
+    AnswerEnum,
+    CapacitySchema,
+    HutTypeEnum,
+    HutTypeSchema,
+    OpenMonthlySchema,
+)
 
 HUT_NAMES = [r"huette", r"r[ie]fug[ei]", r"h[iü]tt[ae]", r"camona", r"capanna", r"cabane", r"huisli"]
 BIVI_NAMES = [r"biwak", r"bivouac", r"bivacco"]
