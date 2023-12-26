@@ -15,8 +15,8 @@ def guess_hut_type(
 ) -> HutTypeSchema:
     # check if every month is closed
     is_closed = False if open_monthly is None else all(o == AnswerEnum.no for o in open_monthly)
-    if capacity is not None and capacity.if_open == 0 and capacity.if_closed in (0, None):
-        is_closed = True
+    # if capacity is not None and capacity.if_open == 0 and capacity.if_closed in (0, None):
+    #    is_closed = True
 
     name = name or ""
     capacity_open = capacity.if_open or 0 if capacity is not None else 0
