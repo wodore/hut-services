@@ -154,6 +154,17 @@ class OpenMonthlySchema(BaseSchema):
         else:
             raise IndexError
 
+    def __iter__(self):  # type: ignore[no-untyped-def]
+        self._current: int = -1
+        return self
+
+    def __next__(self) -> AnswerEnum:
+        self._current += 1
+        if self._current < 12:
+            return self[self._current]
+        else:
+            raise StopIteration
+
     def set_month(self, month: int, value: AnswerEnum) -> None:
         if month > 0 and month <= 12:
             setattr(self, f"month_{month:02d}", value)

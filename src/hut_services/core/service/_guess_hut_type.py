@@ -1,6 +1,6 @@
 import re
 
-from hut_services import CapacitySchema, HutTypeEnum, HutTypeSchema
+from hut_services import AnswerEnum, CapacitySchema, HutTypeEnum, HutTypeSchema, OpenMonthlySchema
 
 
 def guess_hut_type(
@@ -10,8 +10,11 @@ def guess_hut_type(
     operator: str | None = "",
     osm_tag: str | None = "",
     missing_walls: int | None | str = 0,
+    opening_monthly: OpenMonthlySchema | None = None,
     # ) -> HutType:
 ) -> HutTypeSchema:
+    # check if every month is closed
+    is_closed = False if opening_monthly is None else all(o == AnswerEnum.no for o in opening_monthly)
     name = name or ""
     capacity_open = capacity.if_open or 0 if capacity is not None else 0
     capacity_closed = capacity.if_closed or 0 if capacity is not None else 0
@@ -39,7 +42,9 @@ def guess_hut_type(
     _alp_names = ["alp", "alm", "hof"]
     _possible_hut = _in(_hut_names, name)
     slug_open = HutTypeEnum.unknown
-    if _in(_basic_hotel_names, name):
+    if is_closed:
+        slug_open = HutTypeEnum.closed
+    elif _in(_basic_hotel_names, name):
         slug_open = HutTypeEnum.basic_hotel
     elif _in(_hotel_names, name):
         slug_open = HutTypeEnum.hotel
