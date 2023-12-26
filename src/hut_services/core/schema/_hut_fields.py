@@ -123,6 +123,7 @@ class AnswerEnum(str, Enum):
 
 class OpenMonthlySchema(BaseSchema):
     """Shows for every month if it is usally, open, partially open or closed.
+    Can be accessed as index, but it starts with 1 (month_01)!.
 
     Attributes:
         url: URL which shows if it is open or not.
