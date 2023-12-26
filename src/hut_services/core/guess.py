@@ -125,6 +125,7 @@ def guess_slug_name(hut_name: str, max_length: int = 25, min_length: int = 5) ->
     for r in ("ä", "ae"), ("ü", "ue"), ("ö", "oe"):
         hut_name = hut_name.lower().replace(r[0], r[1])
     slug = slugify(hut_name)
+    slug = re.sub(r"[0-9]", "", slug)  # remove numbers
     slug = slug.strip(" -")
     slugs = slug.split("-")
     slugl = [s for s in slugs if (s not in NOT_IN_SLUG and len(s) >= 3)]

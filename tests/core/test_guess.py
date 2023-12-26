@@ -57,6 +57,7 @@ def test_guess_hut_type(params: dict[str, Any], expected: HutTypeSchema) -> None
         ("Waldhaus-", {}, "waldhaus"),
         ("I`am a very Long hut name", {"max_length": 15}, "very-long-hut"),
         ("i go to shor t be a wo rd", {}, "i-go-to-shor-t-be-a-wo-rd"),
+        ("Name2 with 3numbers5", {}, "name-with-numbers"),
     ],
 )
 def test_guess_slug(name: str, params: dict[str, Any], exp_slug: str) -> None:
