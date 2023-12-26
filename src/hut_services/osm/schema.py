@@ -216,16 +216,16 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
                 number = int(self._tags.winter_room)  # capacity in tag
             except ValueError:
                 return None
-            if number != self._capacity_opened:
-                return number
-        # if self._tags.tourism == "wilderness_hut":
-        #    return self._capacity_opened
+            return number
         return None
 
     @computed_field  # type: ignore[misc]
     @property
     def capacity(self) -> CapacitySchema:
-        return CapacitySchema(open=self._capacity_opened, closed=self._capacity_closed)
+        closed = self._capacity_closed
+        if closed == self._capacity_opened:
+            closed = None
+        return CapacitySchema(open=self._capacity_opened, closed=closed)
 
     @computed_field(alias="type")  # type: ignore[misc]
     @property
@@ -233,9 +233,10 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
         _orgs = ""
         if self._tags.operator:
             _orgs = "sac" if "sac" in self._tags.operator else ""
+        capacity = CapacitySchema(open=self._capacity_opened, closed=self._capacity_closed)
         return guess_hut_type(
             name=self.name.i18n or "",
-            capacity=self.capacity,
+            capacity=capacity,
             elevation=self.location.ele,
             operator=_orgs,
             osm_tag=self._tags.tourism,

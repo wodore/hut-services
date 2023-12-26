@@ -66,5 +66,5 @@ def guess_hut_type(
         if (capacity is not None and capacity.if_closed is not None) and capacity.if_closed == 0:
             slug_closed = HutTypeEnum.closed
         else:
-            slug_closed = HutTypeEnum.unattended_hut if elevation < 2500 else HutTypeEnum.bivouac
+            slug_closed = HutTypeEnum.unattended_hut if elevation < 3000 else HutTypeEnum.bivouac
     return HutTypeSchema(open=slug_open, closed=slug_closed)
