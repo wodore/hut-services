@@ -63,6 +63,7 @@ class OSMTagsOptional(OSMTags):
 
     tourism: Literal["alpine_hut", "wilderness_hut"] | None = None  # type: ignore[assignment]
     name: str | None = None  # type: ignore[assignment]
+    ele: float | str | None = None
 
 
 class OsmHutSchema(BaseModel):
