@@ -63,7 +63,7 @@ class OSMTagsOptional(OSMTags):
 
     tourism: str | None = None  # type: ignore[assignment]
     name: str | None = None  # type: ignore[assignment]
-    ele: float | str | None = None
+    ele: float | str | None = None  # type: ignore[assignment]
 
 
 class OsmHutSchema(BaseModel):

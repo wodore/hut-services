@@ -89,7 +89,7 @@ class LocationEleSchema(LocationSchema):
     ele: Elevation | None = None
 
     @classmethod
-    def from_swiss(cls, ch_lat: float, ch_lon: float, ele: float | None) -> "LocationSchema | LocationEleSchema":
+    def from_swiss(cls, ch_lat: float, ch_lon: float, ele: float | None) -> "LocationEleSchema":
         loc = super().from_swiss(ch_lat=ch_lat, ch_lon=ch_lon, ele=ele)
         return LocationEleSchema(lat=loc.lat, lon=loc.lon, ele=ele)
 
