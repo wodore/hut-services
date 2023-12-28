@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Literal, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field, computed_field
 
@@ -11,44 +11,9 @@ from hut_services import (
     SourcePropertiesSchema,
     TranslationSchema,
 )
-from hut_services.core.schema.geo.types import Elevation, Latitude, Longitude
-
-# from hut_services.wikidata import WikidataService
-# from hut_services.wikidata.service import WikidataEntity  # , wikidata_service
-
+from hut_services.core.schema.geo.types import Latitude, Longitude
 
 logger = logging.getLogger(__name__)
-
-
-class OSMTags(BaseModel):
-    """Open street map tags."""
-
-    tourism: Literal["alpine_hut", "wilderness_hut"]
-    wikidata: Optional[str] = None
-
-    name: str
-    operator: Optional[str] = None
-    email: Optional[str] = None
-    contact_email: Optional[str] = Field(None, alias="contact:field")
-    phone: Optional[str] = None
-    contact_phone: Optional[str] = Field(None, alias="contact:phone")
-    website: Optional[str] = None
-    contact_website: Optional[str] = Field(None, alias="contact:website")
-    note: Optional[str] = None
-
-    bed: Optional[str] = None
-    beds: Optional[str] = None
-    capacity: Optional[str] = None
-    access: Optional[str] = None
-    fireplace: Optional[str] = None
-    wall: Optional[str] = None
-    amenity: Optional[str] = None
-    shelter_type: Optional[str] = None
-    winter_room: Optional[str] = None
-    reservation: Optional[str] = None
-
-    # ele: Optional[Elevation]
-    ele: Optional[Elevation] = None
 
 
 class WikidataHutSchema(BaseModel):

@@ -18,6 +18,7 @@ __all__ = [
     "BaseService",
     "OsmService",
     "RefugesInfoService",
+    "GeocodeService",
     "SERVICES",
     "file_cache",
     "clear_file_cache",
@@ -42,6 +43,7 @@ from .core.schema import (
 from .core.schema.geo import LocationEleSchema, LocationSchema
 from .core.schema.locale import TranslationSchema
 from .core.service import BaseService
+from .geocode import GeocodeService
 from .osm import OsmService
 from .refuges_info import RefugesInfoService
 from .services import SERVICES
