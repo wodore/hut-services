@@ -8,7 +8,7 @@ __all__ = ["file_cache", "clear_file_cache"]
 
 
 cachedir = os.environ.get("HUT_SERVICE_CACHE_DIR", os.path.join(tempfile.gettempdir(), "py_file_cache"))
-default_seconds = int(os.environ.get("HUT_SERVICE_EXPIRE_SECONDS", 2 * 60 * 24))  # 2 days
+default_seconds = int(os.environ.get("HUT_SERVICE_EXPIRE_SECONDS", 3600 * 24 * 2))  # 2 days
 _memory = Memory(cachedir, verbose=0, compress=True)
 
 
