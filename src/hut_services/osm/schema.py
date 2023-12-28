@@ -61,7 +61,7 @@ class OSMTags(BaseModel):
 class OSMTagsOptional(OSMTags):
     """Open street map tags, all optional."""
 
-    tourism: Literal["alpine_hut", "wilderness_hut"] | None = None  # type: ignore[assignment]
+    tourism: str | None = None  # type: ignore[assignment]
     name: str | None = None  # type: ignore[assignment]
     ele: float | str | None = None
 
