@@ -38,7 +38,7 @@ def _get_location_by_name(
     country_codes = ",".join(countries)
     accept_lang = ",".join(languages) if languages else country_codes
     params: dict[str, str | int | bool] = {
-        "amenity": "Neue Regensburger Huette",
+        "amenity": name,
         "format": "jsonv2",
         "limit": 1,
         "extratags": True,
