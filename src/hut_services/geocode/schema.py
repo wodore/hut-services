@@ -49,7 +49,11 @@ class GeocodeHutSchema(BaseModel):
     def get_location(self) -> LocationEleSchema:
         """Get open street map location."""
         _tags = self.extratags if self.extratags else OSMTagsOptional()  # pyright: ignore  # noqa: PGH003
-        return LocationEleSchema(lat=self.lat, lon=self.lon, ele=_tags.ele)
+        try:
+            ele = float(_tags.ele)  # type: ignore  # noqa: PGH003
+        except ValueError:
+            ele = None
+        return LocationEleSchema(lat=self.lat, lon=self.lon, ele=ele)
 
 
 class GeocodeProperties(SourcePropertiesSchema):
