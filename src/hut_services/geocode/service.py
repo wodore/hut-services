@@ -130,6 +130,8 @@ class GeocodeService(BaseService[GeocodeHutSource]):
             raise NotImplementedError(err_msg)
 
 
+geocode_service = GeocodeService()
+
 if __name__ == "__main__":
     logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
     # qid = "Q42157530"
