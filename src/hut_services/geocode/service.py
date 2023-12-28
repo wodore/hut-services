@@ -48,7 +48,7 @@ def _get_location_by_name(
     return client.get(url=request_url, params=params).json()
 
 
-# @file_cache(ignore=["client"], expire_in_seconds=60 * 24 * 7 * 4 * 12)  # 12 months
+@file_cache(ignore=["client"], expire_in_seconds=60 * 24 * 7 * 4 * 12)  # 12 months
 def _get_elevations(
     locations: t.Sequence[LocationSchema | LocationEleSchema],
     request_url: str,
