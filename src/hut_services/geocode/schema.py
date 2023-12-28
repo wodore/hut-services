@@ -51,7 +51,7 @@ class GeocodeHutSchema(BaseModel):
         _tags = self.extratags if self.extratags else OSMTagsOptional()  # pyright: ignore  # noqa: PGH003
         try:
             ele = float(_tags.ele)  # type: ignore  # noqa: PGH003
-        except ValueError:
+        except (ValueError, TypeError):
             ele = None
         return LocationEleSchema(lat=self.lat, lon=self.lon, ele=ele)
 
