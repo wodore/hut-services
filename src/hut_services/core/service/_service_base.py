@@ -1,7 +1,8 @@
+import datetime
 import typing as t
 
 from hut_services import HutSourceSchema, clear_file_cache
-from hut_services.core.schema import HutSchema
+from hut_services.core.schema import HutBookingsSchema, HutSchema
 from hut_services.core.schema.geo import BBox
 
 THutSourceSchema = t.TypeVar("THutSourceSchema", bound=HutSourceSchema, covariant=True)
@@ -57,6 +58,7 @@ class BaseService(t.Generic[THutSourceSchema]):
     support_limit: bool = False
     support_offset: bool = False
     support_convert: bool = False
+    support_booking: bool = False
 
     def __init__(
         self,
@@ -64,11 +66,13 @@ class BaseService(t.Generic[THutSourceSchema]):
         support_limit: bool = False,
         support_offset: bool = False,
         support_convert: bool = False,
+        support_booking: bool = False,
     ) -> None:
         self._support_bbox = support_bbox
         self._support_limit = support_limit
         self._support_offset = support_offset
         self._support_convert = support_convert
+        self._support_booking = support_booking
 
     @classmethod
     def clear_all_cache(cls) -> None:
@@ -114,6 +118,24 @@ class BaseService(t.Generic[THutSourceSchema]):
         src_huts = self.get_huts_from_source(bbox=bbox, limit=limit, offset=offset, **kwargs)
         huts = [self.convert(h) for h in src_huts]
         return huts
+
+    def get_bookings(
+        self,
+        date: datetime.datetime | datetime.date | t.Literal["now"] | None = None,
+        days: int | None = None,
+        source_ids: list[int] | None = None,
+    ) -> dict[int, HutBookingsSchema]:
+        """Get bookings for a list of huts.
+
+        Args:
+            date: Start daye for the bookings
+            days: Duration in days
+            source_ids: A list of ids to return (source id, not the hut id), if set to `None` all are returned
+
+        Returns:
+            A dictionary with the bookings (key = soruce id).
+        """
+        raise self.MethodNotImplementedError(self, "get_bookings")
 
     class MethodNotImplementedError(NotImplementedError):
         """Method is not implemented exception.
