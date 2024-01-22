@@ -2,7 +2,9 @@
 import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import Field, computed_field
+
+from ._base import BaseSchema
 
 
 class ReservationStatusEnum(str, Enum):
@@ -25,7 +27,7 @@ class OccupancyStatusEnum(int, Enum):
     full = 100
 
 
-class PlacesSchema(BaseModel):
+class PlacesSchema(BaseSchema):
     free: int
     total: int
 
@@ -60,7 +62,7 @@ class PlacesSchema(BaseModel):
         return OccupancyStatusEnum.empty
 
 
-class BookingSchema(BaseModel):
+class BookingSchema(BaseSchema):
     date: datetime.date
     reservation_status: ReservationStatusEnum = ReservationStatusEnum.unknown
     unattended: bool
@@ -68,7 +70,7 @@ class BookingSchema(BaseModel):
     link: str | None = None
 
 
-class HutBookingsSchema(BaseModel):
+class HutBookingsSchema(BaseSchema):
     source_id: int = Field(..., description="ID of the booking provider, e.g. alpsonline.org.")
     start_date: datetime.date
     days: int
