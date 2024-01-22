@@ -68,11 +68,11 @@ class BaseService(t.Generic[THutSourceSchema]):
         support_convert: bool = False,
         support_booking: bool = False,
     ) -> None:
-        self._support_bbox = support_bbox
-        self._support_limit = support_limit
-        self._support_offset = support_offset
-        self._support_convert = support_convert
-        self._support_booking = support_booking
+        self.support_bbox = support_bbox
+        self.support_limit = support_limit
+        self.support_offset = support_offset
+        self.support_convert = support_convert
+        self.support_booking = support_booking
 
     @classmethod
     def clear_all_cache(cls) -> None:
