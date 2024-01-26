@@ -16,15 +16,22 @@ class ReservationStatusEnum(str, Enum):
     not_online = "not_online"
 
 
-class OccupancyStatusEnum(int, Enum):
+class OccupancyStatusEnum(str, Enum):
     """Enum with with occuptation status."""
 
-    unknown = -1
-    empty = 0
-    low = 25
-    medium = 50
-    high = 75
-    full = 100
+    unknown = "unknown"
+    empty = "empty"
+    low = "low"
+    medium = "medium"
+    high = "high"
+    full = "full"
+
+    # unknown = -1
+    # empty = 0
+    # low = 25
+    # medium = 50
+    # high = 75
+    # full = 100
 
 
 class PlacesSchema(BaseSchema):
