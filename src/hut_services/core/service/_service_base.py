@@ -124,6 +124,7 @@ class BaseService(t.Generic[THutSourceSchema]):
         date: datetime.datetime | datetime.date | t.Literal["now"] | None = None,
         days: int | None = None,
         source_ids: list[int] | None = None,
+        lang: str = "de",
     ) -> dict[int, HutBookingsSchema]:
         """Get bookings for a list of huts.
 
