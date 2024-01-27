@@ -198,6 +198,14 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
 
     @computed_field  # type: ignore[misc]
     @property
+    def description_attribution(self) -> str:
+        if self.description.fr:
+            return "© Les refuges.info contributors"
+        else:
+            return ""
+
+    @computed_field  # type: ignore[misc]
+    @property
     def notes(self) -> list[TranslationSchema]:
         _note_fr = self._props.remarque.valeur or ""
         _note_de = ""

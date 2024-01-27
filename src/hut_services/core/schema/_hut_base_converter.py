@@ -84,6 +84,11 @@ class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
 
     @computed_field  # type: ignore[misc]
     @property
+    def description_attribution(self) -> str:
+        return ""
+
+    @computed_field  # type: ignore[misc]
+    @property
     def notes(self) -> list[TranslationSchema]:
         return []
 
