@@ -140,8 +140,13 @@ def guess_slug_name(hut_name: str, max_length: int = 25, min_length: int = 5) ->
     slug = slug.strip(" -")
     slugs = slug.split("-")
     slugl = [s for s in slugs if (s not in NOT_IN_SLUG and len(s) >= 3)]
+    print(slugl)
     for _replace in REPLACE_IN_SLUG:
-        slugl = [v.replace(_replace, "") for v in slugl if v.replace(_replace, "")]
+        slugl = [
+            v.replace(_replace, "") if len(v.replace(_replace, "")) > 4 else v for v in slugl if v.replace(_replace, "")
+        ]
+    print(slugl)
     if not slugl or len("-".join(slugl)) < min_length:
         slugl = slugify(hut_name).split("-")
+    print(slugl)
     return slugify(" ".join(slugl), max_length=max_length, word_boundary=True)
