@@ -200,7 +200,7 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @property
     def description_attribution(self) -> str:
         if self.description.fr:
-            return "© Les refuges.info contributors"
+            return '&copy; Les <a href="https://www.refuges.info">refuges.info</a> contributors'
         else:
             return ""
 

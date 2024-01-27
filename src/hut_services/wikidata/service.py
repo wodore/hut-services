@@ -42,7 +42,8 @@ def _get_photos(client: Client, qid: EntityId, thumb_width: int | None = 400) ->
     else:
         thumb = ""
     # attribution = f'[{image.title.replace("File:","")}]({image.attributes.get("canonicalurl")}), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode)'  # type: ignore[attr-defined]
-    attribution = "CC BY-SA 4.0"  # type: ignore[attr-defined]
+    attribution = f'<a href="{image.attributes.get("canonicalurl")}">{image.title.replace("File:","")}</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0/legalcode">CC BY-SA 4.0</a>'  # type: ignore[attr-defined]
+    # attribution = "CC BY-SA 4.0"  # type: ignore[attr-defined]
     comment = f"From {wikidata_url}"
     return [PhotoSchema(url=link, thumb=thumb, attribution=attribution, comment=comment, caption=None)]
 
