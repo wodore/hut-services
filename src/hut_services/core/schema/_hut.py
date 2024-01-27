@@ -41,7 +41,7 @@ class HutSchema(BaseSchema):
     location: LocationEleSchema = Field(..., description="Location of the hut with optional elevation.")
 
     description: TranslationSchema = Field(default_factory=TranslationSchema)
-    description_attribution: str = Field("", max_length=40, description="Description attribution/license.")
+    description_attribution: str = Field("", max_length=1000, description="Description attribution/license.")
     notes: Sequence[TranslationSchema] = Field(..., description="Additional notes to the hut.")
     owner: OwnerSchema | None = Field(None)
     url: str = Field("", max_length=200)
