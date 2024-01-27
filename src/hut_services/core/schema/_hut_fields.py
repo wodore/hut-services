@@ -95,14 +95,7 @@ class HutTypeSchema(BaseSchema):
 
 
 class PhotoSchema(BaseSchema):
-    """Photo schema.
-
-    Attributes:
-        url: Link to photo.
-        caption: Caption of the photo.
-        copyright: Copyright text, e.g. Hans Muster, DAV.
-        is_public: Show image to the public.
-    """
+    """Photo schema."""
 
     attribution: str = Field("", description="Attribution, resp. copyright information as markdown text")
     url: str
