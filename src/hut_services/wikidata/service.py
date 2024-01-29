@@ -2,17 +2,22 @@
 # from functools import lru_cache
 import logging
 import typing as t
-import urllib.parse
 
 # from typing import Any, Literal, Mapping
 from wikidata.client import Client
 from wikidata.entity import EntityId
 
-from hut_services import BaseService, PhotoSchema, file_cache
+from hut_services import BaseService, file_cache
 from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
 from hut_services.osm.service import OsmService
-from hut_services.wikidata.schema import WikidataHut0Convert, WikidataHutSchema, WikidataHutSource, WikidataProperties
+from hut_services.wikidata.schema import (
+    WikidataHut0Convert,
+    WikidataHutSchema,
+    WikidataHutSource,
+    WikidataPhoto,
+    WikidataProperties,
+)
 
 if __name__ == "__main__":  # only for testing
     from icecream import ic  # type: ignore[import-untyped] # noqa: F401, RUF100 , PGH003
@@ -26,26 +31,16 @@ logger = logging.getLogger(__name__)
 
 
 @file_cache(ignore=["client"])
-def _get_photos(client: Client, qid: EntityId, thumb_width: int | None = 400) -> list[PhotoSchema]:
+def _get_photo(client: Client, qid: EntityId) -> WikidataPhoto | None:
     image_prop = client.get(EntityId("P18"))  # image
     entity = client.get(qid, load=True)
     wikidata_url = f"https://www.wikidata.org/wiki/{qid.upper()}"
     if image_prop not in entity:
         logger.debug(f"No wikidata image for: '{wikidata_url}'")
-        return []
+        return None
     image = entity[image_prop]
     logger.info(f"Got wikidata image entity: '{image.title}'")  # type: ignore[attr-defined]
-    title = urllib.parse.quote(image.title)  # type: ignore[attr-defined]
-    link = f"https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/{title}"
-    if thumb_width:
-        thumb = f"https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/{title}&width={thumb_width}"
-    else:
-        thumb = ""
-    # attribution = f'[{image.title.replace("File:","")}]({image.attributes.get("canonicalurl")}), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode)'  # type: ignore[attr-defined]
-    attribution = f'<a href="{image.attributes.get("canonicalurl")}" target="_blank">{image.title.replace("File:","")}</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0/legalcode" target="_blank">CC BY-SA 4.0</a>'  # type: ignore[attr-defined]
-    # attribution = "CC BY-SA 4.0"  # type: ignore[attr-defined]
-    comment = f"From {wikidata_url}"
-    return [PhotoSchema(url=link, thumb=thumb, attribution=attribution, comment=comment, caption=None)]
+    return WikidataPhoto.model_validate(image)
 
 
 @file_cache(ignore=["client"])
@@ -59,11 +54,10 @@ class WikidataEntity:
         self.client = Client() if client is None else client
         self.qid = qid
 
-    def get_photos(self, thumb_width: int | None = 400) -> list[PhotoSchema]:
+    def get_photo(self) -> WikidataPhoto | None:
         """Get a list of photos from wikidata."""
-        photos = _get_photos(client=self.client, qid=self.qid, thumb_width=thumb_width)
-        assert all(isinstance(p, PhotoSchema) for p in photos), "Wrong type, not a list of 'PhotoSchema'"  # noqa: S101
-        return t.cast(list[PhotoSchema], photos)
+        photo: WikidataPhoto | None = _get_photo(client=self.client, qid=self.qid)
+        return photo
 
     def get_attributes(
         self,
@@ -118,7 +112,7 @@ class WikidataService(BaseService[WikidataHutSource]):
                 lat=lat,
                 lon=lon,
                 attributes=wikidata.get_attributes(),
-                photos=wikidata.get_photos(),
+                photo=wikidata.get_photo(),
             )
             hut = WikidataHutSource(
                 name=wikidata_hut.get_name(),
@@ -157,7 +151,7 @@ if __name__ == "__main__":
     # service = WikidataService()
     # entity = service.get_entity(qid)
     # rprint(entity.get_photos())
-    limit = 5
+    limit = 5000
     service = WikidataService()
     # service.get_wikidata_photos = wikidata_photos
     huts = service.get_huts_from_source(limit=limit)
