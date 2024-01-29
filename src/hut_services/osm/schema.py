@@ -87,8 +87,17 @@ class OsmHutSchema(BaseModel):
 
     def get_location(self) -> LocationEleSchema:
         """Get open street map location."""
-        if self.lat and self.lon:
-            return LocationEleSchema(lat=self.lat, lon=self.lon, ele=self.tags.ele)
+        lat: float | None
+        lon: float | None
+        # coordinate fixes
+        if self.osm_id == 1386596359:  # Winteregghütte
+            lat, lon = 46.46039, 7.64995
+        elif self.osm_id == 505804029:  # Ostegg
+            lat, lon = 46.60037, 8.04119
+        else:
+            lat, lon = self.lat, self.lon
+        if lat and lon:
+            return LocationEleSchema(lat=lat, lon=lon, ele=self.tags.ele)
         elif self.center_lat and self.center_lon:
             return LocationEleSchema(lat=self.center_lat, lon=self.center_lon, ele=self.tags.ele)
         else:

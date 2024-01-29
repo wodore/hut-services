@@ -148,9 +148,16 @@ class RefugesInfoFeature(Feature):
 
     def get_location(self) -> LocationEleSchema:
         # coords = self.geometry.coordinates
-        return LocationEleSchema(
-            lat=self.properties.coord.lat, lon=self.properties.coord.long, ele=self.properties.coord.alt
-        )
+        lat: float | None
+        lon: float | None
+        # coordinate fixes
+        if self.properties.ident == 2414:  # Oberaarjochhuette
+            lat, lon = (46.52605, 8.17309)
+        elif self.properties.ident == 2980:  # Wildstrubelhuette
+            lat, lon = (46.38300, 7.46782)
+        else:
+            lat, lon = self.properties.coord.lat, self.properties.coord.long
+        return LocationEleSchema(lat=lat, lon=lon, ele=self.properties.coord.alt)
 
     def get_properties(self) -> RefugesInfoProperties:
         slug = self.properties.lien.split("/")[-2]
