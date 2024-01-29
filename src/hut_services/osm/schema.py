@@ -93,7 +93,7 @@ class OsmHutSchema(BaseModel):
         if self.osm_id == 1386596359:  # Winteregghütte
             lat, lon = 46.46039, 7.64995
         elif self.osm_id == 505804029:  # Ostegg
-            lat, lon = 46.60037, 8.04119
+            lat, lon = 46.60037, 8.04120
         else:
             lat, lon = self.lat, self.lon
         if lat and lon:
