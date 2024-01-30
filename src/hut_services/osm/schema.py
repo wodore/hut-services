@@ -9,6 +9,7 @@ from hut_services import (
     BaseHutSourceSchema,
     CapacitySchema,
     ContactSchema,
+    HutTypeEnum,
     HutTypeSchema,
     LocationEleSchema,
     OwnerSchema,
@@ -254,13 +255,17 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
     @property
     def hut_type(self) -> HutTypeSchema:
         capacity = CapacitySchema(open=self._capacity_opened, closed=self._capacity_closed)
-        return guess_hut_type(
+        hut_types = guess_hut_type(
             name=self.name.i18n or "",
             capacity=capacity,
             elevation=self.location.ele,
             operator="sac" if self._tags.operator and "sac" in self._tags.operator else None,
             osm_tag=self._tags.tourism,
         )
+        if hut_types.if_open == HutTypeEnum.hut and capacity.if_open in [0, None]:
+            hut_types.if_open = HutTypeEnum.unknown
+            hut_types.if_closed = None
+        return hut_types
 
     @property
     def wikidata_entity(self) -> None:

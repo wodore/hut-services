@@ -131,7 +131,7 @@ def guess_slug_name(hut_name: str, max_length: int = 25, min_length: int = 5) ->
         "citta",
         "guide",
     ]
-    NOT_IN_SLUG = [*REPLACE_IN_SLUG, "alp", "alpe", "gite", "casa", "sac", "cas", "caf", "cai", "del", "des"]
+    NOT_IN_SLUG = [*REPLACE_IN_SLUG, "alp", "alpe", "gite", "casa", "sac", "cas", "caf", "cai", "del", "des", "rif"]
 
     for r in ("ä", "ae"), ("ü", "ue"), ("ö", "oe"):
         hut_name = hut_name.lower().replace(r[0], r[1])
