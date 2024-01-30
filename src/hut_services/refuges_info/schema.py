@@ -163,6 +163,8 @@ class RefugesInfoFeature(Feature):
             lat, lon = (46.47469, 6.91070)
         elif self.properties.ident == 419:  # Refuge de Bise
             lat, lon = (46.33056, 6.76587)
+        elif self.properties.ident == 2265:  # Lonza biwak
+            lat, lon = (45.98630, 7.63479)
         else:
             lat, lon = self.properties.coord.lat, self.properties.coord.long
         return LocationEleSchema(lat=lat, lon=lon, ele=self.properties.coord.alt)
