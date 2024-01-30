@@ -83,7 +83,7 @@ class _Etat(_ValeurID):
 
 
 class _Date(BaseModel):
-    derniere_modif: str
+    derniere_modif: str | None
     creation: str
 
 

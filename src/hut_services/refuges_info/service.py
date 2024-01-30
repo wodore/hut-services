@@ -11,6 +11,7 @@ from easydict import EasyDict  # type: ignore[import-untyped]
 from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
 from hut_services.core.service import BaseService
+from hut_services.refuges_info.massif import MASSIF_ALPES
 from hut_services.refuges_info.schema import (
     RefugesInfoFeatureCollection,
     RefugesInfoHut0Convert,
@@ -31,9 +32,9 @@ def refuges_info_request(
     url: str,
     limit: str | int = "all",
     type_points: t.Sequence[int] = [7, 10, 9, 28],
-    massif: t.Sequence[int] | None = [12, 339, 407, 45, 342, 20, 29, 343, 412, 8, 344, 408, 432, 406, 52, 9],
+    massif: t.Sequence[int] | None = MASSIF_ALPES,
     bbox: BBox | None = None,
-    text_format: t.Literal["texte", "markdown"] = "markdown",
+    text_format: t.Literal["texte", "markdown", "html"] = "html",
     output_format: t.Literal["geojson", "xml", "csv"] = "geojson",
     detail: bool = True,
     **params: t.Any,
@@ -88,75 +89,9 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
         **kwargs: t.Any,
     ) -> list[RefugesInfoHutSource]:
         type_points: t.Sequence[int] = kwargs.get("type_points", [7, 10, 9, 28])
-        massif_alpes = (
-            43,
-            12,
-            427,
-            404,
-            339,
-            407,
-            405,
-            45,
-            3314,
-            5070,
-            14,
-            11,
-            7,
-            342,
-            3,
-            49,
-            425,
-            17,
-            20,
-            2,
-            15,
-            29,
-            414,
-            18,
-            430,
-            422,
-            16,
-            343,
-            412,
-            431,
-            5073,
-            338,
-            6,
-            25,
-            8,
-            26,
-            5071,
-            44,
-            413,
-            426,
-            5068,
-            42,
-            5130,
-            428,
-            411,
-            344,
-            22,
-            408,
-            429,
-            5081,
-            432,
-            423,
-            406,
-            19,
-            433,
-            52,
-            5069,
-            24,
-            424,
-            9,
-            4,
-            421,
-        )
-        massif: t.Sequence[int] | None = kwargs.get(
-            # "massif", [12, 339, 407, 45, 342, 20, 29, 343, 412, 8, 344, 408, 432, 406, 52, 9] if not bbox else None
-            "massif",
-            massif_alpes if not bbox else None,
-        )
+        massif: t.Sequence[int] | None = kwargs.get("massif", MASSIF_ALPES if not bbox else None)
+        # "massif", [12, 339, 407, 45, 342, 20, 29, 343, 412, 8, 344, 408, 432, 406, 52, 9] if not bbox else None
+
         logger.info(f"get refuges.info data from {self.request_url}")
         fc: RefugesInfoFeatureCollection = refuges_info_request(
             url=self.request_url, bbox=bbox, limit=limit, type_points=type_points, massif=massif, detail=True, **kwargs
@@ -194,12 +129,13 @@ if __name__ == "__main__":
     logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
     limit = 10000
     service = RefugesInfoService()
-    bbox_ch = (6.02260949059, 45.7769477403, 10.4427014502, 47.8308275417)
+    bbox_ch = None  # (6.02260949059, 45.7769477403, 10.4427014502, 47.8308275417)
     huts = service.get_huts_from_source(limit=limit, bbox=bbox_ch)
     for h in huts:
         # rprint(h)
         hut = service.convert(h)
-        rprint(hut)
+        rprint(hut.name)
+        print(hut.description.fr[:250])
         # rprint(h.source_properties_schema)
         # rprint(h)
         # print(h.show(source_name=False))
