@@ -155,6 +155,14 @@ class RefugesInfoFeature(Feature):
             lat, lon = (46.52605, 8.17309)
         elif self.properties.ident == 2980:  # Wildstrubelhuette
             lat, lon = (46.38300, 7.46782)
+        elif self.properties.ident == 3418:  # La Cabane des Choucas
+            lat, lon = (46.48304, 7.12020)
+        elif self.properties.ident == 403:  # Refuge d'Ubine
+            lat, lon = (46.30683, 6.74356)
+        elif self.properties.ident == 3605:  # le-Grillet
+            lat, lon = (46.47469, 6.91070)
+        elif self.properties.ident == 419:  # Refuge de Bise
+            lat, lon = (46.33056, 6.76587)
         else:
             lat, lon = self.properties.coord.lat, self.properties.coord.long
         return LocationEleSchema(lat=lat, lon=lon, ele=self.properties.coord.alt)
