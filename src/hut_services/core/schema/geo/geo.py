@@ -13,8 +13,8 @@ class LocationSchema(BaseModel):
     """Location with longitude, latitude and optional elevation in WSG84.
 
     Attributes:
-        lat: Latitude.
-        lon: Longitude.
+        lon: Longitude (x).
+        lat: Latitude (y).
         ele: Elevation in meter.
     """
 
@@ -27,7 +27,7 @@ class LocationSchema(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def check_field_aliases(cls, data: t.Any) -> t.Any:
-        for field, alias in [("lat", "x"), ("lon", "y"), ("ele", "z")]:
+        for field, alias in [("lat", "y"), ("lon", "x"), ("ele", "z")]:
             if isinstance(data, dict) and alias in data and field not in data:
                 data[field] = data[alias]
             elif hasattr(data, alias) and not hasattr(data, field):
