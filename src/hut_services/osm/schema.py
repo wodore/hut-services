@@ -133,6 +133,11 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
 
     @computed_field  # type: ignore[misc]
     @property
+    def source_name(self) -> str:
+        return "osm"
+
+    @computed_field  # type: ignore[misc]
+    @property
     def description(self) -> TranslationSchema:
         return TranslationSchema()
 

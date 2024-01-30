@@ -33,7 +33,8 @@ class HutSchema(BaseSchema):
         open_monthly: Monthly value if open, closed or partially open.
         is_active: Hut is active.
         is_public: Show hut public.
-        extras: Additional information to the hut as dictionary
+        extras: Additional information to the hut as dictionary.
+        source: Short name of source (e.g. 'hrs' for alpsonline.org, or 'sac', 'refuges', ...).
     """
 
     slug: str = Field("", max_length=50)
@@ -55,6 +56,9 @@ class HutSchema(BaseSchema):
     is_active: bool = Field(default=True)
     is_public: bool = Field(default=True)
     extras: Mapping[str, Any] = Field(default_factory=dict, description="Additional information as dictionary.")
+    source: str = Field(
+        "", max_length=20, description="Short name of source (e.g. 'hrs' for alpsonline.org, or 'sac', 'refuges', ...)."
+    )
 
     # infrastructure:       dict = Field(default_factory=dict, sa_column=Column(JSON)) # TODO, better name. Maybe use infra and service separated, external table
     # access:             Access = Field(default_factory=Access, sa_column=Access.get_sa_column())

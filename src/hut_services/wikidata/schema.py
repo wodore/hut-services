@@ -94,6 +94,11 @@ class WikidataHut0Convert(BaseHutConverterSchema[WikidataHutSchema]):
 
     @computed_field  # type: ignore[misc]
     @property
+    def source_name(self) -> str:
+        return "wikidata"
+
+    @computed_field  # type: ignore[misc]
+    @property
     def description(self) -> TranslationSchema:
         return TranslationSchema()
 

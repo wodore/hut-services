@@ -72,6 +72,11 @@ class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
 
     @computed_field  # type: ignore[misc]
     @property
+    def source_name(self) -> str:
+        raise self.FieldNotImplementedError(self, "source")
+
+    @computed_field  # type: ignore[misc]
+    @property
     def location(self) -> LocationEleSchema:
         if hasattr(self.source, "get_location"):
             return self.source.get_location()  # type: ignore  # noqa: PGH003

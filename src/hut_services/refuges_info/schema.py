@@ -179,7 +179,7 @@ class RefugesInfoFeatureCollection(FeatureCollection):
 class RefugesInfoHutSource(BaseHutSourceSchema[RefugesInfoFeature, RefugesInfoProperties]):
     """Data from refuges.info database."""
 
-    source_name: str = "refuges_info"
+    source_name: str = "refuges"
 
 
 class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
@@ -197,6 +197,11 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @property
     def name(self) -> TranslationSchema:
         return TranslationSchema(fr=self._props.nom, de=self._props.nom)
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def source_name(self) -> str:
+        return "refuges"
 
     @computed_field  # type: ignore[misc]
     @property
