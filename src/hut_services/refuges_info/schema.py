@@ -169,6 +169,8 @@ class RefugesInfoFeature(Feature):
             lat, lon = (45.98630, 7.63479)
         elif self.properties.ident == 5170:  # Bivacco-Campolatte-Baitin-dul-Peurat
             lat, lon = (46.2174989, 8.4489458)
+        elif self.properties.ident == 2336:  # Rifugio Testa Grigia Guide del Cervino
+            lat, lon = (45.93388, 7.70813)
         else:
             lat, lon = self.properties.coord.lat, self.properties.coord.long
         return LocationEleSchema(lat=lat, lon=lon, ele=self.properties.coord.alt)
