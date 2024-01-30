@@ -34,7 +34,7 @@ def refuges_info_request(
     type_points: t.Sequence[int] = [7, 10, 9, 28],
     massif: t.Sequence[int] | None = MASSIF_ALPES,
     bbox: BBox | None = None,
-    text_format: t.Literal["texte", "markdown", "html"] = "html",
+    text_format: t.Literal["texte", "markdown", "html"] = "markdown",
     output_format: t.Literal["geojson", "xml", "csv"] = "geojson",
     detail: bool = True,
     **params: t.Any,
