@@ -101,7 +101,7 @@ def guess_hut_type(
     return HutTypeSchema(open=slug_open, closed=slug_closed)
 
 
-def guess_slug_name(hut_name: str, max_length: int = 25, min_length: int = 5) -> str:
+def guess_slug_name(hut_name: str, max_length: int = 25, min_length: int = 4) -> str:
     REPLACE_IN_SLUG = [
         "alpage",
         "alpina",
@@ -122,8 +122,11 @@ def guess_slug_name(hut_name: str, max_length: int = 25, min_length: int = 5) ->
         "camona",
         "hotel",
         "huette",
+        "naturfreundehaus",
+        "naturfreunde",
         "berghuette",
         "berggasthaus",
+        "waldhuette",
         "berghaus",
         "cascina",
         "rifugio",
@@ -131,7 +134,25 @@ def guess_slug_name(hut_name: str, max_length: int = 25, min_length: int = 5) ->
         "citta",
         "guide",
     ]
-    NOT_IN_SLUG = [*REPLACE_IN_SLUG, "alp", "alpe", "gite", "casa", "sac", "cas", "caf", "cai", "del", "des", "rif"]
+    NOT_IN_SLUG = [
+        *REPLACE_IN_SLUG,
+        "alp",
+        "alpe",
+        "gite",
+        "casa",
+        "sac",
+        "cas",
+        "caf",
+        "cai",
+        "del",
+        "des",
+        "rif",
+        "abri",
+        "sur",
+        "ski",
+        "aacz",
+        "aacb",
+    ]
 
     for r in ("ä", "ae"), ("ü", "ue"), ("ö", "oe"):
         hut_name = hut_name.lower().replace(r[0], r[1])
