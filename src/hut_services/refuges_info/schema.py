@@ -18,6 +18,8 @@ from hut_services.core.guess import guess_hut_type
 from hut_services.core.schema.geo import LocationEleSchema
 from hut_services.core.schema.locale import TranslationSchema
 
+from .coordinates import CORRECTIONS
+
 logger = logging.getLogger(__name__)
 
 
@@ -152,27 +154,7 @@ class RefugesInfoFeature(Feature):
         # coords = self.geometry.coordinates
         lat: float | None
         lon: float | None
-        # coordinate fixes
-        if self.properties.ident == 2414:  # Oberaarjochhuette
-            lat, lon = (46.52605, 8.17309)
-        elif self.properties.ident == 2980:  # Wildstrubelhuette
-            lat, lon = (46.38300, 7.46782)
-        elif self.properties.ident == 3418:  # La Cabane des Choucas
-            lat, lon = (46.48304, 7.12020)
-        elif self.properties.ident == 403:  # Refuge d'Ubine
-            lat, lon = (46.30683, 6.74356)
-        elif self.properties.ident == 3605:  # le-Grillet
-            lat, lon = (46.47469, 6.91070)
-        elif self.properties.ident == 419:  # Refuge de Bise
-            lat, lon = (46.33056, 6.76587)
-        elif self.properties.ident == 2265:  # Lonza biwak
-            lat, lon = (45.98630, 7.63479)
-        elif self.properties.ident == 5170:  # Bivacco-Campolatte-Baitin-dul-Peurat
-            lat, lon = (46.2174989, 8.4489458)
-        elif self.properties.ident == 2336:  # Rifugio Testa Grigia Guide del Cervino
-            lat, lon = (45.93388, 7.70813)
-        else:
-            lat, lon = self.properties.coord.lat, self.properties.coord.long
+        lat, lon = CORRECTIONS.get(self.properties.ident, (self.properties.coord.lat, self.properties.coord.long))
         return LocationEleSchema(lat=lat, lon=lon, ele=self.properties.coord.alt)
 
     def get_properties(self) -> RefugesInfoProperties:
