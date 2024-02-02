@@ -148,7 +148,7 @@ class RefugesInfoFeature(Feature):
         return str(self.properties.ident)
 
     def get_name(self) -> str:
-        return str(self.properties.nom)
+        return str(self.properties.nom).strip('"').strip()
 
     def get_location(self) -> LocationEleSchema:
         # coords = self.geometry.coordinates
