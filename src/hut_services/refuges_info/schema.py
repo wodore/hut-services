@@ -204,7 +204,8 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @computed_field  # type: ignore[misc]
     @property
     def description(self) -> TranslationSchema:
-        return TranslationSchema(fr=self._props.description.valeur or "")
+        # return TranslationSchema(fr=self._props.description.valeur or "")
+        return TranslationSchema(fr=self._props.remarque.valeur or "")
 
     @computed_field  # type: ignore[misc]
     @property
