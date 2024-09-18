@@ -11,6 +11,8 @@ from hut_services import BaseService, file_cache
 from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
 from hut_services.osm.service import OsmService
+
+from hut_services.wikidata._get_image_infos import get_wikimedia_image_info
 from hut_services.wikidata.schema import (
     WikidataHut0Convert,
     WikidataHutSchema,
@@ -151,13 +153,19 @@ if __name__ == "__main__":
     # service = WikidataService()
     # entity = service.get_entity(qid)
     # rprint(entity.get_photos())
-    limit = 5000
+
+    limit = 500
     service = WikidataService()
     # service.get_wikidata_photos = wikidata_photos
     huts = service.get_huts_from_source(limit=limit)
     for h in huts:
         # rprint(h)
         hut = service.convert(h.model_dump(by_alias=True))
-        rprint(hut.name.i18n)
-        # rprint(hut.extras.get("wikidata"))
-        rprint(hut.photos)
+        if hut.photos:
+            rprint(f"[bold]{hut.name.i18n}[/bold]")
+            # rprint(hut.extras.get("wikidata"))
+            filename = h.source_data.photo.title.replace("File:", "")
+            photo = get_wikimedia_image_info(filename)
+            rprint(photo)
+            rprint("--------------------------------")
+            # rprint(hut.photos[0])

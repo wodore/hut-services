@@ -123,11 +123,11 @@ if __name__ == "__main__":
     osm_service.get_wikidata_photos = wikidata_photos
     huts = osm_service.get_huts_from_source(limit=limit)
     for h in huts:
-        # rprint(h)
+        rprint(h)
         hut = osm_service.convert(h.model_dump(by_alias=True))
-        rprint(hut.name.i18n)
-        rprint(hut.extras.get("wikidata"))
-        rprint(hut.photos)
+        if hut.photos:
+            rprint(hut.name.i18n)
+            rprint(hut.photos)
         # rprint(h.source_properties_schema)
         # rprint(h)
         # print(h.show(source_name=False))
