@@ -154,10 +154,12 @@ if __name__ == "__main__":
     # entity = service.get_entity(qid)
     # rprint(entity.get_photos())
 
-    limit = 500
+    limit = 5000
     service = WikidataService()
     # service.get_wikidata_photos = wikidata_photos
     huts = service.get_huts_from_source(limit=limit)
+    licenses = {}
+    licenses_num = {}
     for h in huts:
         # rprint(h)
         hut = service.convert(h.model_dump(by_alias=True))
@@ -168,4 +170,10 @@ if __name__ == "__main__":
             photo = get_wikimedia_image_info(filename)
             rprint(photo)
             rprint("--------------------------------")
-            # rprint(hut.photos[0])
+            lic_slug = photo.license_slug
+            lic_url = photo.license_info_url
+            licenses.update({lic_slug: lic_url})
+            licenses_num[lic_slug] = licenses_num.get(lic_slug, 0) + 1
+    licenses_num = dict(sorted(licenses_num.items(), key=lambda x: x[1], reverse=True))
+    rprint(licenses)
+    rprint(licenses_num)

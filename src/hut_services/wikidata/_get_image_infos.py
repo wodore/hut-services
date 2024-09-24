@@ -1,3 +1,4 @@
+import re
 from typing import Any, Optional, cast
 from urllib.parse import urlparse
 from xml.etree import ElementTree as ET
@@ -20,6 +21,12 @@ class Captions(BaseModel):
     fr: Optional[str] = None
 
 
+class LicenseInfo(BaseModel):
+    slug: str
+    url: HttpUrl | None = None
+    name: str | None = None
+
+
 class AuthorInfo(BaseModel):
     name: str
     url: Optional[HttpUrl] = None
@@ -28,11 +35,11 @@ class AuthorInfo(BaseModel):
 class SourceInfo(BaseModel):
     url: Optional[HttpUrl] = None
     name: Optional[str] = None
+    ident: Optional[str] = None
 
 
 class WikimediaImageInfo(BaseModel):
-    license_slug: str
-    license_info_url: Optional[HttpUrl] = None
+    licenses: list[LicenseInfo]
     captions: Captions
     author: Optional[AuthorInfo] = None
     source: Optional[SourceInfo] = None
@@ -42,13 +49,18 @@ class WikimediaImageInfo(BaseModel):
     url: HttpUrl
 
 
-def parse_html_field(html: Optional[str]) -> (Optional[str], Optional[str]):
+def parse_html_field(html: Optional[str]) -> tuple[str, HttpUrl | None]:
     """Parse an HTML field to extract plain text and URL (if present)."""
     if not html:
-        return None, None
+        return "", None
     soup = BeautifulSoup(html, "html.parser")
     if soup.a:
-        return soup.a.text, soup.a.get("href")
+        name = soup.a.text or ""
+        url = soup.a.get("href")
+        if isinstance(url, list):
+            url = url[0]
+        url_cast = cast(HttpUrl, url) if url is not None else None
+        return name, url_cast
     else:
         return html.strip(), None
 
@@ -71,8 +83,6 @@ def get_wikimedia_image_info(file_name: str, max_dimension: int = 3000) -> Wikim
     api_url = f"https://magnus-toolserver.toolforge.org/commonsapi.php?image={file_name}"
     response = requests.get(api_url, timeout=20)
 
-    wikicommons_url = f"https://commons.wikimedia.org/wiki/File:{file_name}"
-
     if response.status_code != 200:
         err_msg = f"Error fetching data from Magnus Toolserver: {response.status_code}"
         raise Exception(err_msg)  # noqa: TRY002
@@ -85,17 +95,19 @@ def get_wikimedia_image_info(file_name: str, max_dimension: int = 3000) -> Wikim
 
     def file_info_find(name: str, default: str | None = None, elem: Any = None) -> str | None:
         elem = file_info if elem is None else elem
-        if file_info is not None:
-            return file_info.find(name).text if file_info.find(name) is not None else default
+        if elem is not None:
+            return elem.find(name).text if elem.find(name) is not None else default
         return default
 
     assert file_info is not None  # noqa: S101
 
     # Image URL and dimensions
     image_url = file_info_find("urls/file")
+    title = file_info_find("title")
     width = int(cast(str, file_info_find("width")))
     height = int(cast(str, file_info_find("height")))
 
+    wikicommons_url = f"https://commons.wikimedia.org/wiki/{title}"
     # Resize the image URL if width or height is greater than max_dimension
     if image_url and width and height and (width > max_dimension or height > max_dimension):
         image_url = resize_image_url(image_url, max_dimension)
@@ -103,16 +115,19 @@ def get_wikimedia_image_info(file_name: str, max_dimension: int = 3000) -> Wikim
     # License information
     license_elems = root.findall("licenses/license")
     license_name = "No license available"
-    license_info_url = None
+    license_slug = "missing"
+    license_info_url: HttpUrl | None = None
+    licenses = []
     for license_elem in license_elems:
         license_name = cast(
             str, file_info_find("name", file_info_find("full_name", "missing", license_elem), license_elem)
         )
-        license_name = license_name.lower().replace("migrated", "").strip(" -")
-        license_info_url = file_info_find("license_info_url", None, license_elem)
-        if "cc" in license_name.lower():
-            license_name = license_name.split(",")[0].strip()
-            break
+        license_name = license_name.replace("migrated", "").strip(" -")
+        license_slug = license_name.lower()
+        license_info_url = cast(HttpUrl | None, file_info_find("license_info_url", None, license_elem))
+        if "cc" in license_slug.lower():
+            license_slug = license_slug.split(",")[0].strip()
+        licenses.append(LicenseInfo(slug=license_slug, url=license_info_url, name=license_name))
 
     # Captions only
     captions = Captions()
@@ -133,30 +148,34 @@ def get_wikimedia_image_info(file_name: str, max_dimension: int = 3000) -> Wikim
     source_name, source_url = parse_html_field(source_raw)
 
     # Handle 'int-own-work' source
+    source_ident = title
     if "int-own-work" in source_name:
-        source_url = wikicommons_url
+        source_url = cast(HttpUrl, wikicommons_url)
         source_name = "wikicommons"
     if "camptocamp.org" in source_name.lower():
         source_name = "camptocamp"
+        match = re.search(r"\d{3,}", cast(str, source_url))
+        source_ident = match.group() if match else source_ident
+        match = re.search(r"http:.*/\d{3,}", cast(str, source_url))
+        source_url = match.group() if match else source_url
     if "refuges.info" in source_name.lower():
         source_name = "refuges"
     if not source_url:
-        source_url = wikicommons_url
+        source_url = cast(HttpUrl, wikicommons_url)
 
-    source = SourceInfo(url=source_url, name=source_name)
+    source = SourceInfo(url=source_url, name=source_name, ident=source_ident)
     author = AuthorInfo(name=author_name, url=author_url) if author_name else None
 
     # Return structured data using Pydantic
     return WikimediaImageInfo(
-        license_slug=license_name,
-        license_info_url=license_info_url,
+        licenses=licenses,
         captions=captions,
         author=author,
         source=source,
-        image_url=image_url,
+        image_url=cast(HttpUrl, image_url),
         width=width,
         height=height,
-        url=wikicommons_url,
+        url=cast(HttpUrl, wikicommons_url),
     )
 
 
