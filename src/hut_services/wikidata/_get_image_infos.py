@@ -1,6 +1,7 @@
 import re
+from datetime import datetime
 from typing import Any, Optional, cast
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 from xml.etree import ElementTree as ET
 
 import requests
@@ -9,7 +10,7 @@ from pydantic import BaseModel, HttpUrl, ValidationError
 from rich import print
 from rich.console import Console
 
-from hut_services import file_cache
+from hut_services import TranslationSchema, file_cache
 
 console = Console()
 
@@ -40,16 +41,17 @@ class SourceInfo(BaseModel):
 
 class WikimediaImageInfo(BaseModel):
     licenses: list[LicenseInfo]
-    captions: Captions
+    caption: TranslationSchema
     author: Optional[AuthorInfo] = None
     source: Optional[SourceInfo] = None
     image_url: Optional[HttpUrl] = None
     width: Optional[int] = None
     height: Optional[int] = None
     url: HttpUrl
+    date: datetime | None
 
 
-def parse_html_field(html: Optional[str]) -> tuple[str, HttpUrl | None]:
+def parse_href_html_field(html: Optional[str]) -> tuple[str, HttpUrl | None]:
     """Parse an HTML field to extract plain text and URL (if present)."""
     if not html:
         return "", None
@@ -63,6 +65,24 @@ def parse_html_field(html: Optional[str]) -> tuple[str, HttpUrl | None]:
         return name, url_cast
     else:
         return html.strip(), None
+
+
+def parse_time_html_field(html: str | None) -> datetime | None:
+    if html is None:
+        return None
+    soup = BeautifulSoup(html, "html.parser")
+    time_tag = soup.find("time", class_="dtstart")
+    if time_tag:
+        datetime_str = time_tag.get("datetime")
+        try:
+            return datetime.strptime(datetime_str, "%Y-%m-%d")
+        except ValueError:
+            try:
+                return datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                # Handle other possible date formats or raise an error
+                return None
+    return None
 
 
 def extract_hostname(url: str) -> str:
@@ -106,12 +126,17 @@ def get_wikimedia_image_info(file_name: str, max_dimension: int = 3000) -> Wikim
     title = file_info_find("title")
     width = int(cast(str, file_info_find("width")))
     height = int(cast(str, file_info_find("height")))
+    img_date = parse_time_html_field(cast(str, file_info_find("date")))
 
-    wikicommons_url = f"https://commons.wikimedia.org/wiki/{title}"
+    wikicommons_url = f"https://commons.wikimedia.org/wiki/{quote(title)}"
     # Resize the image URL if width or height is greater than max_dimension
     if image_url and width and height and (width > max_dimension or height > max_dimension):
         image_url = resize_image_url(image_url, max_dimension)
-
+        # update height
+        orig_height = height
+        orig_width = width
+        height = max_dimension if orig_height > orig_width else round(orig_height / orig_width * max_dimension)
+        width = max_dimension if orig_width > orig_height else round(orig_width / orig_height * max_dimension)
     # License information
     license_elems = root.findall("licenses/license")
     license_name = "No license available"
@@ -130,7 +155,7 @@ def get_wikimedia_image_info(file_name: str, max_dimension: int = 3000) -> Wikim
         licenses.append(LicenseInfo(slug=license_slug, url=license_info_url, name=license_name))
 
     # Captions only
-    captions = Captions()
+    captions = TranslationSchema()
     captions_elem = root.find("description")
     if captions_elem is not None:
         for lang_elem in captions_elem.findall("language"):
@@ -144,8 +169,8 @@ def get_wikimedia_image_info(file_name: str, max_dimension: int = 3000) -> Wikim
     source_raw = file_info_find("source", wikicommons_url)
 
     # Parse author and source
-    author_name, author_url = parse_html_field(author_raw)
-    source_name, source_url = parse_html_field(source_raw)
+    author_name, author_url = parse_href_html_field(author_raw)
+    source_name, source_url = parse_href_html_field(source_raw)
 
     # Handle 'int-own-work' source
     source_ident = title
@@ -160,6 +185,12 @@ def get_wikimedia_image_info(file_name: str, max_dimension: int = 3000) -> Wikim
         source_url = match.group() if match else source_url
     if "refuges.info" in source_name.lower():
         source_name = "refuges"
+        match = re.search(r"(\d{3,})-originale", cast(str, source_url))
+        if match:
+            source_ident = match.groups()[0]
+        else:
+            match = re.search(r"(#C\d{3,})", cast(str, source_url))
+            source_ident = match.groups()[0] if match else source_ident
     if not source_url:
         source_url = cast(HttpUrl, wikicommons_url)
 
@@ -169,25 +200,26 @@ def get_wikimedia_image_info(file_name: str, max_dimension: int = 3000) -> Wikim
     # Return structured data using Pydantic
     return WikimediaImageInfo(
         licenses=licenses,
-        captions=captions,
+        caption=captions,
         author=author,
         source=source,
         image_url=cast(HttpUrl, image_url),
         width=width,
         height=height,
         url=cast(HttpUrl, wikicommons_url),
+        date=img_date,
     )
 
 
 if __name__ == "__main__":
     # File names to query
-    file_names = ["Wildhornhuette.jpg", "Lohner hut SAC.jpg"]
+    file_names = ["Wildhornhuette.jpg", "Lohner hut SAC.jpg", "RifugioVallanta.jpg", "Refuge d'Ambin.jpeg"]
 
     for file_name in file_names:
         try:
-            image_info = get_wikimedia_image_info(file_name)
+            image_info = get_wikimedia_image_info(file_name, max_dimension=500)
             print(image_info)
         except ValidationError as e:
             print("Validation error:", e)
-        except Exception as ex:
-            print("Error:", ex)
+        # except Exception as ex:
+        #    print("Error:", ex)
