@@ -8,20 +8,11 @@ import requests
 from bs4 import BeautifulSoup
 from pydantic import BaseModel, HttpUrl, ValidationError
 from rich import print
-from rich.console import Console
 
 from hut_services import TranslationSchema, file_cache
 
-console = Console()
 
-
-class Captions(BaseModel):
-    en: Optional[str] = None
-    de: Optional[str] = None
-    it: Optional[str] = None
-    fr: Optional[str] = None
-
-
+# TODO: use schemas from core/schema/_photo.py
 class LicenseInfo(BaseModel):
     slug: str
     url: HttpUrl | None = None
