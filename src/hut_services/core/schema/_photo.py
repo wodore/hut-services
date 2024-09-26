@@ -1,54 +1,25 @@
 from datetime import datetime
-import logging
-from collections import namedtuple
-from typing import Sequence
 
 from pydantic import Field, HttpUrl
 
 from ._base import BaseSchema
+from ._license import AuthorSchema, LicenseSchema, SourceSchema
 from .locale import TranslationSchema
 
-logger = logging.getLogger(__name__)
 
-
-# PhoneMobile = namedtuple("PhoneMobile", ["phone", "mobile"])
-
-
-# TODO Lic, Author, Source are general fields not just for photo, mybe subclass for photo?
-class LicenseSchema(BaseSchema):
-    slug: str
-    url: HttpUrl | None = None
-    name: str | None = None
-
-
-class AuthorSchema(BaseSchema):
-    name: str
-    url: None | HttpUrl = None
-
-
-class SourceSchema(BaseSchema):
-    """
-    Photo source information.
-
-    Attributes:
-        ident: Identifier or slug of the source.
-        name: Name of the source, either person or organization (e.g refuges, wikicommon, sac, ...)
-        url: URL of the source.
-    """
-
-    ident: str | None = None
-    name: str | None = None
-    url: HttpUrl | None = None
-
-
-# TODO: do not use None but just an empty string as default
 class PhotoSchema(BaseSchema):
+    """Schema for a hut photo."""
+
     licenses: list[LicenseSchema]
-    caption: TranslationSchema
-    author: AuthorSchema | None
+    caption: TranslationSchema = Field(default_factory=TranslationSchema)
     source: SourceSchema | None
-    image_url: HttpUrl | None
-    width: int | None
-    height: int | None
-    url: HttpUrl
-    date: datetime | None
+    author: AuthorSchema | None
+    comment: str = Field("", max_length=20000, description="Additional private comment, e.g for review.")
+    raw_url: HttpUrl = Field(..., description="Url to the raw image, this can be used to download or embed the image.")
+    width: int = Field(..., description="Image width in pixels.")
+    height: int = Field(..., description="Image height in pixels.")
+    url: HttpUrl = Field(
+        ...,
+        description="Url to the image on the side, this should not be used to include it direclty, rather to just link to it.",
+    )
+    capture_date: datetime | None

@@ -13,7 +13,7 @@ from hut_services import (
     HutTypeSchema,
     LocationEleSchema,
     OwnerSchema,
-    PhotoSchema,
+    PhotoSchemaOld,
     SourcePropertiesSchema,
     TranslationSchema,
 )
@@ -119,7 +119,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
 
     @property
     def _tags(self) -> OSMTags:
-        return self.source.tags
+        return self.source_data.tags
 
     # implemented in base
     # @computed_field  # type: ignore[misc]
@@ -275,7 +275,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
 
     @computed_field()  # type: ignore[misc]
     @property
-    def photos(self) -> list[PhotoSchema]:
+    def photos(self) -> list[PhotoSchemaOld]:
         if self.wikidata_entity is not None:
             return self.wikidata_entity.get_photos()
         return []

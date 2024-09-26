@@ -69,7 +69,7 @@ class GeocodeHut0Convert(BaseHutConverterSchema[GeocodeHutSchema]):
     @computed_field  # type: ignore[misc]
     @property
     def name(self) -> TranslationSchema:
-        return TranslationSchema(de=self.source.get_name())
+        return TranslationSchema(de=self.source_data.get_name())
 
     @computed_field  # type: ignore[misc]
     @property

@@ -119,7 +119,7 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
             if hut_src.source_data is None:
                 err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} without 'source_data' not allowed."
                 raise AttributeError(err_msg)
-            return RefugesInfoHut0Convert(source=hut_src.source_data).get_hut()
+            return RefugesInfoHut0Convert(source_data=hut_src.source_data).get_hut()
         else:
             err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} not implemented."
             raise NotImplementedError(err_msg)

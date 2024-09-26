@@ -11,8 +11,6 @@ from hut_services import BaseService, file_cache
 from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
 from hut_services.osm.service import OsmService
-
-from hut_services.wikidata._get_image_infos import get_wikimedia_image_info
 from hut_services.wikidata.schema import (
     WikidataHut0Convert,
     WikidataHutSchema,
@@ -138,7 +136,7 @@ class WikidataService(BaseService[WikidataHutSource]):
             if hut_src.source_data is None:
                 err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} without 'source_data' not allowed."
                 raise AttributeError(err_msg)
-            return WikidataHut0Convert(source=hut_src.source_data).get_hut()
+            return WikidataHut0Convert(source_data=hut_src.source_data).get_hut()
         else:
             err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} not implemented."
             raise NotImplementedError(err_msg)
@@ -154,26 +152,27 @@ if __name__ == "__main__":
     # entity = service.get_entity(qid)
     # rprint(entity.get_photos())
 
-    limit = 5000
+    limit = 10000
     service = WikidataService()
     # service.get_wikidata_photos = wikidata_photos
     huts = service.get_huts_from_source(limit=limit)
-    licenses = {}
-    licenses_num = {}
+    # licenses = {}
+    # licenses_num: dict[str, int] = {}
     for h in huts:
         # rprint(h)
         hut = service.convert(h.model_dump(by_alias=True))
-        if hut.photos:
-            rprint(f"[bold]{hut.name.i18n}[/bold]")
-            # rprint(hut.extras.get("wikidata"))
-            filename = h.source_data.photo.title.replace("File:", "")
-            photo = get_wikimedia_image_info(filename)
-            rprint(photo)
-            rprint("--------------------------------")
-            lic_slug = photo.license_slug
-            lic_url = photo.license_info_url
-            licenses.update({lic_slug: lic_url})
-            licenses_num[lic_slug] = licenses_num.get(lic_slug, 0) + 1
-    licenses_num = dict(sorted(licenses_num.items(), key=lambda x: x[1], reverse=True))
-    rprint(licenses)
-    rprint(licenses_num)
+        rprint(hut)
+        # if hut.photos:
+        #     rprint(f"[bold]{hut.name.i18n}[/bold]")
+        #     photo = hut.photos[0]
+        #     # rprint(hut.extras.get("wikidata"))
+        #     # filename = h.source_data.photo.title.replace("File:", "")
+        #     # photo = get_wikicommon_image_info(filename)
+        #     rprint(photo)
+        #     rprint("--------------------------------")
+        #     for lic in photo.licenses:
+        #         licenses.update({lic.slug: lic.url})
+        #         licenses_num[lic.slug] = licenses_num.get(lic.slug, 0) + 1
+    # licenses_num = dict(sorted(licenses_num.items(), key=lambda x: x[1], reverse=True))
+    # rprint(licenses)
+    # rprint(licenses_num)

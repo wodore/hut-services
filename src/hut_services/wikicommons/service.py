@@ -1,48 +1,43 @@
+#!/usr/bin/env python
+# from functools import lru_cache
+import logging
 import re
+import typing as t
 from datetime import datetime
-from typing import Any, Optional, cast
+from typing import Any, cast
 from urllib.parse import quote, urlparse
-from xml.etree import ElementTree as ET
 
+import defusedxml.ElementTree
 import requests
-from bs4 import BeautifulSoup
-from pydantic import BaseModel, HttpUrl, ValidationError
+
+# from typing import Any, Literal, Mapping
+from bs4 import BeautifulSoup, Tag
+from pydantic import HttpUrl, ValidationError
 from rich import print
 
-from hut_services import TranslationSchema, file_cache
+from hut_services import (
+    AuthorSchema,
+    LicenseSchema,
+    PhotoSchema,
+    SourceSchema,
+    TranslationSchema,
+    file_cache,
+)
+from hut_services.core.schema import HutSchema
+from hut_services.core.schema.geo import BBox
+
+if __name__ == "__main__":  # only for testing
+    from icecream import ic  # type: ignore[import-untyped] # noqa: F401, RUF100 , PGH003
+    from rich import print as rprint  # noqa: F401, RUF100
+    from rich.traceback import install
+
+    install(show_locals=False)
 
 
-# TODO: use schemas from core/schema/_photo.py
-class LicenseInfo(BaseModel):
-    slug: str
-    url: HttpUrl | None = None
-    name: str | None = None
+logger = logging.getLogger(__name__)
 
 
-class AuthorInfo(BaseModel):
-    name: str
-    url: Optional[HttpUrl] = None
-
-
-class SourceInfo(BaseModel):
-    url: Optional[HttpUrl] = None
-    name: Optional[str] = None
-    ident: Optional[str] = None
-
-
-class WikimediaImageInfo(BaseModel):
-    licenses: list[LicenseInfo]
-    caption: TranslationSchema
-    author: Optional[AuthorInfo] = None
-    source: Optional[SourceInfo] = None
-    image_url: Optional[HttpUrl] = None
-    width: Optional[int] = None
-    height: Optional[int] = None
-    url: HttpUrl
-    date: datetime | None
-
-
-def parse_href_html_field(html: Optional[str]) -> tuple[str, HttpUrl | None]:
+def _parse_href_html_field(html: str | None) -> tuple[str, HttpUrl | None]:
     """Parse an HTML field to extract plain text and URL (if present)."""
     if not html:
         return "", None
@@ -52,19 +47,28 @@ def parse_href_html_field(html: Optional[str]) -> tuple[str, HttpUrl | None]:
         url = soup.a.get("href")
         if isinstance(url, list):
             url = url[0]
-        url_cast = cast(HttpUrl, url) if url is not None else None
+        url_cast = t.cast(HttpUrl, url) if url is not None else None
         return name, url_cast
     else:
         return html.strip(), None
 
 
-def parse_time_html_field(html: str | None) -> datetime | None:
+def _parse_time_html_field(html: str | None) -> datetime | None:
+    """
+    Parse an HTML field to extract a datetime object.
+
+    Args:
+        html: The HTML field to parse.
+
+    Returns:
+        The extracted datetime object, or None if parsing fails.
+    """
     if html is None:
         return None
     soup = BeautifulSoup(html, "html.parser")
-    time_tag = soup.find("time", class_="dtstart")
-    if time_tag:
-        datetime_str = time_tag.get("datetime")
+    time_tag = soup.find("time")
+    if time_tag and isinstance(time_tag, Tag):
+        datetime_str = str(time_tag.get("datetime"))
         try:
             return datetime.strptime(datetime_str, "%Y-%m-%d")
         except ValueError:
@@ -76,30 +80,40 @@ def parse_time_html_field(html: str | None) -> datetime | None:
     return None
 
 
-def extract_hostname(url: str) -> str:
+def _extract_hostname(url: str) -> str:
     """Extract the hostname from a full URL."""
     parsed_url = urlparse(url)
     return parsed_url.hostname if parsed_url.hostname else url
 
 
-def resize_image_url(url: str, max_dimension: int) -> str:
+def _resize_image_url(url: str, max_dimension: int) -> str:
     """Resize the image URL if width or height exceeds max_dimension."""
     filename = url.split("/")[-1]
     return (url + f"/{max_dimension}px-{filename}").replace("commons/", "commons/thumb/")
 
 
 @file_cache()
-def get_wikimedia_image_info(file_name: str, max_dimension: int = 3000) -> WikimediaImageInfo:
+def _wikicommon_api_call(
+    filename: str, api_url: str = "https://magnus-toolserver.toolforge.org/commonsapi.php"
+) -> bytes | None:
     """Fetch image information from Magnus Toolserver API and return structured data using Pydantic."""
-    api_url = f"https://magnus-toolserver.toolforge.org/commonsapi.php?image={file_name}"
-    response = requests.get(api_url, timeout=20)
+    api_url_image = f"{api_url}?image={filename}"
+    response = requests.get(api_url_image, timeout=20)
 
     if response.status_code != 200:
         err_msg = f"Error fetching data from Magnus Toolserver: {response.status_code}"
         raise Exception(err_msg)  # noqa: TRY002
+    return response.content if isinstance(response.content, bytes) else None
+
+
+def get_wikicommon_photo_info(
+    filename: str, api_url: str = "https://magnus-toolserver.toolforge.org/commonsapi.php", max_dimension: int = 3000
+) -> PhotoSchema:
+    """Fetch image information from Magnus Toolserver API and return structured data using Pydantic."""
+    content = _wikicommon_api_call(filename, api_url)
 
     # Parse XML response
-    root = ET.fromstring(response.content)  # noqa: S314
+    root = defusedxml.ElementTree.fromstring(content)
 
     # Extract fields from XML
     file_info = root.find("file")
@@ -117,12 +131,12 @@ def get_wikimedia_image_info(file_name: str, max_dimension: int = 3000) -> Wikim
     title = file_info_find("title")
     width = int(cast(str, file_info_find("width")))
     height = int(cast(str, file_info_find("height")))
-    img_date = parse_time_html_field(cast(str, file_info_find("date")))
+    img_date = _parse_time_html_field(cast(str, file_info_find("date")))
 
-    wikicommons_url = f"https://commons.wikimedia.org/wiki/{quote(title)}"
+    wikicommons_url = f"https://commons.wikimedia.org/wiki/{quote(title or '')}"
     # Resize the image URL if width or height is greater than max_dimension
     if image_url and width and height and (width > max_dimension or height > max_dimension):
-        image_url = resize_image_url(image_url, max_dimension)
+        image_url = _resize_image_url(image_url, max_dimension)
         # update height
         orig_height = height
         orig_width = width
@@ -143,7 +157,7 @@ def get_wikimedia_image_info(file_name: str, max_dimension: int = 3000) -> Wikim
         license_info_url = cast(HttpUrl | None, file_info_find("license_info_url", None, license_elem))
         if "cc" in license_slug.lower():
             license_slug = license_slug.split(",")[0].strip()
-        licenses.append(LicenseInfo(slug=license_slug, url=license_info_url, name=license_name))
+        licenses.append(LicenseSchema(slug=license_slug, url=license_info_url, name=license_name))
 
     # Captions only
     captions = TranslationSchema()
@@ -160,8 +174,8 @@ def get_wikimedia_image_info(file_name: str, max_dimension: int = 3000) -> Wikim
     source_raw = file_info_find("source", wikicommons_url)
 
     # Parse author and source
-    author_name, author_url = parse_href_html_field(author_raw)
-    source_name, source_url = parse_href_html_field(source_raw)
+    author_name, author_url = _parse_href_html_field(author_raw)
+    source_name, source_url = _parse_href_html_field(source_raw)
 
     # Handle 'int-own-work' source
     source_ident = title
@@ -185,30 +199,62 @@ def get_wikimedia_image_info(file_name: str, max_dimension: int = 3000) -> Wikim
     if not source_url:
         source_url = cast(HttpUrl, wikicommons_url)
 
-    source = SourceInfo(url=source_url, name=source_name, ident=source_ident)
-    author = AuthorInfo(name=author_name, url=author_url) if author_name else None
+    author = AuthorSchema(name=author_name, url=author_url) if author_name else None
+    source = SourceSchema(url=source_url, name=source_name, ident=source_ident)
 
     # Return structured data using Pydantic
-    return WikimediaImageInfo(
+    return PhotoSchema(
         licenses=licenses,
         caption=captions,
         author=author,
         source=source,
-        image_url=cast(HttpUrl, image_url),
+        raw_url=cast(HttpUrl, image_url),
         width=width,
         height=height,
         url=cast(HttpUrl, wikicommons_url),
-        date=img_date,
+        capture_date=img_date,
+        comment="",
     )
 
 
+class WikicommonsService:
+    """Service to get photo from
+    [Wikimedia Commons](https://commons.wikimedia.org).
+
+    Note:
+        This is only used to get photo information, not to get huts!
+    """
+
+    def __init__(
+        self,
+        request_url: str = "https://magnus-toolserver.toolforge.org/commonsapi.php",
+        max_dimension: int = 3600,
+    ):
+        super().__init__()
+        self.request_url = request_url
+        self._max_dimension = max_dimension
+
+    def get_photo(self, filename: str) -> PhotoSchema:
+        return get_wikicommon_photo_info(filename=filename, api_url=self.request_url, max_dimension=self._max_dimension)
+
+    def get_huts_from_source(self, bbox: BBox | None = None, limit: int = 1, offset: int = 0, **kwargs: dict) -> list:
+        raise NotImplementedError("Get huts from source not implemented for WikiCommons.")
+
+    def convert(self, src: t.Mapping | t.Any) -> HutSchema:
+        raise NotImplementedError("Get huts from source not implemented for WikiCommons.")
+
+
+wikicommons_service = WikicommonsService()
+
 if __name__ == "__main__":
+    logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
+
     # File names to query
     file_names = ["Wildhornhuette.jpg", "Lohner hut SAC.jpg", "RifugioVallanta.jpg", "Refuge d'Ambin.jpeg"]
 
     for file_name in file_names:
         try:
-            image_info = get_wikimedia_image_info(file_name, max_dimension=500)
+            image_info = wikicommons_service.get_photo(file_name)
             print(image_info)
         except ValidationError as e:
             print("Validation error:", e)

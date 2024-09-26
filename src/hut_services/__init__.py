@@ -8,7 +8,7 @@ __all__ = [
     "HutSourceSchema",
     "HutTypeEnum",
     "HutTypeSchema",
-    "PhotoSchema",
+    "PhotoSchemaOld",
     "OpenMonthlySchema",
     "AnswerEnum",
     "SourcePropertiesSchema",
@@ -22,11 +22,18 @@ __all__ = [
     "SERVICES",
     "file_cache",
     "clear_file_cache",
+    "LicenseSchema",
+    "AuthorSchema",
+    "SourceSchema",
+    "PhotoSchema",
 ]
+
+from httpx import Auth
 
 from .core.cache import clear_file_cache, file_cache
 from .core.schema import (
     AnswerEnum,
+    AuthorSchema,
     BaseHutConverterSchema,
     BaseHutSourceSchema,
     CapacitySchema,
@@ -35,10 +42,13 @@ from .core.schema import (
     HutSourceSchema,
     HutTypeEnum,
     HutTypeSchema,
+    LicenseSchema,
     OpenMonthlySchema,
     OwnerSchema,
     PhotoSchema,
+    PhotoSchemaOld,
     SourcePropertiesSchema,
+    SourceSchema,
 )
 from .core.schema.geo import LocationEleSchema, LocationSchema
 from .core.schema.locale import TranslationSchema

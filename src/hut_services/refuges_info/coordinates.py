@@ -14,5 +14,5 @@ CORRECTIONS: dict[int, tuple[float, float]] = {
     239: (45.89486, 6.98097),  # Refuge de Leschaux
     2382: (46.13942, 7.98927),  # Hohsaashütte
     2464: (46.07422, 7.86581),  # Mischabeljoch biwak
-    3638: (46.05932, 7.06211),  # Cabane de Bovinette 
+    3638: (46.05932, 7.06211),  # Cabane de Bovinette
 }

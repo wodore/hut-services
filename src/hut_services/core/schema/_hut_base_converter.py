@@ -11,8 +11,9 @@ from ._hut_fields import (
     HutTypeSchema,
     OpenMonthlySchema,
     OwnerSchema,
-    PhotoSchema,
 )
+from ._license import AuthorSchema, SourceSchema
+from ._photo import PhotoSchema
 from .geo import LocationEleSchema
 from .locale import TranslationSchema
 
@@ -36,7 +37,7 @@ class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
 
     # See [`OsmHut0Convert`][hut_services.osm.schema.OsmHut0Convert].
 
-    source: TSourceData = Field(..., exclude=True)
+    source_data: TSourceData = Field(..., exclude=True)
 
     class FieldNotImplementedError(Exception):
         """Field is not implemented.
@@ -66,20 +67,35 @@ class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
     @computed_field  # type: ignore[misc]
     @property
     def name(self) -> TranslationSchema:
-        if hasattr(self.source, "get_name"):
-            return TranslationSchema(de=self.source.get_name())
+        if hasattr(self.source_data, "get_name"):
+            return TranslationSchema(de=self.source_data.get_name())
         raise self.FieldNotImplementedError(self, "name")
 
     @computed_field  # type: ignore[misc]
     @property
+    def source(self) -> SourceSchema | None:
+        if hasattr(self.source_data, "get_name"):
+            return SourceSchema(name=self.source_name, ident=self.source_data.get_id())
+        raise self.FieldNotImplementedError(self, "origin")
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def author(self) -> AuthorSchema | None:
+        return None
+
+    @computed_field  # type: ignore[misc]
+    @property
     def source_name(self) -> str:
-        raise self.FieldNotImplementedError(self, "source")
+        # TODO: how to get source_name
+        # if hasattr(self.source_data, "source_name"):
+        #     return self.source_data.source_name
+        raise self.FieldNotImplementedError(self, "source_name")
 
     @computed_field  # type: ignore[misc]
     @property
     def location(self) -> LocationEleSchema:
-        if hasattr(self.source, "get_location"):
-            return self.source.get_location()  # type: ignore  # noqa: PGH003
+        if hasattr(self.source_data, "get_location"):
+            return self.source_data.get_location()  # type: ignore  # noqa: PGH003
         raise self.FieldNotImplementedError(self, "location")
 
     @computed_field  # type: ignore[misc]
@@ -87,10 +103,10 @@ class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
     def description(self) -> TranslationSchema:
         raise self.FieldNotImplementedError(self, "description")
 
-    @computed_field  # type: ignore[misc]
-    @property
-    def description_attribution(self) -> str:
-        return ""
+    # @computed_field  # type: ignore[misc]
+    # @property
+    # def description_attribution(self) -> str:
+    #    return ""
 
     @computed_field  # type: ignore[misc]
     @property

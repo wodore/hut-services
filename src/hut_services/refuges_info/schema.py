@@ -183,7 +183,7 @@ class RefugesInfoHutSource(BaseHutSourceSchema[RefugesInfoFeature, RefugesInfoPr
 class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @property
     def _props(self) -> _RefugesInfoFeatureProperties:
-        return self.source.properties
+        return self.source_data.properties
 
     ## implemented in base
     # @computed_field  # type: ignore[misc]

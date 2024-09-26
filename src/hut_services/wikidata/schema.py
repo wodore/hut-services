@@ -1,5 +1,4 @@
 import logging
-import urllib.parse
 from typing import Any
 
 from pydantic import Field, computed_field
@@ -13,7 +12,9 @@ from hut_services import (
     TranslationSchema,
 )
 from hut_services.core.schema import BaseSchema
+from hut_services.core.schema._license import LicenseSchema, SourceSchema
 from hut_services.core.schema.geo.types import Latitude, Longitude
+from hut_services.wikicommons.service import wikicommons_service
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +91,7 @@ class WikidataHut0Convert(BaseHutConverterSchema[WikidataHutSchema]):
     @computed_field  # type: ignore[misc]
     @property
     def name(self) -> TranslationSchema:
-        return TranslationSchema(de=self.source.get_name())
+        return TranslationSchema(de=self.source_data.get_name())
 
     @computed_field  # type: ignore[misc]
     @property
@@ -105,24 +106,25 @@ class WikidataHut0Convert(BaseHutConverterSchema[WikidataHutSchema]):
     @computed_field()  # type: ignore[misc]
     @property
     def photos(self) -> list[PhotoSchema]:
-        image = self.source.photo
+        image = self.source_data.photo
         if image is None:
             return []
-        wikidata_url = f"https://www.wikidata.org/wiki/{self.source.wikidata_id.upper()}"
-        thumb_width = 400
-        title = urllib.parse.quote(image.title)
-        link = f"https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/{title}"
-        if thumb_width:
-            thumb = f"https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/{title}&width={thumb_width}"
-        else:
-            thumb = ""
-        img_title = image.title.replace("File:", "").replace(".jpg", "").replace(".jpeg", "").replace(".png", "")
+        return [wikicommons_service.get_photo(image.title.replace("File:", ""))]
 
-        attribution = (
-            f'<a href="{image.attributes.canonicalurl}" target="_blank">{img_title}</a>, ' if img_title else ""
+    @computed_field  # type: ignore[misc]
+    @property
+    def source(self) -> SourceSchema | None:
+        if hasattr(self.source_data, "get_name"):
+            return SourceSchema(
+                name=self.source_name,
+                ident=self.source_data.get_id(),
+                url=f"https://www.wikidata.org/wiki/{self.source_data.wikidata_id}",
+            )
+        raise self.FieldNotImplementedError(self, "origin")
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def license(self) -> LicenseSchema | None:  # noqa: A003
+        return LicenseSchema(
+            slug="cc-by-sa-4.0", name="CC-BY-SA 4.0", url="https://creativecommons.org/licenses/by-sa/4.0/"
         )
-        attribution += (
-            '<a href="https://creativecommons.org/licenses/by-sa/4.0/legalcode" target="_blank">CC BY-SA 4.0</a>'
-        )
-        comment = f"From {wikidata_url}"
-        return [PhotoSchema(url=link, thumb=thumb, attribution=attribution, comment=comment, caption=None)]

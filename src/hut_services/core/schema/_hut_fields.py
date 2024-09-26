@@ -94,7 +94,7 @@ class HutTypeSchema(BaseSchema):
     )
 
 
-class PhotoSchema(BaseSchema):
+class PhotoSchemaOld(BaseSchema):
     """Photo schema."""
 
     attribution: str = Field("", description="Attribution, resp. copyright information as markdown text")
@@ -106,12 +106,22 @@ class PhotoSchema(BaseSchema):
 
 
 class AnswerEnum(str, Enum):
-    """Enum with open values."""
+    """Anser enum.
+
+    'yesish' and 'noish' means it is likely to be 'yes' or 'no'.
+    'maybe' means is is either 'yes' or 'no'."""
 
     yes = "yes"
+    yesish = "yesish"
     maybe = "maybe"
+    noish = "noish"
     no = "no"
     unknown = "unknown"
+
+    # likely_yes = "likely_yes"
+    # likely_no = "likely_no"
+    # maybe_yes = "maybe_yes"
+    # maybe_no = "maybe_no"
 
 
 class OpenMonthlySchema(BaseSchema):

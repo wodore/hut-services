@@ -11,8 +11,10 @@ from ._hut_fields import (
     HutTypeSchema,
     OpenMonthlySchema,
     OwnerSchema,
-    PhotoSchema,
+    PhotoSchemaOld,
 )
+from ._license import AuthorSchema, LicenseSchema, SourceSchema
+from ._photo import PhotoSchema
 
 __all__ = [
     "BaseHutSourceSchema",
@@ -22,7 +24,7 @@ __all__ = [
     "HutTypeEnum",
     "OwnerSchema",
     "HutTypeSchema",
-    "PhotoSchema",
+    "PhotoSchemaOld",
     "CapacitySchema",
     "SourcePropertiesSchema",
     "OpenMonthlySchema",
@@ -32,4 +34,8 @@ __all__ = [
     "PlacesSchema",
     "BookingSchema",
     "HutBookingsSchema",
+    "LicenseSchema",
+    "SourceSchema",
+    "AuthorSchema",
+    "PhotoSchema",
 ]
