@@ -189,7 +189,7 @@ def get_wikicommon_photo_info(
         match = re.search(r"http:.*/\d{3,}", cast(str, source_url))
         source_url = match.group() if match else source_url
     if "refuges.info" in source_name.lower():
-        source_name = "refuges"
+        source_name = "refuges.info"
         match = re.search(r"(\d{3,})-originale", cast(str, source_url))
         if match:
             source_ident = match.groups()[0]

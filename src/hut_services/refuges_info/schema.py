@@ -1,9 +1,9 @@
 import logging
 from enum import Enum
-from typing import Literal
+from typing import Literal, cast
 
 from geojson_pydantic import Feature, FeatureCollection, Point
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, HttpUrl, computed_field
 
 from hut_services import (
     BaseHutConverterSchema,
@@ -15,10 +15,15 @@ from hut_services import (
     SourcePropertiesSchema,
 )
 from hut_services.core.guess import guess_hut_type
+from hut_services.core.schema._license import AuthorSchema, LicenseSchema, SourceSchema
 from hut_services.core.schema.geo import LocationEleSchema
 from hut_services.core.schema.locale import TranslationSchema
+import requests
+from bs4 import BeautifulSoup
+from hut_services.core.schema._photo import PhotoSchema
 
 from .coordinates import CORRECTIONS
+from .utils import get_original_images, refuges_lic
 
 logger = logging.getLogger(__name__)
 
@@ -209,11 +214,25 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
 
     @computed_field  # type: ignore[misc]
     @property
-    def description_attribution(self) -> str:
+    def author(self) -> AuthorSchema | None:
         if self.description.fr:
-            return '&copy; Les <a href="https://www.refuges.info" target="_blank">refuges.info</a> contributors'
+            return AuthorSchema(name="Les refuges.info contributors", url="https://www.refuges.info")
         else:
-            return ""
+            return None
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def source(self) -> SourceSchema | None:
+        return SourceSchema(
+            name=self.source_name,
+            ident=self.source_data.get_id(),
+            url=self._props.lien,
+        )
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def license(self) -> LicenseSchema | None:  # noqa: A003
+        return refuges_lic
 
     @computed_field  # type: ignore[misc]
     @property
@@ -231,6 +250,11 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @property
     def owner(self) -> OwnerSchema | None:
         return None
+
+    @computed_field()  # type: ignore[misc]
+    @property
+    def photos(self) -> list[PhotoSchema]:
+        return get_original_images(self.source_data.get_id())
 
     @computed_field  # type: ignore[misc]
     @property

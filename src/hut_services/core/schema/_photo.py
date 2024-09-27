@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from pydantic import Field, HttpUrl
+from pydantic import Field
+from pydantic_string_url import HttpUrl
 
 from ._base import BaseSchema
 from ._license import AuthorSchema, LicenseSchema, SourceSchema

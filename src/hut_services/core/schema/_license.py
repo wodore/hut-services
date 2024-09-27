@@ -1,12 +1,9 @@
-from datetime import datetime
 import logging
-from collections import namedtuple
-from typing import Sequence
 
-from pydantic import Field, HttpUrl
+from pydantic import Field
+from pydantic_string_url import HttpUrl
 
 from ._base import BaseSchema
-from .locale import TranslationSchema
 
 logger = logging.getLogger(__name__)
 

@@ -10,6 +10,7 @@ from easydict import EasyDict  # type: ignore[import-untyped]
 
 from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
+from hut_services.core.schema.locale import TranslationSchema
 from hut_services.core.service import BaseService
 from hut_services.refuges_info.massif import MASSIF_ALPES
 from hut_services.refuges_info.schema import (
@@ -17,6 +18,7 @@ from hut_services.refuges_info.schema import (
     RefugesInfoHut0Convert,
     RefugesInfoHutSource,
 )
+
 
 if __name__ == "__main__":  # only for testing
     from rich import print as rprint  # noqa: F401, RUF100
@@ -98,6 +100,7 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
         )  # type: ignore  # noqa: PGH003
         huts = []
         for feature in fc.features:
+            rprint(fc)
             refuges_hut = RefugesInfoHutSource(
                 name=feature.get_name(),
                 source_data=feature,
@@ -127,15 +130,17 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
 
 if __name__ == "__main__":
     logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
-    limit = 10000
+    limit = 10
     service = RefugesInfoService()
     bbox_ch = None  # (6.02260949059, 45.7769477403, 10.4427014502, 47.8308275417)
     huts = service.get_huts_from_source(limit=limit, bbox=bbox_ch)
     for h in huts:
         # rprint(h)
         hut = service.convert(h)
-        rprint(hut.name)
-        print(hut.description.fr[:250])
+        rprint(hut.name.i18n)
+        rprint(hut.photos)
+        print("========================")
+        # print(hut.description.fr[:250])
         # rprint(h.source_properties_schema)
         # rprint(h)
         # print(h.show(source_name=False))

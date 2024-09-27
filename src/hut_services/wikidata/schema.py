@@ -114,13 +114,11 @@ class WikidataHut0Convert(BaseHutConverterSchema[WikidataHutSchema]):
     @computed_field  # type: ignore[misc]
     @property
     def source(self) -> SourceSchema | None:
-        if hasattr(self.source_data, "get_name"):
-            return SourceSchema(
-                name=self.source_name,
-                ident=self.source_data.get_id(),
-                url=f"https://www.wikidata.org/wiki/{self.source_data.wikidata_id}",
-            )
-        raise self.FieldNotImplementedError(self, "origin")
+        return SourceSchema(
+            name=self.source_name,
+            ident=self.source_data.get_id(),
+            url=f"https://www.wikidata.org/wiki/{self.source_data.get_id()}",
+        )
 
     @computed_field  # type: ignore[misc]
     @property
