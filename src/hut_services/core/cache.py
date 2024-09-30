@@ -1,6 +1,6 @@
 import os
 import tempfile
-from typing import Any, Callable, Sequence, TypeVar, cast
+from typing import Any, Callable, Sequence, TypeVar
 
 from joblib import Memory, expires_after  # type: ignore[import-untyped]
 
