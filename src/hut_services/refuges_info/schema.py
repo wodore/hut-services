@@ -1,6 +1,6 @@
 import logging
 from enum import Enum
-from typing import Literal
+from typing import Literal, cast
 
 from geojson_pydantic import Feature, FeatureCollection, Point
 from pydantic import BaseModel, Field, computed_field
@@ -257,7 +257,7 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     def photos(self) -> list[PhotoSchema]:
         if self.include_photos is False:
             return []
-        return get_original_images(self.source_data.get_id())
+        return cast(list[PhotoSchema], get_original_images(self.source_data.get_id()))
 
     @computed_field  # type: ignore[prop-decorator]
     @property
