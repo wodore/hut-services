@@ -38,12 +38,12 @@ class PlacesSchema(BaseSchema):
     free: int
     total: int
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def occupancy_percent(self) -> float:
         return (self.total - self.free) / self.total * 100 if self.total > 0 else 100
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def occupancy_steps(self) -> float:
         steps_fine = round(self.occupancy_percent / 10) * 10
@@ -53,7 +53,7 @@ class PlacesSchema(BaseSchema):
             steps_fine = 90
         return steps_fine
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def occupancy_status(self) -> OccupancyStatusEnum:
         if self.total == 0:

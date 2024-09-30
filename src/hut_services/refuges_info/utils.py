@@ -1,17 +1,25 @@
 import logging
-from datetime import datetime
+import time
 from io import BytesIO
 
+import dateparser
 import requests
 from bs4 import BeautifulSoup
-from PIL import Image, ImageFile
+from PIL import ImageFile
 from pydantic_string_url import HttpUrl
+
+# if __name__ == "__main__":
+from rich import print as rprint
 
 # from numpy import imag
 from hut_services.core.cache import file_cache
 from hut_services.core.schema._license import AuthorSchema, LicenseSchema, SourceSchema
 from hut_services.core.schema._photo import PhotoSchema
 from hut_services.core.schema.locale import TranslationSchema
+
+logging.getLogger("PIL").setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
@@ -20,26 +28,28 @@ refuges_lic = LicenseSchema(
 )
 
 
-@file_cache()
-def _get_image_size(url: HttpUrl) -> tuple[int, int]:
-    response = requests.get(url, stream=True, timeout=10)
+@file_cache(forever=True)
+def _get_image_size(url: HttpUrl, _delay: float = 0.2) -> tuple[int, int]:
+    response = requests.get(url, stream=True, timeout=15)
     image_data = BytesIO()
     image_file = ImageFile.Parser()
     counter = 0
+    time.sleep(_delay)
     for chunk in response.iter_content(4096):
         image_data.write(chunk)
         image_file.feed(chunk)
         counter += 1
         if image_file.image:
-            print(f"Image size determined after {counter} iterations")
+            logger.debug(f"Image size determined after {counter} iterations ({url})")
             return image_file.image.size
     return 0, 0
 
 
-@file_cache()
-def _get_original_images_request(hut_id: str) -> bytes:
+@file_cache(forever=True)
+def _get_original_images_request(hut_id: str, _delay: float = 1.5) -> bytes:
     url = f"https://www.refuges.info/point/{hut_id}"
-    response = requests.get(url, timeout=10)
+    response = requests.get(url, timeout=15)
+    time.sleep(_delay)
     return response.content
 
 
@@ -52,17 +62,31 @@ def get_original_images(hut_id: str) -> list[PhotoSchema]:
         if image_tag:
             image_url = f"https://www.refuges.info{image_tag.parent['href']}".split("?")[0]
             image_url = image_url.replace("-reduite", "-originale")
-            capture_date_str = comment.find("div", class_="texte_sur_image").text
-            capture_date = datetime.strptime(capture_date_str, "%d/%m/%Y")
-            caption = TranslationSchema(
-                fr=comment.find("blockquote").text.strip(),
-            )
-            author_name = comment.find("p", class_="fauxfieldset-legend").text.split("par")[1].strip()
-            author = AuthorSchema(name=author_name)
+            fauxfieldset_legend_split = comment.find("p", class_="fauxfieldset-legend").text.split("par")
+            capture_date_str_fr = fauxfieldset_legend_split[0].strip()
+            _capture_date_str_image = comment.find("div", class_="texte_sur_image").text  # date in the image - not used
+
+            try:
+                capture_date = dateparser.parse(capture_date_str_fr, languages=["fr"])
+            except ValueError:
+                rprint(comment)
+                rprint(capture_date_str_fr)
+                rprint(_capture_date_str_image)
+                rprint(f"https://www.refuges.info/point/{hut_id}")
+                raise
+            try:
+                caption = TranslationSchema(
+                    fr=comment.find("blockquote").text.strip(),
+                )
+            except AttributeError:
+                # no comment to the image
+                caption = TranslationSchema()
+            author_name = fauxfieldset_legend_split[1].strip() if len(fauxfieldset_legend_split) > 1 else ""
+            author = AuthorSchema(name=author_name) if author_name else None
             src_ident = comment.find("a")["id"]
             src_url = f"https://www.refuges.info/point/{hut_id}#{src_ident}"
             source = SourceSchema(name="refuges.info", url=src_url, ident=src_ident)
-            width, height = _get_image_size(image_url)
+            width, height = 0, 0  # _get_image_size(image_url)
             photo_schema = PhotoSchema(
                 raw_url=image_url,
                 url=src_url,
@@ -80,7 +104,5 @@ def get_original_images(hut_id: str) -> list[PhotoSchema]:
 
 
 if __name__ == "__main__":
-    from rich import print as rprint
-
     photos = get_original_images("9819")
     rprint(photos)

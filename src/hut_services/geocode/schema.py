@@ -1,11 +1,12 @@
 import logging
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import Field, computed_field
 
 from hut_services import (
     BaseHutConverterSchema,
     BaseHutSourceSchema,
     LocationEleSchema,
+    SourceDataSchema,
     SourcePropertiesSchema,
     TranslationSchema,
 )
@@ -19,7 +20,7 @@ from hut_services.osm.schema import OSMTagsOptional
 logger = logging.getLogger(__name__)
 
 
-class GeocodeHutSchema(BaseModel):
+class GeocodeHutSchema(SourceDataSchema):
     """Open street map schema."""
 
     place_id: int | None = None
@@ -66,12 +67,12 @@ class GeocodeHutSource(BaseHutSourceSchema[GeocodeHutSchema, GeocodeProperties])
 
 
 class GeocodeHut0Convert(BaseHutConverterSchema[GeocodeHutSchema]):
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def name(self) -> TranslationSchema:
         return TranslationSchema(de=self.source_data.get_name())
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def description(self) -> TranslationSchema:
         return TranslationSchema()

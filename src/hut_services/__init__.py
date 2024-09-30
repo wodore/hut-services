@@ -12,6 +12,7 @@ __all__ = [
     "OpenMonthlySchema",
     "AnswerEnum",
     "SourcePropertiesSchema",
+    "SourceDataSchema",
     "LocationEleSchema",
     "LocationSchema",
     "TranslationSchema",
@@ -47,6 +48,7 @@ from .core.schema import (
     OwnerSchema,
     PhotoSchema,
     PhotoSchemaOld,
+    SourceDataSchema,
     SourcePropertiesSchema,
     SourceSchema,
 )

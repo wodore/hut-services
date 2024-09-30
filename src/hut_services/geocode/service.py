@@ -114,7 +114,7 @@ class GeocodeService(BaseService[GeocodeHutSource]):
     #    self, bbox: BBox | None = None, limit: int = 1, offset: int = 0, **kwargs: dict
     # ) -> list[GeocodeHutSource]:
 
-    def convert(self, src: t.Mapping | t.Any) -> HutSchema:
+    def convert(self, src: t.Mapping | t.Any, include_photos: bool = True) -> HutSchema:
         hut_src = (
             GeocodeHutSource(**src)
             if isinstance(src, t.Mapping)
@@ -124,7 +124,7 @@ class GeocodeService(BaseService[GeocodeHutSource]):
             if hut_src.source_data is None:
                 err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} without 'source_data' not allowed."
                 raise AttributeError(err_msg)
-            return GeocodeHut0Convert(source_data=hut_src.source_data).get_hut()
+            return GeocodeHut0Convert(source_data=hut_src.source_data, include_photos=include_photos).get_hut()
         else:
             err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} not implemented."
             raise NotImplementedError(err_msg)

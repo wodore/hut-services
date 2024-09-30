@@ -3,7 +3,7 @@ from ._booking import BookingSchema, HutBookingsSchema, OccupancyStatusEnum, Pla
 from ._contact import ContactSchema
 from ._hut import HutSchema
 from ._hut_base_converter import BaseHutConverterSchema
-from ._hut_base_source import BaseHutSourceSchema, HutSourceSchema, SourcePropertiesSchema
+from ._hut_base_source import BaseHutSourceSchema, HutSourceSchema, SourceDataSchema, SourcePropertiesSchema
 from ._hut_fields import (
     AnswerEnum,
     CapacitySchema,
@@ -27,6 +27,7 @@ __all__ = [
     "PhotoSchemaOld",
     "CapacitySchema",
     "SourcePropertiesSchema",
+    "SourceDataSchema",
     "OpenMonthlySchema",
     "AnswerEnum",
     "ReservationStatusEnum",

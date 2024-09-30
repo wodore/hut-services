@@ -13,7 +13,8 @@ from hut_services import (
     HutTypeSchema,
     LocationEleSchema,
     OwnerSchema,
-    PhotoSchemaOld,
+    PhotoSchema,
+    SourceDataSchema,
     SourcePropertiesSchema,
     TranslationSchema,
 )
@@ -67,7 +68,7 @@ class OSMTagsOptional(OSMTags):
     ele: float | str | None = None  # type: ignore[assignment]
 
 
-class OsmHutSchema(BaseModel):
+class OsmHutSchema(SourceDataSchema):
     """Open street map schema."""
 
     osm_type: Literal["node", "way", "area"] | None = None
@@ -115,34 +116,34 @@ class OsmHutSource(BaseHutSourceSchema[OsmHutSchema, OsmProperties]):
 
 
 class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
-    get_wikidata_photos: bool = False
+    include_photos: bool = False
 
     @property
     def _tags(self) -> OSMTags:
         return self.source_data.tags
 
     # implemented in base
-    # @computed_field  # type: ignore[misc]
+    # @computed_field  # type: ignore[prop-decorator]
     # @property
     # def slug(self) -> str:
     #    return f"osm-{self.source.get_id()}"
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def name(self) -> TranslationSchema:
         return TranslationSchema(de=self._tags.name[:69])
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def source_name(self) -> str:
         return "osm"
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def description(self) -> TranslationSchema:
         return TranslationSchema()
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def owner(self) -> OwnerSchema | None:
         name = self._tags.operator or ""
@@ -154,7 +155,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
             return OwnerSchema(name=name, comment=comment)
         return None
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def url(self) -> str:
         url = ""
@@ -187,7 +188,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
             phones += ContactSchema.extract_phone_numbers(phone, region="CH")
         return phones
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def contacts(self) -> list[ContactSchema]:
         contacts = []
@@ -206,7 +207,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
                 contacts.append(ContactSchema(email=email.strip(), function="contact", is_public=True))
         return contacts
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def comment(self) -> str:
         note = ""
@@ -243,7 +244,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
             return number
         return None
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def capacity(self) -> CapacitySchema:
         closed = self._capacity_closed
@@ -251,7 +252,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
             closed = None
         return CapacitySchema(open=self._capacity_opened, closed=closed)
 
-    @computed_field(alias="type")  # type: ignore[misc]
+    @computed_field(alias="type")  # type: ignore[prop-decorator]
     @property
     def hut_type(self) -> HutTypeSchema:
         capacity = CapacitySchema(open=self._capacity_opened, closed=self._capacity_closed)
@@ -273,26 +274,27 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
         #    return wikidata_service.get_entity(self._tags.wikidata)
         return None
 
-    @computed_field()  # type: ignore[misc]
+    @computed_field()  # type: ignore[prop-decorator]
     @property
-    def photos(self) -> list[PhotoSchemaOld]:
-        if self.wikidata_entity is not None:
+    def photos(self) -> list[PhotoSchema]:
+        """Not supported for osm data, use wikidata isntead which are based on the osm data."""
+        if self.wikidata_entity is not None and self.include_photos:
             return self.wikidata_entity.get_photos()
         return []
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def is_active(self) -> bool:
         return True
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def is_public(self) -> bool:
         if self._tags.access:
             return self._tags.access in ["yes", "public", "customers", "permissive"]
         return True
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def extras(self) -> dict[str, Any]:
         extras = {}

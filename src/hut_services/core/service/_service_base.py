@@ -88,17 +88,19 @@ class BaseService(t.Generic[THutSourceSchema]):
             bbox: Boundary box.
             limit: Limit (how many entries to retrieve).
             offset: Offset of the request.
+            include_phtos: Include photos, some service need addtionals request to get the photos.
 
         Returns:
             Huts from source.
         """
         raise self.MethodNotImplementedError(self, "get_huts_from_source")
 
-    def convert(self, src: t.Mapping | t.Any) -> HutSchema:
+    def convert(self, src: t.Mapping | t.Any, include_photos: bool = True) -> HutSchema:
         """Convert one hut from source to [`HutSchema`][hut_services.HutSchema].
 
         Args:
             src: Source schema.
+            include_photos: Include photos, some service need addtionals request to get the photos.
 
         Returns:
             Converted hut.
@@ -107,7 +109,9 @@ class BaseService(t.Generic[THutSourceSchema]):
         # hut_src = OsmHutSource(**src) if isinstance(src, t.Mapping) else OsmHutSource.model_validate(src)
         raise self.MethodNotImplementedError(self, "convert")
 
-    def get_huts(self, bbox: BBox | None = None, limit: int = 1, offset: int = 0, **kwargs: t.Any) -> list[HutSchema]:
+    def get_huts(
+        self, bbox: BBox | None = None, limit: int = 1, offset: int = 0, include_photos: bool = True, **kwargs: t.Any
+    ) -> list[HutSchema]:
         """Get all huts form source and converts them.
         Calls [`get_huts_from_source()`][hut_services.BaseService.get_huts_from_source]
         and [`convert()`][hut_services.BaseService.convert].
@@ -116,7 +120,7 @@ class BaseService(t.Generic[THutSourceSchema]):
             Converted huts from source."""
         huts = []
         src_huts = self.get_huts_from_source(bbox=bbox, limit=limit, offset=offset, **kwargs)
-        huts = [self.convert(h) for h in src_huts]
+        huts = [self.convert(h, include_photos=include_photos) for h in src_huts]
         return huts
 
     def get_bookings(

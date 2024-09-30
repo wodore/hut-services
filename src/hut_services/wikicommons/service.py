@@ -12,7 +12,8 @@ import requests
 
 # from typing import Any, Literal, Mapping
 from bs4 import BeautifulSoup, Tag
-from pydantic import HttpUrl, ValidationError
+from pydantic import ValidationError
+from pydantic_string_url import HttpUrl
 from rich import print
 
 from hut_services import (
@@ -187,7 +188,7 @@ def get_wikicommon_photo_info(
         match = re.search(r"\d{3,}", cast(str, source_url))
         source_ident = match.group() if match else source_ident
         match = re.search(r"http:.*/\d{3,}", cast(str, source_url))
-        source_url = match.group() if match else source_url
+        source_url = cast(HttpUrl, match.group()) if match else source_url
     if "refuges.info" in source_name.lower():
         source_name = "refuges.info"
         match = re.search(r"(\d{3,})-originale", cast(str, source_url))
@@ -208,10 +209,10 @@ def get_wikicommon_photo_info(
         caption=captions,
         author=author,
         source=source,
-        raw_url=cast(HttpUrl, image_url),
+        raw_url=image_url,
         width=width,
         height=height,
-        url=cast(HttpUrl, wikicommons_url),
+        url=wikicommons_url,
         capture_date=img_date,
         comment="",
     )

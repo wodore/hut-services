@@ -6,13 +6,15 @@ from pydantic import Field, computed_field
 from hut_services import (
     BaseHutConverterSchema,
     BaseHutSourceSchema,
+    LicenseSchema,
     LocationEleSchema,
     PhotoSchema,
+    SourceDataSchema,
     SourcePropertiesSchema,
+    SourceSchema,
     TranslationSchema,
 )
 from hut_services.core.schema import BaseSchema
-from hut_services.core.schema._license import LicenseSchema, SourceSchema
 from hut_services.core.schema.geo.types import Latitude, Longitude
 from hut_services.wikicommons.service import wikicommons_service
 
@@ -52,7 +54,7 @@ class WikidataPhoto(BaseSchema):
     attributes: WikidataPhotoAttributes
 
 
-class WikidataHutSchema(BaseSchema):
+class WikidataHutSchema(SourceDataSchema):
     """Open street map schema."""
 
     attributes: dict[str, Any]
@@ -88,30 +90,30 @@ class WikidataHutSource(BaseHutSourceSchema[WikidataHutSchema, WikidataPropertie
 
 
 class WikidataHut0Convert(BaseHutConverterSchema[WikidataHutSchema]):
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def name(self) -> TranslationSchema:
         return TranslationSchema(de=self.source_data.get_name())
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def source_name(self) -> str:
         return "wikidata"
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def description(self) -> TranslationSchema:
         return TranslationSchema()
 
-    @computed_field()  # type: ignore[misc]
+    @computed_field()  # type: ignore[prop-decorator]
     @property
     def photos(self) -> list[PhotoSchema]:
         image = self.source_data.photo
-        if image is None:
+        if image is None or self.include_photos is False:
             return []
         return [wikicommons_service.get_photo(image.title.replace("File:", ""))]
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def source(self) -> SourceSchema | None:
         return SourceSchema(
@@ -120,7 +122,7 @@ class WikidataHut0Convert(BaseHutConverterSchema[WikidataHutSchema]):
             url=f"https://www.wikidata.org/wiki/{self.source_data.get_id()}",
         )
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def license(self) -> LicenseSchema | None:  # noqa: A003
         return LicenseSchema(

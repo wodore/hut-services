@@ -126,7 +126,7 @@ class WikidataService(BaseService[WikidataHutSource]):
                 break
         return huts
 
-    def convert(self, src: t.Mapping | t.Any) -> HutSchema:
+    def convert(self, src: t.Mapping | t.Any, include_photos: bool = True) -> HutSchema:
         hut_src = (
             WikidataHutSource(**src)
             if isinstance(src, t.Mapping)
@@ -136,7 +136,7 @@ class WikidataService(BaseService[WikidataHutSource]):
             if hut_src.source_data is None:
                 err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} without 'source_data' not allowed."
                 raise AttributeError(err_msg)
-            return WikidataHut0Convert(source_data=hut_src.source_data).get_hut()
+            return WikidataHut0Convert(source_data=hut_src.source_data, include_photos=include_photos).get_hut()
         else:
             err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} not implemented."
             raise NotImplementedError(err_msg)
@@ -152,7 +152,8 @@ if __name__ == "__main__":
     # entity = service.get_entity(qid)
     # rprint(entity.get_photos())
 
-    limit = 10000
+    limit = 10
+    include_photos = True
     service = WikidataService()
     # service.get_wikidata_photos = wikidata_photos
     huts = service.get_huts_from_source(limit=limit)
@@ -160,7 +161,7 @@ if __name__ == "__main__":
     # licenses_num: dict[str, int] = {}
     for h in huts:
         # rprint(h)
-        hut = service.convert(h.model_dump(by_alias=True))
+        hut = service.convert(h.model_dump(by_alias=True), include_photos=include_photos)
         rprint(hut)
         # if hut.photos:
         #     rprint(f"[bold]{hut.name.i18n}[/bold]")
