@@ -1881,6 +1881,20 @@ docs = ["furo (>=2024.8.6)", "sphinx (>=8.0.2)", "sphinx-argparse-cli (>=1.17)",
 testing = ["build[virtualenv] (>=1.2.2)", "covdefaults (>=2.3)", "detect-test-pollution (>=1.2)", "devpi-process (>=1)", "diff-cover (>=9.1.1)", "distlib (>=0.3.8)", "flaky (>=3.8.1)", "hatch-vcs (>=0.4)", "hatchling (>=1.25)", "psutil (>=6)", "pytest (>=8.3.2)", "pytest-cov (>=5)", "pytest-mock (>=3.14)", "pytest-xdist (>=3.6.1)", "re-assert (>=1.1)", "setuptools (>=74.1.2)", "time-machine (>=2.15)", "wheel (>=0.44)"]
 
 [[package]]
+name = "types-beautifulsoup4"
+version = "4.12.0.20240907"
+description = "Typing stubs for beautifulsoup4"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-beautifulsoup4-4.12.0.20240907.tar.gz", hash = "sha256:8d023b86530922070417a1d4c4d91678ab0ff2439b3b2b2cffa3b628b49ebab1"},
+    {file = "types_beautifulsoup4-4.12.0.20240907-py3-none-any.whl", hash = "sha256:32f5ac48514b488f15241afdd7d2f73f0baf3c54e874e23b66708503dd288489"},
+]
+
+[package.dependencies]
+types-html5lib = "*"
+
+[[package]]
 name = "types-dateparser"
 version = "1.2.0.20240420"
 description = "Typing stubs for dateparser"
@@ -1900,6 +1914,17 @@ python-versions = ">=3.8"
 files = [
     {file = "types-defusedxml-0.7.0.20240218.tar.gz", hash = "sha256:05688a7724dc66ea74c4af5ca0efc554a150c329cb28c13a64902cab878d06ed"},
     {file = "types_defusedxml-0.7.0.20240218-py3-none-any.whl", hash = "sha256:2b7f3c5ca14fdbe728fab0b846f5f7eb98c4bd4fd2b83d25f79e923caa790ced"},
+]
+
+[[package]]
+name = "types-html5lib"
+version = "1.1.11.20240806"
+description = "Typing stubs for html5lib"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-html5lib-1.1.11.20240806.tar.gz", hash = "sha256:8060dc98baf63d6796a765bbbc809fff9f7a383f6e3a9add526f814c086545ef"},
+    {file = "types_html5lib-1.1.11.20240806-py3-none-any.whl", hash = "sha256:575c4fd84ba8eeeaa8520c7e4c7042b7791f5ec3e9c0a5d5c418124c42d9e7e4"},
 ]
 
 [[package]]
@@ -2124,4 +2149,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4.0"
-content-hash = "20410f5070ba3af3910fd91514ed77a6f7ce2e101aa8ff6aa4d0f00e9c08bd0b"
+content-hash = "69ce0d06664e483510128946364faa82d055b1537dd5c6a42e3be71129b25e95"

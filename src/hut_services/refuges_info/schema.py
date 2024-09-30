@@ -1,6 +1,6 @@
 import logging
 from enum import Enum
-from typing import Literal
+from typing import Literal, cast
 
 from geojson_pydantic import Feature, FeatureCollection, Point
 from pydantic import BaseModel, Field, computed_field
@@ -154,7 +154,7 @@ class RefugesInfoFeature(Feature, SourceDataSchema):
         return str(self.properties.ident)
 
     def get_name(self) -> str:
-        return str(self.properties.nom).strip('"').strip()
+        return str(self.properties.nom).strip().strip('"').strip()
 
     def get_location(self) -> LocationEleSchema:
         # coords = self.geometry.coordinates
@@ -200,7 +200,7 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def name(self) -> TranslationSchema:
-        return TranslationSchema(fr=self._props.nom, de=self._props.nom)
+        return TranslationSchema(fr=self.source_data.get_name(), de=self.source_data.get_name())
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -257,7 +257,7 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     def photos(self) -> list[PhotoSchema]:
         if self.include_photos is False:
             return []
-        return get_original_images(self.source_data.get_id())
+        return cast(list[PhotoSchema], get_original_images(self.source_data.get_id()))
 
     @computed_field  # type: ignore[prop-decorator]
     @property

@@ -1,6 +1,6 @@
 import os
 import tempfile
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Sequence, TypeVar
 
 from joblib import Memory, expires_after  # type: ignore[import-untyped]
 
@@ -11,10 +11,14 @@ cachedir = os.environ.get("HUT_SERVICE_CACHE_DIR", os.path.join(tempfile.gettemp
 default_seconds = int(os.environ.get("HUT_SERVICE_EXPIRE_SECONDS", 3600 * 24 * 2))  # 2 days
 forever_seconds = int(3600 * 24 * 365 * 10)  # 10 years
 _memory = Memory(cachedir, verbose=0, compress=True)
+T = TypeVar("T")
 
 
 def file_cache(
-    func: None | Callable = None, ignore: Sequence = [], expire_in_seconds: int = default_seconds, forever: bool = False
+    func: None | Callable = None,
+    ignore: Sequence = [],
+    expire_in_seconds: int = default_seconds,
+    forever: bool = False,
 ) -> Any:
     """Chaches function, if 'forever' is True, cache will never expire (and 'expire_in_seconds' will be ignored)."""
     if forever:

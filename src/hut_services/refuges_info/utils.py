@@ -20,6 +20,8 @@ from hut_services.core.schema.locale import TranslationSchema
 logging.getLogger("PIL").setLevel(logging.WARNING)
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("chardet").setLevel(logging.WARNING)
+logging.getLogger("tzlocal").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +55,7 @@ def _get_original_images_request(hut_id: str, _delay: float = 1.5) -> bytes:
     return response.content
 
 
+@file_cache()
 def get_original_images(hut_id: str) -> list[PhotoSchema]:
     soup = BeautifulSoup(_get_original_images_request(hut_id), "html.parser")
     comments = soup.find_all("li")
