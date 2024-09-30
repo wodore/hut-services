@@ -1,5 +1,4 @@
 import logging
-import urllib.parse
 from typing import Any
 
 from pydantic import Field, computed_field
@@ -7,13 +6,17 @@ from pydantic import Field, computed_field
 from hut_services import (
     BaseHutConverterSchema,
     BaseHutSourceSchema,
+    LicenseSchema,
     LocationEleSchema,
     PhotoSchema,
+    SourceDataSchema,
     SourcePropertiesSchema,
+    SourceSchema,
     TranslationSchema,
 )
 from hut_services.core.schema import BaseSchema
 from hut_services.core.schema.geo.types import Latitude, Longitude
+from hut_services.wikicommons.service import wikicommons_service
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +54,7 @@ class WikidataPhoto(BaseSchema):
     attributes: WikidataPhotoAttributes
 
 
-class WikidataHutSchema(BaseSchema):
+class WikidataHutSchema(SourceDataSchema):
     """Open street map schema."""
 
     attributes: dict[str, Any]
@@ -87,42 +90,41 @@ class WikidataHutSource(BaseHutSourceSchema[WikidataHutSchema, WikidataPropertie
 
 
 class WikidataHut0Convert(BaseHutConverterSchema[WikidataHutSchema]):
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def name(self) -> TranslationSchema:
-        return TranslationSchema(de=self.source.get_name())
+        return TranslationSchema(de=self.source_data.get_name())
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def source_name(self) -> str:
         return "wikidata"
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def description(self) -> TranslationSchema:
         return TranslationSchema()
 
-    @computed_field()  # type: ignore[misc]
+    @computed_field()  # type: ignore[prop-decorator]
     @property
     def photos(self) -> list[PhotoSchema]:
-        image = self.source.photo
-        if image is None:
+        image = self.source_data.photo
+        if image is None or self.include_photos is False:
             return []
-        wikidata_url = f"https://www.wikidata.org/wiki/{self.source.wikidata_id.upper()}"
-        thumb_width = 400
-        title = urllib.parse.quote(image.title)
-        link = f"https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/{title}"
-        if thumb_width:
-            thumb = f"https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/{title}&width={thumb_width}"
-        else:
-            thumb = ""
-        img_title = image.title.replace("File:", "").replace(".jpg", "").replace(".jpeg", "").replace(".png", "")
+        return [wikicommons_service.get_photo(image.title.replace("File:", ""))]
 
-        attribution = (
-            f'<a href="{image.attributes.canonicalurl}" target="_blank">{img_title}</a>, ' if img_title else ""
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def source(self) -> SourceSchema | None:
+        return SourceSchema(
+            name=self.source_name,
+            ident=self.source_data.get_id(),
+            url=f"https://www.wikidata.org/wiki/{self.source_data.get_id()}",
         )
-        attribution += (
-            '<a href="https://creativecommons.org/licenses/by-sa/4.0/legalcode" target="_blank">CC BY-SA 4.0</a>'
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def license(self) -> LicenseSchema | None:  # noqa: A003
+        return LicenseSchema(
+            slug="cc-by-sa-4.0", name="CC-BY-SA 4.0", url="https://creativecommons.org/licenses/by-sa/4.0/"
         )
-        comment = f"From {wikidata_url}"
-        return [PhotoSchema(url=link, thumb=thumb, attribution=attribution, comment=comment, caption=None)]

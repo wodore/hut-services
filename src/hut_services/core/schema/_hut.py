@@ -5,7 +5,9 @@ from slugify import slugify
 
 from ._base import BaseSchema
 from ._contact import ContactSchema
-from ._hut_fields import CapacitySchema, HutTypeSchema, OpenMonthlySchema, OwnerSchema, PhotoSchema
+from ._hut_fields import CapacitySchema, HutTypeSchema, OpenMonthlySchema, OwnerSchema
+from ._license import AuthorSchema, LicenseSchema, SourceSchema
+from ._photo import PhotoSchema
 from .geo import LocationEleSchema
 from .locale import TranslationSchema
 
@@ -42,7 +44,19 @@ class HutSchema(BaseSchema):
     location: LocationEleSchema = Field(..., description="Location of the hut with optional elevation.")
 
     description: TranslationSchema = Field(default_factory=TranslationSchema)
-    description_attribution: str = Field("", max_length=1000, description="Description attribution/license.")
+    # description_attribution: str = Field("", max_length=1000, description="Description attribution/license.")
+    license: LicenseSchema | None = Field(  # noqa: A003
+        None,
+        description="License for the hut information (mainly descpription)",
+    )
+    source: SourceSchema | None = Field(
+        None, description="Source origin information (e.g. 'hrs' for alpsonline.org, or 'sac', 'refuges', ...)."
+    )
+    author: AuthorSchema | None = Field(
+        None,
+        description="Author of the hut information, this is an addition to the source information (e.g. custom author)",
+    )
+
     notes: Sequence[TranslationSchema] = Field(..., description="Additional notes to the hut.")
     owner: OwnerSchema | None = Field(None)
     url: str = Field("", max_length=200)
@@ -56,9 +70,9 @@ class HutSchema(BaseSchema):
     is_active: bool = Field(default=True)
     is_public: bool = Field(default=True)
     extras: Mapping[str, Any] = Field(default_factory=dict, description="Additional information as dictionary.")
-    source: str = Field(
-        "", max_length=20, description="Short name of source (e.g. 'hrs' for alpsonline.org, or 'sac', 'refuges', ...)."
-    )
+    # source: str = Field(
+    #    "", max_length=20, description="Short name of source (e.g. 'hrs' for alpsonline.org, or 'sac', 'refuges', ...)."
+    # )
 
     # infrastructure:       dict = Field(default_factory=dict, sa_column=Column(JSON)) # TODO, better name. Maybe use infra and service separated, external table
     # access:             Access = Field(default_factory=Access, sa_column=Access.get_sa_column())

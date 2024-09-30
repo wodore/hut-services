@@ -3,6 +3,7 @@ from typing import Generic, TypeAlias, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from ._base import BaseSchema
 from .geo import LocationEleSchema
 
 
@@ -15,7 +16,19 @@ class SourcePropertiesSchema(BaseModel):
     # See [`OsmProperties`][hut_services.osm.schema.OsmProperties]."""
 
 
-TSourceData_co = TypeVar("TSourceData_co", bound=BaseModel, covariant=True)
+class SourceDataSchema(BaseSchema):
+    """SourceData schema"""
+
+    def get_id(self) -> str:
+        """Get source `id`."""
+        raise NotImplementedError("'get_id()' not implemented")
+
+    def get_name(self) -> str:
+        """Get source hut `name`."""
+        raise NotImplementedError("'get_name()' not implemented")
+
+
+TSourceData_co = TypeVar("TSourceData_co", bound=SourceDataSchema, covariant=True)
 TProperties_co = TypeVar("TProperties_co", bound=SourcePropertiesSchema, covariant=True)
 
 
@@ -117,7 +130,7 @@ class BaseHutSourceSchema(BaseModel, Generic[TSourceData_co, TProperties_co]):
         return "\n".join(out)
 
 
-HutSourceSchema: TypeAlias = BaseHutSourceSchema[BaseModel, SourcePropertiesSchema]
+HutSourceSchema: TypeAlias = BaseHutSourceSchema[SourceDataSchema, SourcePropertiesSchema]
 """Hut source schema, used for typing.
 With pydantic `BaseModel` and [`SourcePrpertiesSchema`][hut_services.core.schema.SourcePropertiesSchema]."""
 

@@ -6,19 +6,25 @@ from geojson_pydantic import Feature, FeatureCollection, Point
 from pydantic import BaseModel, Field, computed_field
 
 from hut_services import (
+    AuthorSchema,
     BaseHutConverterSchema,
     BaseHutSourceSchema,
     CapacitySchema,
     HutTypeEnum,
     HutTypeSchema,
+    LicenseSchema,
     OwnerSchema,
+    SourceDataSchema,
     SourcePropertiesSchema,
+    SourceSchema,
 )
 from hut_services.core.guess import guess_hut_type
+from hut_services.core.schema._photo import PhotoSchema
 from hut_services.core.schema.geo import LocationEleSchema
 from hut_services.core.schema.locale import TranslationSchema
 
 from .coordinates import CORRECTIONS
+from .utils import get_original_images, refuges_lic
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +144,7 @@ class _RefugesInfoFeatureProperties(BaseModel):
     description: _Description
 
 
-class RefugesInfoFeature(Feature):
+class RefugesInfoFeature(Feature, SourceDataSchema):
     """RefugesInfo Feature Model with required properties and geometry."""
 
     geometry: Point
@@ -183,39 +189,53 @@ class RefugesInfoHutSource(BaseHutSourceSchema[RefugesInfoFeature, RefugesInfoPr
 class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @property
     def _props(self) -> _RefugesInfoFeatureProperties:
-        return self.source.properties
+        return self.source_data.properties
 
     ## implemented in base
-    # @computed_field  # type: ignore[misc]
+    # @computed_field  # type: ignore[prop-decorator]
     # @property
     # def slug(self) -> str:
     #    return f"refuges-{self.source.get_id()}"
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def name(self) -> TranslationSchema:
         return TranslationSchema(fr=self._props.nom, de=self._props.nom)
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def source_name(self) -> str:
         return "refuges"
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def description(self) -> TranslationSchema:
         # return TranslationSchema(fr=self._props.description.valeur or "")
         return TranslationSchema(fr=self._props.remarque.valeur or "")
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
-    def description_attribution(self) -> str:
+    def author(self) -> AuthorSchema | None:
         if self.description.fr:
-            return '&copy; Les <a href="https://www.refuges.info" target="_blank">refuges.info</a> contributors'
+            return AuthorSchema(name="Les refuges.info contributors", url="https://www.refuges.info")
         else:
-            return ""
+            return None
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def source(self) -> SourceSchema | None:
+        return SourceSchema(
+            name=self.source_name,
+            ident=self.source_data.get_id(),
+            url=self._props.lien,
+        )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def license(self) -> LicenseSchema | None:  # noqa: A003
+        return refuges_lic
+
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def notes(self) -> list[TranslationSchema]:
         _note_fr = self._props.remarque.valeur or ""
@@ -227,17 +247,24 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
             return [TranslationSchema(fr=_note_fr, de=_note_de)]
         return []
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def owner(self) -> OwnerSchema | None:
         return None
 
-    @computed_field  # type: ignore[misc]
+    @computed_field()  # type: ignore[prop-decorator]
+    @property
+    def photos(self) -> list[PhotoSchema]:
+        if self.include_photos is False:
+            return []
+        return get_original_images(self.source_data.get_id())
+
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def url(self) -> str:
         return self._props.info_comp.site_officiel.url or ""
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def capacity(self) -> CapacitySchema:
         try:
@@ -245,7 +272,7 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
         except TypeError:
             return CapacitySchema(open=None, closed=None)
 
-    @computed_field(alias="type")  # type: ignore[misc]
+    @computed_field(alias="type")  # type: ignore[prop-decorator]
     @property
     def hut_type(self) -> HutTypeSchema:
         return guess_hut_type(
@@ -257,7 +284,7 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
             missing_walls=self._props.info_comp.manque_un_mur.valeur or "0",
         )
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def is_public(self) -> bool:
         return self._props.etat.ident in ["ouverture", "cle_a_recuperer"] or self._props.etat.ident is None

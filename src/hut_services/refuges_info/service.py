@@ -8,6 +8,7 @@ import httpx
 import xmltodict
 from easydict import EasyDict  # type: ignore[import-untyped]
 
+from hut_services.core.cache import file_cache
 from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
 from hut_services.core.service import BaseService
@@ -28,6 +29,7 @@ if __name__ == "__main__":  # only for testing
 logger = logging.getLogger(__name__)
 
 
+@file_cache()
 def refuges_info_request(
     url: str,
     limit: str | int = "all",
@@ -95,9 +97,10 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
         logger.info(f"get refuges.info data from {self.request_url}")
         fc: RefugesInfoFeatureCollection = refuges_info_request(
             url=self.request_url, bbox=bbox, limit=limit, type_points=type_points, massif=massif, detail=True, **kwargs
-        )  # type: ignore  # noqa: PGH003
+        )
         huts = []
         for feature in fc.features:
+            # rprint(fc)
             refuges_hut = RefugesInfoHutSource(
                 name=feature.get_name(),
                 source_data=feature,
@@ -109,7 +112,7 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
         logger.info(f"succesfully got {len(huts)} huts")
         return huts
 
-    def convert(self, src: t.Mapping | t.Any) -> HutSchema:
+    def convert(self, src: t.Mapping | t.Any, include_photos: bool = True) -> HutSchema:
         hut_src = (
             RefugesInfoHutSource(**src)
             if isinstance(src, t.Mapping)
@@ -119,7 +122,7 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
             if hut_src.source_data is None:
                 err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} without 'source_data' not allowed."
                 raise AttributeError(err_msg)
-            return RefugesInfoHut0Convert(source=hut_src.source_data).get_hut()
+            return RefugesInfoHut0Convert(source_data=hut_src.source_data, include_photos=include_photos).get_hut()
         else:
             err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} not implemented."
             raise NotImplementedError(err_msg)
@@ -127,15 +130,19 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
 
 if __name__ == "__main__":
     logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
-    limit = 10000
+    limit = 5000
+    include_photos = True
     service = RefugesInfoService()
     bbox_ch = None  # (6.02260949059, 45.7769477403, 10.4427014502, 47.8308275417)
     huts = service.get_huts_from_source(limit=limit, bbox=bbox_ch)
     for h in huts:
         # rprint(h)
-        hut = service.convert(h)
-        rprint(hut.name)
-        print(hut.description.fr[:250])
+        hut = service.convert(h, include_photos=include_photos)
+        rprint(hut.name.i18n)
+        rprint(hut.url)
+        rprint(hut.photos)
+        print("========================")
+        # print(hut.description.fr[:250])
         # rprint(h.source_properties_schema)
         # rprint(h)
         # print(h.show(source_name=False))
