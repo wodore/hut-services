@@ -44,6 +44,7 @@ types-python-slugify = "^8.0.0.3"
 types-requests = "^2.32.0.20240914"
 types-dateparser = "^1.2.0.20240420"
 types-defusedxml = "^0.7.0.20240218"
+types-beautifulsoup4 = "^4.12.0.20240907"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
