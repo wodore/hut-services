@@ -129,7 +129,10 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG)
+    # logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
+    logging.getLogger("chardet").setLevel(logging.WARNING)
+    logging.getLogger("tzlocal").setLevel(logging.WARNING)
     limit = 5000
     include_photos = True
     service = RefugesInfoService()
@@ -138,8 +141,9 @@ if __name__ == "__main__":
     for h in huts:
         # rprint(h)
         hut = service.convert(h, include_photos=include_photos)
+        # rprint(h.get_name())
         rprint(hut.name.i18n)
-        rprint(hut.url)
+        # rprint(hut.url)
         rprint(hut.photos)
         print("========================")
         # print(hut.description.fr[:250])

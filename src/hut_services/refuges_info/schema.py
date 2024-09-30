@@ -154,7 +154,7 @@ class RefugesInfoFeature(Feature, SourceDataSchema):
         return str(self.properties.ident)
 
     def get_name(self) -> str:
-        return str(self.properties.nom).strip('"').strip()
+        return str(self.properties.nom).strip().strip('"').strip()
 
     def get_location(self) -> LocationEleSchema:
         # coords = self.geometry.coordinates
@@ -200,7 +200,7 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def name(self) -> TranslationSchema:
-        return TranslationSchema(fr=self._props.nom, de=self._props.nom)
+        return TranslationSchema(fr=self.source_data.get_name(), de=self.source_data.get_name())
 
     @computed_field  # type: ignore[prop-decorator]
     @property
