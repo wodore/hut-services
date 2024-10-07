@@ -180,16 +180,17 @@ def get_wikicommon_photo_info(
 
     # Handle 'int-own-work' source
     source_ident = title
-    if "int-own-work" in source_name:
-        source_url = cast(HttpUrl, wikicommons_url)
-        source_name = "wikicommons"
-    if "camptocamp.org" in source_name.lower():
+    # if "int-own-work" in source_name:
+    #    source_url = cast(HttpUrl, wikicommons_url)
+    #    source_name = "wikicommons"
+    comment = "* Wikicommons source: {wikicommons_url}\n"
+    if "camptocamp" in source_name.lower():
         source_name = "camptocamp"
         match = re.search(r"\d{3,}", cast(str, source_url))
         source_ident = match.group() if match else source_ident
         match = re.search(r"http:.*/\d{3,}", cast(str, source_url))
         source_url = cast(HttpUrl, match.group()) if match else source_url
-    if "refuges.info" in source_name.lower():
+    elif "refuges.info" in source_name.lower():
         source_name = "refuges.info"
         match = re.search(r"(\d{3,})-originale", cast(str, source_url))
         if match:
@@ -197,8 +198,15 @@ def get_wikicommon_photo_info(
         else:
             match = re.search(r"(#C\d{3,})", cast(str, source_url))
             source_ident = match.groups()[0] if match else source_ident
-    if not source_url:
+    else:
+        if source_name:
+            comment = "* Original source name: {source_name}\n"
+        if source_url:
+            comment = "* Original source url: {source_}\n"
         source_url = cast(HttpUrl, wikicommons_url)
+        source_name = "wikicommons"
+    # if not source_url:
+    #    source_url = cast(HttpUrl, wikicommons_url)
 
     author = AuthorSchema(name=author_name, url=author_url) if author_name else None
     source = SourceSchema(url=source_url, name=source_name, ident=source_ident)
@@ -214,7 +222,7 @@ def get_wikicommon_photo_info(
         height=height,
         url=wikicommons_url,
         capture_date=img_date,
-        comment="",
+        comment=comment.strip(),
     )
 
 
