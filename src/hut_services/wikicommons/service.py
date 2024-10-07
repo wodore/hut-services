@@ -200,9 +200,9 @@ def get_wikicommon_photo_info(
             source_ident = match.groups()[0] if match else source_ident
     else:
         if source_name:
-            comment = f"* Original source name: {source_name}\n"
+            comment += f"* Original source name: {source_name}\n"
         if source_url:
-            comment = f"* Original source url: {source_url}\n"
+            comment += f"* Original source url: {source_url}\n"
         source_url = cast(HttpUrl, wikicommons_url)
         source_name = "wikicommons"
     # if not source_url:
