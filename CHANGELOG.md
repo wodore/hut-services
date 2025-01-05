@@ -10,14 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-01-05
 
 #### 🚀 Features
-- Add photos support ([#3]) - [dc2caed]
+- Add photos support ([#3]) - dc2caed
 
 #### 📘 Documentation
-- Add documentation page ([#6]) - [a630a92]
+- Add documentation page ([#6]) - a630a92
 
 #### 💻 Tooling
-- Replace `make` with [`invoke`](https://www.pyinvoke.org/) (see `inv help`) ([#5]) - [1c26026]
-- Change from `poetry` to [`uv`](https://docs.astral.sh/uv/) ([#4]) - [748bca2]
+- Replace `make` with [`invoke`](https://www.pyinvoke.org/) (see `inv help`) ([#5]) - 1c26026
+- Change from `poetry` to [`uv`](https://docs.astral.sh/uv/) ([#4]) - 748bca2
 
 
 [#3]: https://github.com/wodore/hut-services/pull/3
