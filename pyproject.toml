@@ -1,59 +1,89 @@
-[tool.poetry]
-name = "hut_services"
+[project]
+name = "hut-services"
 version = "0.2.0"
 description = "Services to retrieve information about (mountain) huts"
-authors = ["TBxy <tb@wodore.com>"]
+authors = [{name="TBxy", email= "tb@wodore.com"}]
 repository = "https://github.com/wodore/hut-services"
 documentation = "https://wodore.github.io/hut-services/"
 readme = "README.md"
-#packages = [
-#  {include = "src/hut_services"}
-#]
+requires-python = ">=3.10"
 
-[tool.poetry.dependencies]
-python = ">=3.8.1,<4.0"
-pydantic = "^2.5.2"
-overpy = "^0.7"
-geojson-pydantic = "^1.0.1"
-phonenumbers = "^8.13.26"
-easydict = "^1.11"
-xmltodict = "^0.13.0"
-httpx = "^0.25.2"
-python-slugify = "^8.0.1"
-wikidata = "^0.7.0"
-joblib = "^1.3.2"
-defusedxml = "^0.7.1"
-pydantic-string-url = "^1.0.2"
-pillow = "^10.4.0"
-dateparser = "^1.2.0"
-requests = "^2.32.3"
-bs4 = "^0.0.2"
+classifiers = [
+  # How mature is this project? Common values are
+  #   3 - Alpha 4 - Beta 5 - Production/Stable
+  "Development Status :: 4 - Beta",
+  # Indicate who your project is intended for
+  "Intended Audience :: Developers",
+  # Pick your license as you wish (see also "license" above)
+  "License :: OSI Approved :: MIT License",
+  # Specify the Python versions you support here.
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.2.0"
-deptry = "^0.12.0"
-mypy = "^1.5.1"
-pre-commit = "^3.4.0"
-tox = "^4.11.1"
-pytest-cov = "^4.1.0"
-rich = "^13.7.0"
-icecream = "^2.1.3"
-pyright = "^1.1.341"
-types-xmltodict = "^0.13.0.3"
-types-python-slugify = "^8.0.0.3"
-types-requests = "^2.32.0.20240914"
-types-dateparser = "^1.2.0.20240420"
-types-defusedxml = "^0.7.0.20240218"
-types-beautifulsoup4 = "^4.12.0.20240907"
+dependencies = [
+    "pydantic==2.*", # https://pypi.org/project/pydantic/
+    "overpy==0.7", # https://pypi.org/project/overpy/
+    "geojson-pydantic==1.*", # https://pypi.org/project/geojson-pydantic/
+    "phonenumbers==8.*", # https://pypi.org/project/phonenumbers/
+    "easydict==1.*", # https://pypi.org/project/easydict/
+    "xmltodict>=0.13.0,<1.0", # https://pypi.org/project/xmltodict/
+    "httpx>=0.25.2", # https://pypi.org/project/httpx/
+    "python-slugify==8.*", # https://pypi.org/project/python-slugify/
+    "wikidata>=0.7.0,<1.0", # https://pypi.org/project/wikidata/
+    "joblib==1.*", # https://pypi.org/project/joblib/
+    "defusedxml>=0.7.1,<1.0", # https://pypi.org/project/defusedxml/
+    "pydantic-string-url==1.*", # https://pypi.org/project/pydantic-string-url/
+    "pillow>=10.4.0,<12.0", # https://pypi.org/project/Pillow/
+    "dateparser==1.*", # https://pypi.org/project/dateparser/
+    "requests==2.*", # https://pypi.org/project/requests/
+    "bs4>=0.0.2,<1.0", # https://pypi.org/project/bs4/
+]
 
-[tool.poetry.group.docs.dependencies]
-mkdocs = "^1.4.2"
-mkdocs-material = "^9.5.2"
-mkdocstrings = {extras = ["python"], version = "^0.23.0"}
+[dependency-groups]
+dev = [
+    # utils
+    "rich==13.*", # https://pypi.org/project/rich/
+    "icecream==2.*", # https://pypi.org/project/icecream/
+    "environs==11.*", # https://pypi.org/project/environs/
+    # tools
+    "invoke==2.*", # https://pypi.org/project/invoke/ # python make -> 'inv help'
+    "deptry==0.*", # https://pypi.org/project/deptry/ # dependencies
+    "pre-commit==4.*", # https://pypi.org/project/pre-commit/
+    "mypy==1.*", # https://pypi.org/project/mypy/
+    "pyright==1.*", # https://pypi.org/project/pyright/
+    "git-cliff==2.*", # https://pypi.org/project/git-cliff/ # changelog
+    # testing
+    "pytest==8.*",
+    "pytest-cov==6.*", # https://pypi.org/project/pytest-cov/
+    "tox==4.*", # https://pypi.org/project/tox/
+    # types
+    "types-xmltodict==0.*", # https://pypi.org/project/types-xmltodict/
+    "types-python-slugify==8.*", # https://pypi.org/project/types-python-slugify/
+    "types-requests==2.*", # https://pypi.org/project/types-requests/
+    "types-dateparser==1.*", # https://pypi.org/project/types-dateparser/
+    "types-defusedxml==0.7.*", # https://pypi.org/project/types-defusedxml/
+    "types-beautifulsoup4==4.*", # https://pypi.org/project/types-beautifulsoup4/
+    # docs
+    "mkdocs-material==9.*", # https://pypi.org/project/mkdocs-material/
+    # extensions
+    # "mkdocs-autoapi>=0.3.2", # does not work # https://pypi.org/project/mkdocs-autoapi/
+    "mkdocstrings[python]==0.27.*", # https://pypi.org/project/mkdocstrings/
+    "mkdocs-click==0.8.*", # https://pypi.org/project/mkdocs-click/
+    "mkdocs-gen-files==0.5.*", # https://pypi.org/project/mkdocs-gen-files/
+    "mkdocs-literate-nav==0.6.*", # https://pypi.org/project/mkdocs-literate-nav/
+    "mkdocs-open-in-new-tab==1.*", # https://pypi.org/project/mkdocs-open-in-new-tab/
+    "mkdocs-section-index==0.3.*", # https://pypi.org/project/mkdocs-section-index/
+]
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[project.urls]
+Repository = "https://github.com/wodore/hut-services"
+Documentation = "https://wodore.github.io/hut-services/"
+Changelog = "https://github.com/wodore/hut-services/blob/main/CHANGELOG.md"
+Releases = "https://github.com/wodore/hut-services/releases"
+
 
 [tool.mypy]
 files = ["src/hut_services"]
@@ -70,7 +100,7 @@ plugins = ["pydantic.mypy"]
 testpaths = ["tests"]
 
 [tool.ruff]
-target-version = "py37"
+target-version = "py310"
 line-length = 120
 fix = true
 select = [
@@ -130,3 +160,7 @@ preview = true
 DEP004 = ["rich", "icecream"] # only in dev
 DEP003 = ["hut_services"] # transitive dependencies
 DEP002 = ["types-xmltodict", "types-python-slugify"] # not used
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
