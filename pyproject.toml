@@ -1,8 +1,8 @@
-[project]
-name = "hut-services"
-version = "0.2.0"
+[tool.poetry]
+name = "hut_services"
+version = "0.1.0"
 description = "Services to retrieve information about (mountain) huts"
-authors = [{name="TBxy", email= "tb@wodore.com"}]
+authors = ["TBxy <tb@wodore.com>"]
 repository = "https://github.com/wodore/hut-services"
 documentation = "https://wodore.github.io/hut-services/"
 readme = "README.md"
