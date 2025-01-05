@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Set
 
 from pydantic import Field
 from pydantic_string_url import HttpUrl
@@ -24,3 +25,4 @@ class PhotoSchema(BaseSchema):
         description="Url to the image on the side, this should not be used to include it direclty, rather to just link to it.",
     )
     capture_date: datetime | None
+    tags: Set[str] | None = None
