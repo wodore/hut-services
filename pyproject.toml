@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hut_services"
-version = "0.1.1"
+version = "0.2.0"
 description = "Services to retrieve information about (mountain) huts"
 authors = ["TBxy <tb@wodore.com>"]
 repository = "https://github.com/wodore/hut-services"
