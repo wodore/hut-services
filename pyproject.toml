@@ -66,8 +66,7 @@ dev = [
     "types-dateparser==1.*", # https://pypi.org/project/types-dateparser/
     "types-defusedxml==0.7.*", # https://pypi.org/project/types-defusedxml/
     "types-beautifulsoup4==4.*", # https://pypi.org/project/types-beautifulsoup4/
-]
-docs = [
+    # docs
     "mkdocs-material==9.*", # https://pypi.org/project/mkdocs-material/
     # extensions
     # "mkdocs-autoapi>=0.3.2", # does not work # https://pypi.org/project/mkdocs-autoapi/

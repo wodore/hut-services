@@ -481,6 +481,13 @@ dev = [
     { name = "git-cliff" },
     { name = "icecream" },
     { name = "invoke" },
+    { name = "mkdocs-click" },
+    { name = "mkdocs-gen-files" },
+    { name = "mkdocs-literate-nav" },
+    { name = "mkdocs-material" },
+    { name = "mkdocs-open-in-new-tab" },
+    { name = "mkdocs-section-index" },
+    { name = "mkdocstrings", extra = ["python"] },
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "pyright" },
@@ -494,15 +501,6 @@ dev = [
     { name = "types-python-slugify" },
     { name = "types-requests" },
     { name = "types-xmltodict" },
-]
-docs = [
-    { name = "mkdocs-click" },
-    { name = "mkdocs-gen-files" },
-    { name = "mkdocs-literate-nav" },
-    { name = "mkdocs-material" },
-    { name = "mkdocs-open-in-new-tab" },
-    { name = "mkdocs-section-index" },
-    { name = "mkdocstrings", extra = ["python"] },
 ]
 
 [package.metadata]
@@ -532,6 +530,13 @@ dev = [
     { name = "git-cliff", specifier = "==2.*" },
     { name = "icecream", specifier = "==2.*" },
     { name = "invoke", specifier = "==2.*" },
+    { name = "mkdocs-click", specifier = "==0.8.*" },
+    { name = "mkdocs-gen-files", specifier = "==0.5.*" },
+    { name = "mkdocs-literate-nav", specifier = "==0.6.*" },
+    { name = "mkdocs-material", specifier = "==9.*" },
+    { name = "mkdocs-open-in-new-tab", specifier = "==1.*" },
+    { name = "mkdocs-section-index", specifier = "==0.3.*" },
+    { name = "mkdocstrings", extras = ["python"], specifier = "==0.27.*" },
     { name = "mypy", specifier = "==1.*" },
     { name = "pre-commit", specifier = "==4.*" },
     { name = "pyright", specifier = "==1.*" },
@@ -545,15 +550,6 @@ dev = [
     { name = "types-python-slugify", specifier = "==8.*" },
     { name = "types-requests", specifier = "==2.*" },
     { name = "types-xmltodict", specifier = "==0.*" },
-]
-docs = [
-    { name = "mkdocs-click", specifier = "==0.8.*" },
-    { name = "mkdocs-gen-files", specifier = "==0.5.*" },
-    { name = "mkdocs-literate-nav", specifier = "==0.6.*" },
-    { name = "mkdocs-material", specifier = "==9.*" },
-    { name = "mkdocs-open-in-new-tab", specifier = "==1.*" },
-    { name = "mkdocs-section-index", specifier = "==0.3.*" },
-    { name = "mkdocstrings", extras = ["python"], specifier = "==0.27.*" },
 ]
 
 [[package]]
