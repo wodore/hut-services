@@ -35,7 +35,6 @@
 #
 #   https://github.com/ValentinMinder/Swisstopo-WGS84-LV03/blob/master/scripts/py/wgs84_ch1903.py
 import math
-from typing import Tuple
 
 from hut_services.core.schema.geo.types import LV03, LV03X, LV03Y, Elevation, Latitude, Longitude
 
@@ -153,7 +152,7 @@ class GPSConverter:
         )
         return y
 
-    def LV03toWGS84(self, east: float, north: float, height: Elevation) -> Tuple[Latitude, Longitude, Elevation]:
+    def LV03toWGS84(self, east: float, north: float, height: Elevation) -> tuple[Latitude, Longitude, Elevation]:
         """
         Convert LV03 to WGS84 Return a array of double that contain lat, long,
         and height

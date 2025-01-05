@@ -1,4 +1,5 @@
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from pydantic import Field, model_validator
 from slugify import slugify

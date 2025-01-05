@@ -1,6 +1,6 @@
 import logging
 from collections import namedtuple
-from typing import Sequence
+from collections.abc import Sequence
 
 import phonenumbers
 from pydantic import Field

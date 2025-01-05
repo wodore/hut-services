@@ -1,6 +1,6 @@
 import logging
 import textwrap
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, computed_field
 
@@ -33,31 +33,31 @@ class OSMTags(BaseModel):
     """Open street map tags."""
 
     tourism: Literal["alpine_hut", "wilderness_hut"]
-    wikidata: Optional[str] = None
+    wikidata: str | None = None
 
     name: str
-    operator: Optional[str] = None
-    email: Optional[str] = None
-    contact_email: Optional[str] = Field(None, alias="contact:field")
-    phone: Optional[str] = None
-    contact_phone: Optional[str] = Field(None, alias="contact:phone")
-    website: Optional[str] = None
-    contact_website: Optional[str] = Field(None, alias="contact:website")
-    note: Optional[str] = None
+    operator: str | None = None
+    email: str | None = None
+    contact_email: str | None = Field(None, alias="contact:field")
+    phone: str | None = None
+    contact_phone: str | None = Field(None, alias="contact:phone")
+    website: str | None = None
+    contact_website: str | None = Field(None, alias="contact:website")
+    note: str | None = None
 
-    bed: Optional[str] = None
-    beds: Optional[str] = None
-    capacity: Optional[str] = None
-    access: Optional[str] = None
-    fireplace: Optional[str] = None
-    wall: Optional[str] = None
-    amenity: Optional[str] = None
-    shelter_type: Optional[str] = None
-    winter_room: Optional[str] = None
-    reservation: Optional[str] = None
+    bed: str | None = None
+    beds: str | None = None
+    capacity: str | None = None
+    access: str | None = None
+    fireplace: str | None = None
+    wall: str | None = None
+    amenity: str | None = None
+    shelter_type: str | None = None
+    winter_room: str | None = None
+    reservation: str | None = None
 
     # ele: Optional[Elevation]
-    ele: Optional[Elevation] = None
+    ele: Elevation | None = None
 
 
 class OSMTagsOptional(OSMTags):
@@ -216,7 +216,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
         return note
 
     @property
-    def _capacity_opened(self) -> Optional[int]:
+    def _capacity_opened(self) -> int | None:
         tags = self._tags
         cap: int | None = None
         cap_str: str | None = None
@@ -234,7 +234,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
         return cap
 
     @property
-    def _capacity_closed(self) -> Optional[int]:
+    def _capacity_closed(self) -> int | None:
         if self._tags.winter_room:
             number = None
             try:
