@@ -14,12 +14,12 @@ nav:
   - "Getting Started": docu.md
   #- "<i>db-backup-runner</i>": cli.md
   # Packages: packages.md
-  - References:
-      - Core: api/core.md
-      - "Open Street Map": api/osm.md
-      - "Refuges.info": api/refuges_info.md
-  #- API Reference:
-  #    - hut-services: reference/
+  # - References:
+  #     - Core: api/core.md
+  #     - "Open Street Map": api/osm.md
+  #     - "Refuges.info": api/refuges_info.md
+  - API Reference:
+      - hut-services: reference/
   #- Changelog: changelog.md
 
   #- Home: index.md
@@ -110,7 +110,7 @@ plugins:
         - tasks/gen_ref_pages.py
   - literate-nav
   - section-index
-  #- termynal
+  - termynal
   #- mkdocs-autoapi: # does not work?
   #    autoapi_dir: src
   #    autoapi_keep_files: True
