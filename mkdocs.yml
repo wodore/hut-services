@@ -20,7 +20,7 @@ nav:
   #     - "Refuges.info": api/refuges_info.md
   - API Reference:
       - hut-services: reference/
-  #- Changelog: changelog.md
+  - Changelog: changelog.md
 
   #- Home: index.md
   #- References:
