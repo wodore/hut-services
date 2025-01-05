@@ -12,7 +12,7 @@ def test_refuges_info_service_source_online() -> None:
     for h in huts:
         # rprint(h)
         print(h.show(source_name=False))
-        assert type(h) == RefugesInfoHutSource
+        assert type(h) is RefugesInfoHutSource
 
 
 def test_refuges_info_service_hut_online() -> None:
@@ -21,4 +21,4 @@ def test_refuges_info_service_hut_online() -> None:
     osm_service = RefugesInfoService()
     huts = osm_service.get_huts(limit=limit)
     assert len(huts) == 2
-    assert type(huts[0]) == HutSchema
+    assert type(huts[0]) is HutSchema

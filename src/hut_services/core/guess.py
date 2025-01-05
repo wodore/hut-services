@@ -3,7 +3,7 @@ from typing import Literal
 
 from slugify import slugify
 
-__all__ = ["guess_slug_name", "guess_hut_type"]
+__all__ = ["guess_hut_type", "guess_slug_name"]
 
 from hut_services.core.schema._hut_fields import (
     AnswerEnum,

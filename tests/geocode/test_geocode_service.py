@@ -1,4 +1,5 @@
 import pytest
+
 from hut_services.core.schema.geo import LocationSchema
 from hut_services.geocode.service import GeocodeService, geocode_service
 

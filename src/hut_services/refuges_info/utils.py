@@ -35,14 +35,12 @@ def _get_image_size(url: HttpUrl, _delay: float = 0.2) -> tuple[int, int]:
     response = requests.get(url, stream=True, timeout=15)
     image_data = BytesIO()
     image_file = ImageFile.Parser()
-    counter = 0
     time.sleep(_delay)
-    for chunk in response.iter_content(4096):
+    for counter, chunk in enumerate(response.iter_content(4096)):
         image_data.write(chunk)
         image_file.feed(chunk)
-        counter += 1
         if image_file.image:
-            logger.debug(f"Image size determined after {counter} iterations ({url})")
+            logger.debug(f"Image size determined after {counter+1} iterations ({url})")
             return image_file.image.size
     return 0, 0
 

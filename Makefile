@@ -1,6 +1,6 @@
 .PHONY: install
 install: ## Install the uv environment and install the pre-commit hooks
-	@echo "🚀 Creating virtual environment using pyenv and uv"
+	@echo "🚀 Creating virtual environment using uv"
 	@uv sync
 	@ uv run pre-commit install
 	@echo "Run 'source .venv/bin/activate'"

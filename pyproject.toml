@@ -76,6 +76,7 @@ dev = [
     "mkdocs-literate-nav==0.6.*", # https://pypi.org/project/mkdocs-literate-nav/
     "mkdocs-open-in-new-tab==1.*", # https://pypi.org/project/mkdocs-open-in-new-tab/
     "mkdocs-section-index==0.3.*", # https://pypi.org/project/mkdocs-section-index/
+    "toml>=0.10.2",
 ]
 
 [project.urls]
@@ -103,6 +104,7 @@ testpaths = ["tests"]
 target-version = "py310"
 line-length = 120
 fix = true
+[tool.ruff.lint]
 select = [
     # flake8-2020
     "YTT",
@@ -144,12 +146,11 @@ ignore = [
     "C901",
 ]
 
-[tool.ruff.format]
-preview = true
+[tool.ruff.lint.isort]
+force-to-top = ["tasks._env", "tasks._logger"]
 
 
-
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]
 "__init__.py" = ["F401"]
 
@@ -157,7 +158,7 @@ preview = true
 #ignore = ["DEP003"]
 
 [tool.deptry.per_rule_ignores]
-DEP004 = ["rich", "icecream"] # only in dev
+DEP004 = ["rich", "icecream", "invoke", "environs", "mkdocs_gen_files", "toml"] # only in dev
 DEP003 = ["hut_services"] # transitive dependencies
 DEP002 = ["types-xmltodict", "types-python-slugify"] # not used
 

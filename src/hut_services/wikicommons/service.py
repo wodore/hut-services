@@ -14,7 +14,7 @@ import requests
 from bs4 import BeautifulSoup, Tag
 from pydantic import ValidationError
 from pydantic_string_url import HttpUrl
-from rich import print
+from rich import print as rprint
 
 from hut_services import (
     AuthorSchema,
@@ -264,8 +264,8 @@ if __name__ == "__main__":
     for file_name in file_names:
         try:
             image_info = wikicommons_service.get_photo(file_name)
-            print(image_info)
+            rprint(image_info)
         except ValidationError as e:
-            print("Validation error:", e)
+            rprint("Validation error:", e)
         # except Exception as ex:
         #    print("Error:", ex)

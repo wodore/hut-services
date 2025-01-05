@@ -124,7 +124,7 @@ class WikidataHut0Convert(BaseHutConverterSchema[WikidataHutSchema]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def license(self) -> LicenseSchema | None:  # noqa: A003
+    def license(self) -> LicenseSchema | None:
         return LicenseSchema(
             slug="cc-by-sa-4.0", name="CC-BY-SA 4.0", url="https://creativecommons.org/licenses/by-sa/4.0/"
         )

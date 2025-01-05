@@ -51,7 +51,7 @@ def _get_huts_from_source(
             );
             out qt center {limit};
         """
-    logger.debug(f"query:\n{'-'*20}\n{textwrap.dedent(query).strip()}\n{'-'*20}")
+    logger.debug(f"query:\n{'-' * 20}\n{textwrap.dedent(query).strip()}\n{'-' * 20}")
     try:
         result = api.query(query)
     except overpy.exception.OverpassGatewayTimeout as e:

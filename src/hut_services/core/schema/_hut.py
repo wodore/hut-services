@@ -46,7 +46,7 @@ class HutSchema(BaseSchema):
 
     description: TranslationSchema = Field(default_factory=TranslationSchema)
     # description_attribution: str = Field("", max_length=1000, description="Description attribution/license.")
-    license: LicenseSchema | None = Field(  # noqa: A003
+    license: LicenseSchema | None = Field(
         None,
         description="License for the hut information (mainly descpription)",
     )
