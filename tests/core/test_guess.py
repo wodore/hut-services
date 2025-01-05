@@ -1,6 +1,7 @@
 from typing import Any
 
 import pytest
+
 from hut_services import CapacitySchema, HutTypeEnum, HutTypeSchema
 from hut_services.core.guess import guess_hut_type, guess_slug_name
 

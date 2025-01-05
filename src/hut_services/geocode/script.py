@@ -1,6 +1,6 @@
 # type: ignore  # noqa: PGH003
 import httpx
-from rich import print
+from rich import print as rprint
 
 request_url = (
     "https://nominatim.openstreetmap.org/search"  # ?q=Neue%20Regensburger%20H%C3%BCtte&polygon_geojson=0&format=jsonv2"
@@ -19,4 +19,4 @@ params = {
 res = httpx.get(url=request_url, params=params).json()
 if res:
     hut = res[0]
-print(hut)
+rprint(hut)

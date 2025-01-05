@@ -232,7 +232,7 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def license(self) -> LicenseSchema | None:  # noqa: A003
+    def license(self) -> LicenseSchema | None:
         return refuges_lic
 
     @computed_field  # type: ignore[prop-decorator]

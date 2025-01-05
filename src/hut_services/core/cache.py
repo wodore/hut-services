@@ -5,7 +5,7 @@ from typing import Any, TypeVar
 
 from joblib import Memory, expires_after  # type: ignore[import-untyped]
 
-__all__ = ["file_cache", "clear_file_cache"]
+__all__ = ["clear_file_cache", "file_cache"]
 
 
 cachedir = os.environ.get("HUT_SERVICE_CACHE_DIR", os.path.join(tempfile.gettempdir(), "py_file_cache"))

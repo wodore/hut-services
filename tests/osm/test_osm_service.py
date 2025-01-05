@@ -1,4 +1,5 @@
 import pytest
+
 from hut_services.core.schema import HutSchema
 from hut_services.osm import OsmService
 from hut_services.osm.schema import OsmHutSource
@@ -27,13 +28,13 @@ def test_osm_service_source_online(hut_sources: list[OsmHutSource]) -> None:
     for h in hut_sources:
         # rprint(h)
         print(h.show(source_name=False))
-        assert type(h) == OsmHutSource
+        assert type(h) is OsmHutSource
 
 
 def test_osm_service_hut_online(huts: list[HutSchema]) -> None:
     """Tests conversion to HutSchema as well."""
     assert len(huts) == 2
-    assert type(huts[0]) == HutSchema
+    assert type(huts[0]) is HutSchema
 
 
 def test_osm_service_convert_dict_online(hut_sources: list[OsmHutSource], service: OsmService) -> None:
