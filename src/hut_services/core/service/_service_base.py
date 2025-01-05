@@ -88,7 +88,6 @@ class BaseService(t.Generic[THutSourceSchema]):
             bbox: Boundary box.
             limit: Limit (how many entries to retrieve).
             offset: Offset of the request.
-            include_phtos: Include photos, some service need addtionals request to get the photos.
 
         Returns:
             Huts from source.
@@ -100,7 +99,7 @@ class BaseService(t.Generic[THutSourceSchema]):
 
         Args:
             src: Source schema.
-            include_photos: Include photos, some service need addtionals request to get the photos.
+            include_photos: Include photos, some service need additonal requests to get the photos.
 
         Returns:
             Converted hut.

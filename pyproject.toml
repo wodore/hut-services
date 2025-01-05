@@ -77,6 +77,8 @@ dev = [
     "mkdocs-open-in-new-tab==1.*", # https://pypi.org/project/mkdocs-open-in-new-tab/
     "mkdocs-section-index==0.3.*", # https://pypi.org/project/mkdocs-section-index/
     "toml>=0.10.2",
+    "termynal>=0.12.2",
+    "ruff>=0.8.6",
 ]
 
 [project.urls]
