@@ -3,16 +3,11 @@ repo_url: https://github.com/wodore/hut-services
 site_url: https://wodore.github.io/hut-services
 repo_name: wodore/hut-services
 site_description: Services to retrieve information about (mountain) huts.
-site_author: TBxy
-edit_uri:
-  edit/main/docs/
-  #repo_name: wodore/hut-services
-copyright: Maintained by <a href="tb@wodore.com">TBxy</a>.
+copyright: Maintained by <a href="https://burgdev.ch">TBxy</a>.
 
 nav:
   - "Home": index.md
   - "Getting Started": docu.md
-  #- "<i>db-backup-runner</i>": cli.md
   # Packages: packages.md
   # - References:
   #     - Core: api/core.md
@@ -22,18 +17,10 @@ nav:
       - hut-services: reference/
   - Changelog: changelog.md
 
-  #- Home: index.md
-  #- References:
-  #    - Core: api/core.md
-  #    - "Open Street Map": api/osm.md
-  #    - "Refuges.info": api/refuges_info.md
-
 extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/wodore/hut-services
-    - icon: fontawesome/brands/docker
-      link: https://ghcr.io/wodore/hut-services
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/hut-services/
 
@@ -208,69 +195,3 @@ watch:
   - src
 extra_css:
   - css/custom.css
-# plugins:
-#   - search
-#   - mkdocstrings:
-#       handlers:
-#         python:
-#           paths: [src]
-#           load_external_modules: true
-#           options:
-#             #show_bases: false
-#             show_source: false
-#             #show_root_heading: false
-#             #show_root_full_path: false
-#             members_order: source
-#             separate_signature: true
-#             filters: ["!^_"]
-#             #docstring_options:
-#             #  ignore_init_summary: true
-#             #merge_init_into_class: true
-#             docstring_section_style: list
-#             show_root_toc_entry: false
-#             #heading_level: 2
-# watch:
-#   - src
-# theme:
-#   name: material
-#   feature:
-#     tabs: true
-#   features:
-#     #- content.code.copy
-#   palette:
-#     - media: "(prefers-color-scheme: light)"
-#       scheme: default
-#       primary: white
-#       accent: deep orange
-#       toggle:
-#         icon: material/brightness-7
-#         name: Switch to dark mode
-#     - media: "(prefers-color-scheme: dark)"
-#       scheme: slate
-#       primary: black
-#       accent: deep orange
-#       toggle:
-#         icon: material/brightness-4
-#         name: Switch to light mode
-#   icon:
-#     repo: fontawesome/brands/github
-#
-# extra:
-#   social:
-#     - icon: fontawesome/brands/github
-#       link: https://github.com/wodore/hut-services
-#     - icon: fontawesome/brands/python
-#       link: https://pypi.org/project/hut-services
-#
-# markdown_extensions:
-#   - toc:
-#       permalink: true
-#   - pymdownx.arithmatex:
-#       generic: true
-#   - pymdownx.highlight:
-#       anchor_linenums: true
-#       line_spans: __span
-#       pygments_lang_class: true
-#   - pymdownx.inlinehilite
-#   - pymdownx.snippets
-#   - pymdownx.superfences
