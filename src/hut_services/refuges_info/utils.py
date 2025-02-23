@@ -63,7 +63,10 @@ def get_original_images(hut_id: str) -> list[PhotoSchema]:
         if image_tag:
             image_url = f"https://www.refuges.info{image_tag.parent['href']}".split("?")[0]
             image_url = image_url.replace("-reduite", "-originale")
-            fauxfieldset_legend_split = comment.find("p", class_="fauxfieldset-legend").text.split("par")
+            try:
+                fauxfieldset_legend_split = comment.find("p", class_="fauxfieldset-legend").text.split("par")
+            except AttributeError:
+                continue
             capture_date_str_fr = fauxfieldset_legend_split[0].strip()
             _capture_date_str_image = comment.find("div", class_="texte_sur_image").text  # date in the image - not used
 
