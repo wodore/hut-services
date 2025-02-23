@@ -23,10 +23,13 @@ def update_venv(c: Ctx, dry: bool = False):
 
 
 @task(help={"venv_update": "Updates venv activate script (runs per default)"})
-def install(c: Ctx, venv_update: bool = True):
+def install(c: Ctx, update: bool = False, venv_update: bool = True):
     """Install the uv environment and install the pre-commit hooks"""
-    echo("🚀 Creating virtual environment using pyenv and poetry")
-    c.run("uv sync")
+    echo(f"🚀 {'Update' if update else 'Creating'} virtual environment using uv")
+    if update:
+        c.run("uv sync --upgrade")
+    else:
+        c.run("uv sync")
     c.run("uv run pre-commit install")
     if venv_update:
         update_venv(c)

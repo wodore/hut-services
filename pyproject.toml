@@ -79,6 +79,7 @@ dev = [
     "toml>=0.10.2",
     "termynal>=0.12.2",
     "ruff>=0.8.6",
+    "bump2version>=1.0.1",
 ]
 
 [project.urls]
