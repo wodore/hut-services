@@ -52,7 +52,7 @@ cd hut-services
 Then, install and activate the environment with:
 
 ```bash
-make init
+make init # make install # if already forked and only a update is needed
 source .venv/bin/activate
 ```
 
