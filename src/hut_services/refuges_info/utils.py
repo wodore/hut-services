@@ -13,7 +13,7 @@ from rich import print as rprint
 
 # from numpy import imag
 from hut_services.core.cache import file_cache
-from hut_services.core.schema._license import AuthorSchema, LicenseSchema, SourceSchema
+from hut_services.core.schema._license import LicenseSchema, SourceSchema
 from hut_services.core.schema._photo import PhotoSchema
 from hut_services.core.schema.locale import TranslationSchema
 
@@ -59,51 +59,46 @@ def get_original_images(hut_id: str) -> list[PhotoSchema]:
     comments = soup.find_all("li")
     original_images = []
     for comment in comments:
-        image_tag = comment.find("img")
-        if image_tag:
-            image_url = f"https://www.refuges.info{image_tag.parent['href']}".split("?")[0]
-            image_url = image_url.replace("-reduite", "-originale")
-            try:
-                fauxfieldset_legend_split = comment.find("p", class_="fauxfieldset-legend").text.split("par")
-            except AttributeError:
-                continue
-            capture_date_str_fr = fauxfieldset_legend_split[0].strip()
-            _capture_date_str_image = comment.find("div", class_="texte_sur_image").text  # date in the image - not used
-
-            try:
-                capture_date = dateparser.parse(capture_date_str_fr, languages=["fr"])
-            except ValueError:
-                rprint(comment)
-                rprint(capture_date_str_fr)
-                rprint(_capture_date_str_image)
-                rprint(f"https://www.refuges.info/point/{hut_id}")
-                raise
-            try:
-                caption = TranslationSchema(
-                    fr=comment.find("blockquote").text.strip(),
-                )
-            except AttributeError:
-                # no comment to the image
-                caption = TranslationSchema()
-            author_name = fauxfieldset_legend_split[1].strip() if len(fauxfieldset_legend_split) > 1 else ""
-            author = AuthorSchema(name=author_name) if author_name else None
-            src_ident = comment.find("a")["id"]
-            src_url = f"https://www.refuges.info/point/{hut_id}#{src_ident}"
-            source = SourceSchema(name="refuges.info", url=src_url, ident=src_ident)
-            width, height = 0, 0  # _get_image_size(image_url)
-            photo_schema = PhotoSchema(
-                raw_url=image_url,
-                url=src_url,
-                capture_date=capture_date,
-                caption=caption,
-                comment="",
-                author=author,
-                source=source,
-                width=width,
-                height=height,
-                licenses=[refuges_lic],
-            )
-            original_images.append(photo_schema)
+        photos_div = comment.find("div", class_="photos")
+        if not photos_div:
+            continue
+        image_link = photos_div.find("a")
+        if not image_link:
+            continue
+        image_url = f"https://www.refuges.info{image_link['href']}".split("?")[0]
+        # Get date from texte_sur_image div
+        date_div = photos_div.find("div", class_="texte_sur_image")
+        if not date_div:
+            continue
+        capture_date_str_fr = date_div.text.strip()
+        try:
+            capture_date = dateparser.parse(capture_date_str_fr, languages=["fr"]) if capture_date_str_fr else None
+        except ValueError:
+            logger.warning(f"Could not parse date: {capture_date_str_fr} for hut {hut_id}")
+            capture_date = None
+        # Get caption from blockquote if it exists
+        blockquote = comment.find("blockquote")
+        caption = TranslationSchema(fr=blockquote.text.strip()) if blockquote else TranslationSchema()
+        # Get author - currently not available in new structure
+        author = None
+        # Get source info
+        src_ident = f"C{image_url.split('/')[-1].split('-')[0]}"  # Extract ID from image URL
+        src_url = f"https://www.refuges.info/point/{hut_id}#{src_ident}"
+        source = SourceSchema(name="refuges.info", url=src_url, ident=src_ident)
+        width, height = 0, 0  # _get_image_size(image_url)
+        photo_schema = PhotoSchema(
+            raw_url=image_url,
+            url=src_url,
+            capture_date=capture_date,
+            caption=caption,
+            comment="",
+            author=author,
+            source=source,
+            width=width,
+            height=height,
+            licenses=[refuges_lic],
+        )
+        original_images.append(photo_schema)
     return original_images
 
 

@@ -130,7 +130,7 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    # logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
+    logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
     logging.getLogger("chardet").setLevel(logging.WARNING)
     logging.getLogger("tzlocal").setLevel(logging.WARNING)
     limit = 5000
