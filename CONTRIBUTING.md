@@ -96,3 +96,17 @@ Before you submit a pull request, check that it meets these guidelines:
 
 2. If the pull request adds functionality, the docs should be updated.
    Put your new functionality into a function with a docstring, and add the feature to the list in `README.md`.
+
+# Release
+
+```bash
+inv release # collects PRs and updates CHANGELOG.md and versions
+vim CHANGELOG.md # check if everything is correct, add additional info if needed.
+VERSION=<VERSION>
+git checkout -b release/v$VERSION
+git commit -am "Release v$VERSION"
+```
+
+Create [pull request](https://github.com/wodore/hut-services/pull/new) with labels `type:tooling` and `INTERNAL`.
+
+The CI/CD updates the documentation and creates a github release and publishes the package.
