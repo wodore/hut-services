@@ -1,6 +1,6 @@
 [project]
 name = "hut-services"
-version = "0.1.1"
+version = "0.1.2"
 description = "Services to retrieve information about (mountain) huts"
 authors = [{name="TBxy", email= "tb@wodore.com"}]
 repository = "https://github.com/wodore/hut-services"
