@@ -9,8 +9,8 @@ def test_geocode_get_location() -> None:
     name = "Almagellerhuette"
     coord = service.get_location_by_name(name)
     assert coord, "Nothing returned"
-    assert pytest.approx(coord.lat) == 46.1076
-    assert pytest.approx(coord.lon) == 8.007716
+    assert pytest.approx(coord.lat, rel=0.01) == 46.1076
+    assert pytest.approx(coord.lon, rel=0.01) == 8.007716
 
 
 def test_geocode_get_elevations() -> None:

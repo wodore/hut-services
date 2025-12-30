@@ -1,8 +1,8 @@
 [project]
 name = "hut-services"
-version = "0.1.2"
+version = "0.1.3"
 description = "Services to retrieve information about (mountain) huts"
-authors = [{name="TBxy", email= "tb@wodore.com"}]
+authors = [{ name = "TBxy", email = "tb@wodore.com" }]
 repository = "https://github.com/wodore/hut-services"
 documentation = "https://wodore.github.io/hut-services/"
 readme = "README.md"
@@ -24,62 +24,62 @@ classifiers = [
 ]
 
 dependencies = [
-    "pydantic==2.*", # https://pypi.org/project/pydantic/
-    "overpy==0.7", # https://pypi.org/project/overpy/
-    "geojson-pydantic==1.*", # https://pypi.org/project/geojson-pydantic/
-    "phonenumbers==8.*", # https://pypi.org/project/phonenumbers/
-    "easydict==1.*", # https://pypi.org/project/easydict/
-    "xmltodict>=0.13.0,<1.0", # https://pypi.org/project/xmltodict/
-    "httpx>=0.25.2", # https://pypi.org/project/httpx/
-    "python-slugify==8.*", # https://pypi.org/project/python-slugify/
-    "wikidata>=0.7.0,<1.0", # https://pypi.org/project/wikidata/
-    "joblib==1.*", # https://pypi.org/project/joblib/
-    "defusedxml>=0.7.1,<1.0", # https://pypi.org/project/defusedxml/
-    "pydantic-string-url==1.*", # https://pypi.org/project/pydantic-string-url/
-    "pillow>=10.4.0,<12.0", # https://pypi.org/project/Pillow/
-    "dateparser==1.*", # https://pypi.org/project/dateparser/
-    "requests==2.*", # https://pypi.org/project/requests/
-    "bs4>=0.0.2,<1.0", # https://pypi.org/project/bs4/
+  "pydantic==2.*",            # https://pypi.org/project/pydantic/
+  "overpy==0.7",              # https://pypi.org/project/overpy/
+  "geojson-pydantic==1.*",    # https://pypi.org/project/geojson-pydantic/
+  "phonenumbers==8.*",        # https://pypi.org/project/phonenumbers/
+  "easydict==1.*",            # https://pypi.org/project/easydict/
+  "xmltodict>=0.13.0,<1.0",   # https://pypi.org/project/xmltodict/
+  "httpx>=0.25.2",            # https://pypi.org/project/httpx/
+  "python-slugify==8.*",      # https://pypi.org/project/python-slugify/
+  "wikidata>=0.7.0,<1.0",     # https://pypi.org/project/wikidata/
+  "joblib==1.*",              # https://pypi.org/project/joblib/
+  "defusedxml>=0.7.1,<1.0",   # https://pypi.org/project/defusedxml/
+  "pydantic-string-url==1.*", # https://pypi.org/project/pydantic-string-url/
+  "pillow>=10.4.0,<12.0",     # https://pypi.org/project/Pillow/
+  "dateparser==1.*",          # https://pypi.org/project/dateparser/
+  "requests==2.*",            # https://pypi.org/project/requests/
+  "bs4>=0.0.2,<1.0",          # https://pypi.org/project/bs4/
 ]
 
 [dependency-groups]
 dev = [
-    # utils
-    "rich==13.*", # https://pypi.org/project/rich/
-    "icecream==2.*", # https://pypi.org/project/icecream/
-    "environs==11.*", # https://pypi.org/project/environs/
-    # tools
-    "invoke==2.*", # https://pypi.org/project/invoke/ # python make -> 'inv help'
-    "deptry==0.*", # https://pypi.org/project/deptry/ # dependencies
-    "pre-commit==4.*", # https://pypi.org/project/pre-commit/
-    "mypy==1.*", # https://pypi.org/project/mypy/
-    "pyright==1.*", # https://pypi.org/project/pyright/
-    "git-cliff==2.*", # https://pypi.org/project/git-cliff/ # changelog
-    # testing
-    "pytest==8.*",
-    "pytest-cov==6.*", # https://pypi.org/project/pytest-cov/
-    "tox==4.*", # https://pypi.org/project/tox/
-    # types
-    "types-xmltodict==0.*", # https://pypi.org/project/types-xmltodict/
-    "types-python-slugify==8.*", # https://pypi.org/project/types-python-slugify/
-    "types-requests==2.*", # https://pypi.org/project/types-requests/
-    "types-dateparser==1.*", # https://pypi.org/project/types-dateparser/
-    "types-defusedxml==0.7.*", # https://pypi.org/project/types-defusedxml/
-    "types-beautifulsoup4==4.*", # https://pypi.org/project/types-beautifulsoup4/
-    # docs
-    "mkdocs-material==9.*", # https://pypi.org/project/mkdocs-material/
-    # extensions
-    # "mkdocs-autoapi>=0.3.2", # does not work # https://pypi.org/project/mkdocs-autoapi/
-    "mkdocstrings[python]==0.27.*", # https://pypi.org/project/mkdocstrings/
-    "mkdocs-click==0.8.*", # https://pypi.org/project/mkdocs-click/
-    "mkdocs-gen-files==0.5.*", # https://pypi.org/project/mkdocs-gen-files/
-    "mkdocs-literate-nav==0.6.*", # https://pypi.org/project/mkdocs-literate-nav/
-    "mkdocs-open-in-new-tab==1.*", # https://pypi.org/project/mkdocs-open-in-new-tab/
-    "mkdocs-section-index==0.3.*", # https://pypi.org/project/mkdocs-section-index/
-    "toml>=0.10.2",
-    "termynal>=0.12.2",
-    "ruff>=0.8.6",
-    "bump2version>=1.0.1",
+  # utils
+  "rich==13.*",     # https://pypi.org/project/rich/
+  "icecream==2.*",  # https://pypi.org/project/icecream/
+  "environs==11.*", # https://pypi.org/project/environs/
+  # tools
+  "invoke==2.*",     # https://pypi.org/project/invoke/ # python make -> 'inv help'
+  "deptry==0.*",     # https://pypi.org/project/deptry/ # dependencies
+  "pre-commit==4.*", # https://pypi.org/project/pre-commit/
+  "mypy==1.*",       # https://pypi.org/project/mypy/
+  "pyright==1.*",    # https://pypi.org/project/pyright/
+  "git-cliff==2.*",  # https://pypi.org/project/git-cliff/ # changelog
+  # testing
+  "pytest==8.*",
+  "pytest-cov==6.*", # https://pypi.org/project/pytest-cov/
+  "tox==4.*",        # https://pypi.org/project/tox/
+  # types
+  "types-xmltodict==0.*",      # https://pypi.org/project/types-xmltodict/
+  "types-python-slugify==8.*", # https://pypi.org/project/types-python-slugify/
+  "types-requests==2.*",       # https://pypi.org/project/types-requests/
+  "types-dateparser==1.*",     # https://pypi.org/project/types-dateparser/
+  "types-defusedxml==0.7.*",   # https://pypi.org/project/types-defusedxml/
+  "types-beautifulsoup4==4.*", # https://pypi.org/project/types-beautifulsoup4/
+  # docs
+  "mkdocs-material==9.*", # https://pypi.org/project/mkdocs-material/
+  # extensions
+  # "mkdocs-autoapi>=0.3.2", # does not work # https://pypi.org/project/mkdocs-autoapi/
+  "mkdocstrings[python]==0.27.*", # https://pypi.org/project/mkdocstrings/
+  "mkdocs-click==0.8.*",          # https://pypi.org/project/mkdocs-click/
+  "mkdocs-gen-files==0.5.*",      # https://pypi.org/project/mkdocs-gen-files/
+  "mkdocs-literate-nav==0.6.*",   # https://pypi.org/project/mkdocs-literate-nav/
+  "mkdocs-open-in-new-tab==1.*",  # https://pypi.org/project/mkdocs-open-in-new-tab/
+  "mkdocs-section-index==0.3.*",  # https://pypi.org/project/mkdocs-section-index/
+  "toml>=0.10.2",
+  "termynal>=0.12.2",
+  "ruff>=0.8.6",
+  "bump2version>=1.0.1",
 ]
 
 [project.urls]
@@ -109,44 +109,45 @@ line-length = 120
 fix = true
 [tool.ruff.lint]
 select = [
-    # flake8-2020
-    "YTT",
-    # flake8-bandit
-    "S",
-    # flake8-bugbear
-    "B",
-    # flake8-builtins
-    "A",
-    # flake8-comprehensions
-    "C4",
-    # flake8-debugger
-    "T10",
-    # flake8-simplify
-    "SIM",
-    # isort
-    "I",
-    # mccabe
-    "C90",
-    # pycodestyle
-    "E", "W",
-    # pyflakes
-    "F",
-    # pygrep-hooks
-    "PGH",
-    # pyupgrade
-    "UP",
-    # ruff
-    "RUF",
-    # tryceratops
-    "TRY",
+  # flake8-2020
+  "YTT",
+  # flake8-bandit
+  "S",
+  # flake8-bugbear
+  "B",
+  # flake8-builtins
+  "A",
+  # flake8-comprehensions
+  "C4",
+  # flake8-debugger
+  "T10",
+  # flake8-simplify
+  "SIM",
+  # isort
+  "I",
+  # mccabe
+  "C90",
+  # pycodestyle
+  "E",
+  "W",
+  # pyflakes
+  "F",
+  # pygrep-hooks
+  "PGH",
+  # pyupgrade
+  "UP",
+  # ruff
+  "RUF",
+  # tryceratops
+  "TRY",
 ]
 ignore = [
-    # LineTooLong
-    "E501",
-    # DoNotAssignLambda
-    "E731",
-    # Too compelx
-    "C901",
+  # LineTooLong
+  "E501",
+  # DoNotAssignLambda
+  "E731",
+  # Too compelx
+  "C901",
 ]
 
 [tool.ruff.lint.isort]
@@ -161,7 +162,14 @@ force-to-top = ["tasks._env", "tasks._logger"]
 #ignore = ["DEP003"]
 
 [tool.deptry.per_rule_ignores]
-DEP004 = ["rich", "icecream", "invoke", "environs", "mkdocs_gen_files", "toml"] # only in dev
+DEP004 = [
+  "rich",
+  "icecream",
+  "invoke",
+  "environs",
+  "mkdocs_gen_files",
+  "toml",
+] # only in dev
 DEP003 = ["hut_services"] # transitive dependencies
 DEP002 = ["types-xmltodict", "types-python-slugify"] # not used
 

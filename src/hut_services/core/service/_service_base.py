@@ -126,18 +126,21 @@ class BaseService(t.Generic[THutSourceSchema]):
         self,
         date: datetime.datetime | datetime.date | t.Literal["now"] | None = None,
         days: int | None = None,
-        source_ids: list[int] | None = None,
+        source_ids: list[int | str] | None = None,
         lang: str = "de",
-    ) -> dict[int, HutBookingsSchema]:
+        request_interval: float | None = None,
+    ) -> dict[int | str, HutBookingsSchema]:
         """Get bookings for a list of huts.
 
         Args:
             date: Start daye for the bookings
             days: Duration in days
             source_ids: A list of ids to return (source id, not the hut id), if set to `None` all are returned
+            lang: Language for the response
+            request_interval: Interval between requests (if each huts needs a request)
 
         Returns:
-            A dictionary with the bookings (key = soruce id).
+            A dictionary with the bookings (key = source id).
         """
         raise self.MethodNotImplementedError(self, "get_bookings")
 
