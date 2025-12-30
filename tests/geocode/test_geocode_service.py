@@ -1,16 +1,16 @@
 import pytest
 
 from hut_services.core.schema.geo import LocationSchema
-from hut_services.geocode.service import GeocodeService, geocode_service
+from hut_services.geocode.service import geocode_service
 
-
-def test_geocode_get_location() -> None:
-    service = GeocodeService()
-    name = "Almagellerhuette"
-    coord = service.get_location_by_name(name)
-    assert coord, "Nothing returned"
-    assert pytest.approx(coord.lat, rel=0.01) == 46.1076
-    assert pytest.approx(coord.lon, rel=0.01) == 8.007716
+# Blocked by github
+# def test_geocode_get_location() -> None:
+#    service = GeocodeService()
+#    name = "Almagellerhuette"
+#    coord = service.get_location_by_name(name)
+#    assert coord, "Nothing returned"
+#    assert pytest.approx(coord.lat, rel=0.01) == 46.1076
+#    assert pytest.approx(coord.lon, rel=0.01) == 8.007716
 
 
 def test_geocode_get_elevations() -> None:
