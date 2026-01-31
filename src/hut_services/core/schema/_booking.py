@@ -45,13 +45,13 @@ class PlacesSchema(BaseSchema):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def occupancy_steps(self) -> float:
+    def occupancy_steps(self) -> int:
         steps_fine = round(self.occupancy_percent / 10) * 10
         if self.occupancy_percent > 0 and self.occupancy_percent < 5:
             steps_fine = 10
         elif self.occupancy_percent < 100 and self.occupancy_percent > 95:
             steps_fine = 90
-        return steps_fine
+        return int(steps_fine)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
