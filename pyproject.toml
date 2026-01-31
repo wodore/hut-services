@@ -40,6 +40,7 @@ dependencies = [
   "dateparser==1.*",          # https://pypi.org/project/dateparser/
   "requests==2.*",            # https://pypi.org/project/requests/
   "bs4>=0.0.2,<1.0",          # https://pypi.org/project/bs4/
+  "pyproj>=3.0.0",            # https://pypi.org/project/pyproj/
 ]
 
 [dependency-groups]
