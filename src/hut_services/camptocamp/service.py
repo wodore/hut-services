@@ -6,19 +6,8 @@ import logging
 import typing as t
 from time import sleep
 
-try:
-    from pyproj import Transformer
-except ImportError:
-    Transformer: type[object] | None = None  # type: ignore[no-redef]
-
-try:
-    import httpx
-
-    USE_HTTPX = True
-except ImportError:
-    import requests
-
-    USE_HTTPX = False
+import httpx
+from pyproj import Transformer
 
 from hut_services.camptocamp.schema import (
     CamptocampApiResponse,
@@ -62,19 +51,14 @@ def camptocamp_detail_request(
     detail_url = f"{url}/{document_id}"
 
     try:
-        if USE_HTTPX:
-            r = httpx.get(detail_url, params=params, timeout=30)
-            r.raise_for_status()
-            logger.debug(f"Request detail URL: {r.url}")
-        else:
-            r = requests.get(detail_url, params=params, timeout=30)  # type: ignore[assignment]
-            r.raise_for_status()
-            logger.debug(f"Request detail URL: {r.url}")
+        r = httpx.get(detail_url, params=params, timeout=30)
+        r.raise_for_status()
+        logger.debug(f"Request detail URL: {r.url}")
 
         data = r.json()
 
-        # Parse the geometry coordinates from projected to lat/lon if we have pyproj
-        if Transformer is not None and "geometry" in data and "geom" in data["geometry"]:
+        # Parse the geometry coordinates from projected to lat/lon
+        if "geometry" in data and "geom" in data["geometry"]:
             try:
                 transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
                 geom_str = data["geometry"]["geom"]
@@ -90,13 +74,11 @@ def camptocamp_detail_request(
 
         return CamptocampDocument(**data)
 
-    except Exception as e:
-        if (USE_HTTPX and isinstance(e, httpx.HTTPError)) or (
-            not USE_HTTPX and isinstance(e, requests.exceptions.RequestException)
-        ):
-            logger.exception(f"HTTP error occurred fetching detail for {document_id}")
-        else:
-            logger.exception(f"Error fetching detail data for document {document_id}")
+    except httpx.HTTPError:
+        logger.exception(f"HTTP error occurred fetching detail for {document_id}")
+        return None
+    except Exception:
+        logger.exception(f"Error fetching detail data for document {document_id}")
         return None
 
 
@@ -138,43 +120,36 @@ def camptocamp_request(
 
     # Make request
     try:
-        if USE_HTTPX:
-            r = httpx.get(url, params=params, timeout=30)
-            r.raise_for_status()
-        else:
-            r = requests.get(url, params=params, timeout=30)  # type: ignore[assignment]
-            r.raise_for_status()
+        r = httpx.get(url, params=params, timeout=30)
+        r.raise_for_status()
         logger.debug(f"Request URL: {r.url}")
 
         data = r.json()
 
-        # Parse the geometry coordinates from projected to lat/lon if we have pyproj
-        if Transformer is not None:
-            transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
+        # Parse the geometry coordinates from projected to lat/lon
+        transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
 
-            for doc in data.get("documents", []):
-                if "geometry" in doc and "geom" in doc["geometry"]:
-                    try:
-                        geom_str = doc["geometry"]["geom"]
-                        geom_data = json.loads(geom_str)
-                        if geom_data.get("type") == "Point" and "coordinates" in geom_data:
-                            # Convert from Web Mercator to WGS84
-                            x, y = geom_data["coordinates"]
-                            lon, lat = transformer.transform(x, y)
-                            geom_data["coordinates"] = [lon, lat]
-                            doc["geometry"]["geom"] = json.dumps(geom_data)
-                    except (json.JSONDecodeError, KeyError) as e:
-                        logger.warning(f"Failed to convert coordinates for document {doc.get('document_id')}: {e}")
+        for doc in data.get("documents", []):
+            if "geometry" in doc and "geom" in doc["geometry"]:
+                try:
+                    geom_str = doc["geometry"]["geom"]
+                    geom_data = json.loads(geom_str)
+                    if geom_data.get("type") == "Point" and "coordinates" in geom_data:
+                        # Convert from Web Mercator to WGS84
+                        x, y = geom_data["coordinates"]
+                        lon, lat = transformer.transform(x, y)
+                        geom_data["coordinates"] = [lon, lat]
+                        doc["geometry"]["geom"] = json.dumps(geom_data)
+                except (json.JSONDecodeError, KeyError) as e:
+                    logger.warning(f"Failed to convert coordinates for document {doc.get('document_id')}: {e}")
 
         return CamptocampApiResponse(**data)
 
-    except Exception as e:
-        if (USE_HTTPX and isinstance(e, httpx.HTTPError)) or (
-            not USE_HTTPX and isinstance(e, requests.exceptions.RequestException)
-        ):
-            logger.exception("HTTP error occurred")
-        else:
-            logger.exception("Error fetching data from Camptocamp")
+    except httpx.HTTPError:
+        logger.exception("HTTP error occurred")
+        return CamptocampApiResponse(documents=[])
+    except Exception:
+        logger.exception("Error fetching data from Camptocamp")
         return CamptocampApiResponse(documents=[])
 
 
@@ -216,9 +191,12 @@ class CamptocampService(BaseService[CamptocampHutSource]):
         """
         logger.info(f"Getting Camptocamp data from {self.request_url}")
 
-        # Request data from API
+        # Camptocamp API supports multiple waypoint types in one request
+        # Format: wtyp=bivouac,hut,gite,shelter,camp_site,base_camp
+        waypoint_types = "bivouac,hut,gite,shelter,camp_site,base_camp"
+
         response = camptocamp_request(
-            url=self.request_url, waypoint_type="hut", limit=limit, offset=offset, bbox=bbox, **kwargs
+            url=self.request_url, waypoint_type=waypoint_types, limit=limit, offset=offset, bbox=bbox, **kwargs
         )
 
         huts = []
@@ -296,13 +274,13 @@ class CamptocampService(BaseService[CamptocampHutSource]):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
+    logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
 
     # Test the service
     service = CamptocampService()
 
     # Test with a small limit
-    limit = 5
+    limit = 50
     huts = service.get_huts_from_source(limit=limit)
 
     for hut_source in huts:

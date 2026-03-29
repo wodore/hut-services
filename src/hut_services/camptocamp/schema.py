@@ -160,16 +160,12 @@ class CamptocampHut0Convert(BaseHutConverterSchema[CamptocampDocument]):
         trans = TranslationSchema()
 
         # Map camptocamp language codes to our schema
+        # Only include languages supported by TranslationSchema (de, en, fr, it)
         lang_mapping = {
             "fr": "fr",
             "de": "de",
             "en": "en",
             "it": "it",
-            "es": "es",
-            "ca": "ca",
-            "eu": "eu",
-            "zh": "zh",
-            "sl": "sl",
         }
 
         for locale in self.source_data.locales:
@@ -197,11 +193,6 @@ class CamptocampHut0Convert(BaseHutConverterSchema[CamptocampDocument]):
             "de": "de",
             "en": "en",
             "it": "it",
-            "es": "es",
-            "ca": "ca",
-            "eu": "eu",
-            "zh": "zh",
-            "sl": "sl",
         }
 
         for locale in self.source_data.locales:
@@ -339,16 +330,39 @@ class CamptocampHut0Convert(BaseHutConverterSchema[CamptocampDocument]):
     @property
     def hut_type(self) -> HutTypeSchema:
         """Guess hut type based on waypoint_type and other info."""
-        default_type = HutTypeEnum.hut  # Default to hut
+        # Map Camptocamp waypoint types to OSM-like tags
+        waypoint_type = self.source_data.waypoint_type or "hut"
 
-        # Could potentially use waypoint_type or other fields to determine
-        # For now, use the guess function
+        # Map Camptocamp types to OSM tourism tags for better type detection
+        osm_tag_map = {
+            "bivouac": "wilderness_hut",
+            "hut": "alpine_hut",
+            "gite": "hostel",
+            "shelter": "shelter",
+            "camp_site": "camp_site",
+            "base_camp": "alpine_hut",
+        }
+
+        osm_tag = osm_tag_map.get(waypoint_type, "")
+
+        # Determine default based on waypoint type
+        default_map = {
+            "bivouac": HutTypeEnum.bivouac,
+            "hut": HutTypeEnum.hut,
+            "gite": HutTypeEnum.hostel,
+            "shelter": HutTypeEnum.shelter,
+            "camp_site": HutTypeEnum.camping,
+            "base_camp": HutTypeEnum.hut,
+        }
+        default_type = default_map.get(waypoint_type, HutTypeEnum.hut)
+
         return guess_hut_type(
             name=self.name.i18n or "",
             default=default_type,
             capacity=self.capacity,
             elevation=self.location.ele,
             operator=None,  # Camptocamp doesn't provide SAC/DAV operator info
+            osm_tag=osm_tag,
         )
 
     @computed_field  # type: ignore[prop-decorator]
@@ -364,5 +378,7 @@ class CamptocampHut0Convert(BaseHutConverterSchema[CamptocampDocument]):
         """Get contact information."""
         phone = self.source_data.phone or self.source_data.phone_custodian
         if phone:
-            return [ContactSchema(phone=phone)]
+            # Truncate phone number to max 30 characters (ContactSchema constraint)
+            phone_truncated = phone[:30] if len(phone) > 30 else phone
+            return [ContactSchema(phone=phone_truncated)]
         return []
