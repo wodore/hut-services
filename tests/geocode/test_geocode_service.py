@@ -13,6 +13,7 @@ from hut_services.geocode.service import geocode_service
 #    assert pytest.approx(coord.lon, rel=0.01) == 8.007716
 
 
+@pytest.mark.skip(reason="open-elevation.com certificate expired 2026-09-20 (external provider outage)")
 def test_geocode_get_elevations() -> None:
     service = geocode_service
     location = LocationSchema(lat=47.0, lon=11.1)
