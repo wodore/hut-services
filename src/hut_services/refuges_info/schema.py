@@ -62,7 +62,7 @@ class _Coord(BaseModel):
     alt: float
     long: float
     lat: float
-    precision: dict[str, str]
+    precision: dict[str, str | int]
 
 
 class _ValeurNom(BaseModel):
@@ -105,12 +105,23 @@ class _SiteOfficiel(_ValeurNom):
     url: str | None
 
 
-class _PlacesMatelas(_ValeurNom):
+class _PlacesMatelas(BaseModel):
+    """Mattress places. `valeur` is a number in current API responses."""
+
+    nom: str
+    valeur: int | str | None
     nb: int | None
 
 
+class _Places(BaseModel):
+    """Sleeping places. `valeur` is a number in current API responses."""
+
+    nom: str
+    valeur: int | str | None
+
+
 class _InfoComp(BaseModel):
-    site_officiel: _SiteOfficiel
+    site_officiel: _SiteOfficiel | None = None
     manque_un_mur: _ValeurNom
     cheminee: _ValeurNom
     poele: _ValeurNom
@@ -132,7 +143,7 @@ class _RefugesInfoFeatureProperties(BaseModel):
     sym: str
     coord: _Coord
     hut_type: _Type = Field(..., alias="type")
-    places: _ValeurNom
+    places: _Places
     etat: _Etat
     date: _Date
     remarque: _ValeurNom
@@ -176,7 +187,7 @@ class RefugesInfoFeatureCollection(FeatureCollection):
     generator: str
     copyright_by: str = Field(..., alias="copyright")
     timestamp: str
-    size: str
+    size: int | str
     features: list[RefugesInfoFeature]
 
 
@@ -262,7 +273,8 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def url(self) -> str:
-        return self._props.info_comp.site_officiel.url or ""
+        official_site = self._props.info_comp.site_officiel
+        return (official_site.url or "") if official_site else ""
 
     @computed_field  # type: ignore[prop-decorator]
     @property
