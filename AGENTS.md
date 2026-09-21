@@ -20,17 +20,15 @@ Python package (`uv`, src-layout under `src/hut_services/`) providing services t
 ## Release flow
 
 1. Branch `release_vX.Y.Z` from `main` (predecessor style: `release_V0.1.2`).
-2. Generate changelog + bump version:
-   - Automatic: `inv release` (git-cliff `--bump` + `bump2version --new-version`).
-     It computes the next version **only from conventional-commit syntax in commit
-     messages** (`fix:` → patch, `feat:` → minor, `feat!:` → major).
-     **PR labels (e.g. `BREAKING`) do NOT affect the version bump** — they only
-     group the changelog. Plain-sentence squash titles carry no bump signal → patch.
-   - Override for a specific version (e.g. breaking change in 0.x that should bump minor):
-     ```bash
-     GITHUB_TOKEN=... uv run git-cliff -u --tag vX.Y.Z --prepend CHANGELOG.md
-     uv run bump2version --new-version X.Y.Z patch
-     ```
+2. Generate changelog + bump version: `inv release` (git-cliff + bump2version).
+   The bump level comes **from PR labels** of merged, unreleased PRs
+   (via `git-cliff --context`):
+   - `BREAKING` → minor while 0.x (major from 1.0.0 on)
+   - `type:feature` → minor
+   - anything else → patch
+   git-cliff computes the actual version number from the latest tag
+   (`GIT_CLIFF__BUMP__BUMP_TYPE` override; requires git-cliff >= 2.9 and `GITHUB_TOKEN`).
+   No conventional-commit PR titles needed; plain sentences are fine.
 3. **Re-lock**: run `uv lock`. `uv.lock` records the project's own version; CI
    (`uv lock --locked` inside `inv check`) fails without it.
 4. Verify `inv check` green, review `CHANGELOG.md` (`inv release` tells you to).
@@ -43,10 +41,8 @@ Python package (`uv`, src-layout under `src/hut_services/`) providing services t
 
 ## Gotchas
 
-- git-cliff needs `GITHUB_TOKEN` for the remote API (PR titles/labels). Source it
-  before running release commands.
-- `feat!:`/breaking bumps straight to **major** (`v1.0.0` from 0.x). For a minor
-  bump on a breaking change in 0.x, use the explicit `--tag` override above.
+- git-cliff needs `GITHUB_TOKEN` for the remote API (PR titles/labels, bump level).
+  Source it before running release commands.
 - `.bumpversion.cfg` must stay in sync with `pyproject.toml` (`current_version`);
   `bump2version` (via `inv release`) keeps them in sync.
 - Pyright is a dev dependency but is **not** wired into CI; mypy is the type gate.
