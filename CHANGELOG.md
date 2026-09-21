@@ -7,6 +7,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-09-21
+
+#### 🚧 Breaking changes
+- Make PlacesSchema free/total nullable, add free_unknown status ([#22]) - [3f457ef]
+
+#### 🚀 Features
+- Add is_bookable flag to hut schema ([#23]) - [a62d715]
+
+#### 🐛 Fixes
+- Change occupancy_steps return type to int. Remove test_geocode_get_location test (fails on github) ([#20]) - [e4f9f4b]
+
+#### 🩺 Tests
+- Disable test_geocode_get_location because it is blocked by github ([#19]) - [6c7d1eb]
+
+
+[#22]: https://github.com/wodore/hut-services/pull/22
+[3f457ef]: https://github.com/wodore/hut-services/commit/3f457efa8c1aa77d4d704274576371e8529deec4
+
+[#23]: https://github.com/wodore/hut-services/pull/23
+[a62d715]: https://github.com/wodore/hut-services/commit/a62d715e4ea4798b95c033eba2c794c77707e3c0
+
+[#20]: https://github.com/wodore/hut-services/pull/20
+[e4f9f4b]: https://github.com/wodore/hut-services/commit/e4f9f4b61895b00fae56577fc05e0ca134ecb49d
+
+[#19]: https://github.com/wodore/hut-services/pull/19
+[6c7d1eb]: https://github.com/wodore/hut-services/commit/6c7d1eb550c099892bd892f198c6a3a1a733de95
+
+[0.2.0]: https://github.com/wodore/hut-services/compare/v0.1.3..v0.2.0
 ## [0.1.2] - 2025-05-04
 
 #### 🐛 Fixes
