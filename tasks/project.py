@@ -3,6 +3,7 @@ from pathlib import Path
 import toml
 
 from tasks import Ctx, EnvError, echo, env, error, header, info, success, task, warning  # noqa: F401
+from tasks.changelog import _bump_type
 
 
 @task
@@ -51,7 +52,8 @@ def release(
     length: int = -1,
 ):
     """Prepare a release, update CHANGELOG file and bump versions"""
-    new_tag = c.run("git-cliff --bumped-version", hide=True).stdout.strip()
+    bump_env = {"GIT_CLIFF__BUMP__BUMP_TYPE": _bump_type(c)}
+    new_tag = c.run("git-cliff --bumped-version", env=bump_env, hide=True).stdout.strip()
     new_version = new_tag.replace("v", "")
     if dry:
         unreleased = unreleased if length < 0 else False
@@ -65,6 +67,7 @@ def release(
         cl = (
             c.run(
                 f"git-cliff --bump {'--unreleased' if unreleased else ''}",
+                env=bump_env,
                 hide=True,
             )
             .stdout.strip()
@@ -77,7 +80,7 @@ def release(
             echo(f"{line}\n...\n")
         header("Changelog end") if dry else None
     else:
-        cl = c.run("git-cliff --bump -u --prepend CHANGELOG.md", hide=True).stdout.strip().split("\n")
+        cl = c.run("git-cliff --bump -u --prepend CHANGELOG.md", env=bump_env, hide=True).stdout.strip().split("\n")
         c.run(f"bump2version --new-version {new_version} patch")
 
         # only prepend new tag -- this way it is possible to edit it.
@@ -107,7 +110,11 @@ def version(c: Ctx, next: bool = False):  # noqa: A002
         elif "tool" in data and "poetry" in data["tool"] and "version" in data["tool"]["poetry"]:
             version = data["tool"]["poetry"]["version"]
     if next:
-        new_version = c.run("git-cliff --bumped-version", hide=True).stdout.strip().replace("v", "")
+        new_version = (
+            c.run("git-cliff --bumped-version", env={"GIT_CLIFF__BUMP__BUMP_TYPE": _bump_type(c)}, hide=True)
+            .stdout.strip()
+            .replace("v", "")
+        )
         if new_version == version:
             warning("No newer version available")
         echo(new_version)
