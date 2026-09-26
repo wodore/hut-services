@@ -35,16 +35,50 @@ class OccupancyStatusEnum(str, Enum):
     # full = 100
 
 
+class TotalFallback(BaseSchema):
+    """Fallback totals by season mode, used when the booking service does
+    not publish a total: `standard` = guarded-season capacity,
+    `reduced` = off-season (winter room / unattended) capacity. Sources
+    fill it from the hut's published capacities; consumers (e.g.
+    wodore-backend) may OVERWRITE a page-derived total they know to be
+    wrong. A booking-service total, when returned, always wins."""
+
+    standard: int | None = Field(None, description="Total places in the standard (guarded) season.")
+    reduced: int | None = Field(None, description="Total places in the reduced (off) season.")
+
+
 class PlacesSchema(BaseSchema):
     """Free/total places of a hut.
 
     `free`/`total` are `None` when the source does not publish them
     (e.g. bookable days without counts, or counts without totals).
     Occupancy is only computed when both are known and `total > 0`.
+
+    `free_tolerance` (default 0): plus/minus uncertainty on `free` for
+    sources that ESTIMATE free places (e.g. binary-search probing of a
+    people parameter) — the true value lies in
+    [free - tolerance, free + tolerance]. Exact sources keep 0.
+    `total_fallback`: per-season totals for consumers that want a total
+    when the service publishes none (see TotalFallback).
     """
 
     free: int | None = Field(None, description="Free places. None = not published by the source.")
     total: int | None = Field(None, description="Total places. None = not published by the source.")
+    free_tolerance: int = Field(
+        0,
+        ge=0,
+        description="Plus/minus uncertainty on `free` (0 = exact). Estimated sources set e.g. 5 for [free-5, free+5].",
+    )
+    total_fallback: TotalFallback | None = Field(
+        None, description="Per-season fallback totals (standard/reduced) when the source publishes no total."
+    )
+
+    @property
+    def free_range(self) -> tuple[int, int] | None:
+        """([free - tol, free + tol], None when free is unknown)."""
+        if self.free is None:
+            return None
+        return (max(self.free - self.free_tolerance, 0), self.free + self.free_tolerance)
 
     @model_validator(mode="after")
     def _total_at_least_free(self) -> "PlacesSchema":
