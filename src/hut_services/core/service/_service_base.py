@@ -2,7 +2,11 @@ import datetime
 import typing as t
 
 from hut_services import HutSourceSchema, clear_file_cache
-from hut_services.core.schema import HutBookingsSchema, HutSchema
+from hut_services.core.schema import (
+    HutBookingsSchema,
+    HutSchema,
+    TotalFallback,
+)
 from hut_services.core.schema.geo import BBox
 
 THutSourceSchema = t.TypeVar("THutSourceSchema", bound=HutSourceSchema, covariant=True)
@@ -129,6 +133,7 @@ class BaseService(t.Generic[THutSourceSchema]):
         source_ids: list[int | str] | None = None,
         lang: str = "de",
         request_interval: float | None = None,
+        total_fallback: TotalFallback | t.Mapping[int | str, TotalFallback] | None = None,
     ) -> dict[int | str, HutBookingsSchema]:
         """Get bookings for a list of huts.
 
@@ -138,6 +143,12 @@ class BaseService(t.Generic[THutSourceSchema]):
             source_ids: A list of ids to return (source id, not the hut id), if set to `None` all are returned
             lang: Language for the response
             request_interval: Interval between requests (if each huts needs a request)
+            total_fallback: Caller-provided totals that may OVERWRITE scraped
+                page totals — a single `TotalFallback` for all huts or a
+                per-hut mapping keyed by source id (int or str) / slug.
+                Priority: booking-service total > this fallback > hut detail.
+                Sources that publish their own totals ignore it; the field
+                also lands in `PlacesSchema.total_fallback` for consumers.
 
         Returns:
             A dictionary with the bookings (key = source id).
