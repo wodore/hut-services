@@ -172,5 +172,17 @@ class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
+    def is_bookable(self) -> bool:
+        """Whether availability can be fetched for this hut through the
+        source service's online booking system.
+
+        Booking services override this (e.g. only huts with a booking
+        structure); huts of sources without online booking are never
+        bookable.
+        """
+        return False
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
     def extras(self) -> dict[str, Any]:
         return {}

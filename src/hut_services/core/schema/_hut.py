@@ -36,6 +36,8 @@ class HutSchema(BaseSchema):
         open_monthly: Monthly value if open, closed or partially open.
         is_active: Hut is active.
         is_public: Show hut public.
+        is_bookable: Availability can be fetched for this hut via its source
+            service (set by booking services during conversion).
         extras: Additional information to the hut as dictionary.
         source: Short name of source (e.g. 'hrs' for alpsonline.org, or 'sac', 'refuges', ...).
     """
@@ -70,6 +72,14 @@ class HutSchema(BaseSchema):
     open_monthly: OpenMonthlySchema
     is_active: bool = Field(default=True)
     is_public: bool = Field(default=True)
+    is_bookable: bool = Field(
+        default=False,
+        description=(
+            "Whether availability can be fetched for this hut via its source "
+            "service's online booking system (set by booking services during "
+            "conversion, see `BaseHutConverterSchema.is_bookable`)."
+        ),
+    )
     extras: Mapping[str, Any] = Field(default_factory=dict, description="Additional information as dictionary.")
     # source: str = Field(
     #    "", max_length=20, description="Short name of source (e.g. 'hrs' for alpsonline.org, or 'sac', 'refuges', ...)."

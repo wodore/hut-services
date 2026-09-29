@@ -107,7 +107,7 @@ class WikidataService(BaseService[WikidataHutSource]):
             wikidata = wikidata_service.get_entity(qid)
             lon, lat = oh.location.lon_lat if oh.location else (None, None)
             wikidata_hut = WikidataHutSchema(
-                id=qid,
+                wikidata_id=qid,
                 name=oh.name,
                 lat=lat,
                 lon=lon,

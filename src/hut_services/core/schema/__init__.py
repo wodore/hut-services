@@ -1,5 +1,12 @@
 from ._base import BaseSchema
-from ._booking import BookingSchema, HutBookingsSchema, OccupancyStatusEnum, PlacesSchema, ReservationStatusEnum
+from ._booking import (
+    BookingSchema,
+    HutBookingsSchema,
+    OccupancyStatusEnum,
+    PlacesSchema,
+    ReservationStatusEnum,
+    TotalFallback,
+)
 from ._contact import ContactSchema
 from ._hut import HutSchema
 from ._hut_base_converter import BaseHutConverterSchema
@@ -39,4 +46,5 @@ __all__ = [
     "SourceDataSchema",
     "SourcePropertiesSchema",
     "SourceSchema",
+    "TotalFallback",
 ]
