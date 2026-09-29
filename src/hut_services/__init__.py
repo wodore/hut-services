@@ -29,10 +29,7 @@ __all__ = [
     "file_cache",
 ]
 
-try:
-    from httpx import Auth
-except ImportError:
-    Auth: type[object] | None = None  # type: ignore[no-redef]
+from httpx import Auth
 
 from .core.cache import clear_file_cache, file_cache
 from .core.schema import (

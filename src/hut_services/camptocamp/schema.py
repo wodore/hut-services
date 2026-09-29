@@ -1,9 +1,11 @@
 """Camptocamp.org schema for hut data."""
 
+import json
 import logging
 from typing import Any
 
 from pydantic import BaseModel, Field, computed_field
+from pyproj import Transformer
 
 from hut_services import (
     AuthorSchema,
@@ -99,8 +101,6 @@ class CamptocampDocument(SourceDataSchema):
 
     def get_location(self) -> LocationEleSchema:
         """Extract location from geometry."""
-        import json
-
         try:
             geom_data = json.loads(self.geometry.geom)
             if geom_data.get("type") == "Point" and "coordinates" in geom_data:
@@ -110,17 +110,18 @@ class CamptocampDocument(SourceDataSchema):
                 lon = coords[0]
                 lat = coords[1]
 
-                # Check if coordinates seem to be in Web Mercator (values too large for lat/lon)
+                # Check if coordinates are still in Web Mercator (values too large for lat/lon)
                 if abs(lat) > 90 or abs(lon) > 180:
-                    # Need conversion but don't have pyproj here
-                    logger.warning(f"Coordinates appear to be in projected system for document {self.document_id}")
-                    return LocationEleSchema(lon=None, lat=None, ele=self.elevation)
+                    transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
+                    lon, lat = transformer.transform(lon, lat)
+                    logger.debug(f"Converted Web Mercator coordinates for document {self.document_id}")
 
                 return LocationEleSchema(lon=lon, lat=lat, ele=self.elevation)
         except (json.JSONDecodeError, KeyError, IndexError):
             logger.exception(f"Failed to parse geometry for document {self.document_id}")
 
-        return LocationEleSchema(lon=None, lat=None, ele=self.elevation)
+        logger.warning(f"No usable coordinates for document {self.document_id}")
+        return LocationEleSchema(lat=0, lon=0, ele=self.elevation)
 
     def get_locale(self, lang: str) -> CamptocampLocale | None:
         """Get locale for specific language."""
