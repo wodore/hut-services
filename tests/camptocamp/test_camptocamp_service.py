@@ -60,6 +60,26 @@ def test_camptocamp_service_convert_dict_online(
         assert type(converted) is HutSchema
 
 
+def test_camptocamp_service_photos_online(service: CamptocampService) -> None:
+    """Photos can be fetched on request, and are skipped when not requested."""
+    hut_sources_ = service.get_huts_from_source(limit=1, fetch_details=True)
+    if not hut_sources_:
+        pytest.skip("Camptocamp API not usable from this environment, skipping")
+    hut = service.convert(hut_sources_[0], include_photos=True)
+    assert type(hut) is HutSchema
+    if hut_sources_[0].source_data is not None and hut_sources_[0].source_data.get_image_ids():
+        assert len(hut.photos) > 0
+    for p in hut.photos:
+        assert p.raw_url
+        assert p.url
+        assert p.width > 0
+        assert p.height > 0
+        assert p.licenses
+        assert p.source is not None
+    hut_no_photos = service.convert(hut_sources_[0], include_photos=False)
+    assert hut_no_photos.photos == []
+
+
 def test_camptocamp_service_location(hut_sources: list[CamptocampHutSource]) -> None:
     """Locations from the source data are valid WGS84 coordinates."""
     for h in hut_sources:

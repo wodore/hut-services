@@ -26,6 +26,8 @@ from hut_services import (
 )
 from hut_services.core.guess import guess_hut_type
 
+from .utils import get_images
+
 logger = logging.getLogger(__name__)
 
 
@@ -129,6 +131,15 @@ class CamptocampDocument(SourceDataSchema):
             if locale.lang == lang:
                 return locale
         return None
+
+    def get_image_ids(self) -> list[int]:
+        """Get image document ids from the associated images."""
+        if not self.associations:
+            return []
+        images = self.associations.get("images", [])
+        if not isinstance(images, list):
+            return []
+        return [img["document_id"] for img in images if isinstance(img, dict) and "document_id" in img]
 
 
 class CamptocampProperties(SourcePropertiesSchema):
@@ -303,11 +314,10 @@ class CamptocampHut0Convert(BaseHutConverterSchema[CamptocampDocument]):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def photos(self) -> list[PhotoSchema]:
-        """Get photos - to be implemented with image API."""
-        # TODO: Implement fetching photos from camptocamp API
-        # The API endpoint would be something like:
-        # https://api.camptocamp.org/images?w={document_id}
-        return []
+        """Get photos associated with this hut from camptocamp.org."""
+        if self.include_photos is False:
+            return []
+        return get_images(tuple(self.source_data.get_image_ids()))
 
     @computed_field  # type: ignore[prop-decorator]
     @property
