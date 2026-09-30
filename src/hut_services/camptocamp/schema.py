@@ -180,9 +180,18 @@ class CamptocampHut0Convert(BaseHutConverterSchema[CamptocampDocument]):
             "it": "it",
         }
 
+        matched = False
         for locale in self.source_data.locales:
             if locale.lang in lang_mapping:
                 setattr(trans, lang_mapping[locale.lang], locale.title)
+                matched = True
+
+        if not matched:
+            # Keep the original name even if its language is not supported (de, en, fr, it),
+            # same convention as the osm/wikidata converters.
+            original = self.source_data.get_name()
+            if original:
+                trans.de = original
 
         # i18n is automatically computed by TranslationSchema property
         # It returns the first available translation in order: de, en, fr, it
@@ -212,6 +221,14 @@ class CamptocampHut0Convert(BaseHutConverterSchema[CamptocampDocument]):
                 setattr(trans, lang_mapping[locale.lang], locale.description)
             elif locale.lang in lang_mapping and locale.summary:
                 setattr(trans, lang_mapping[locale.lang], locale.summary)
+
+        if not (trans.de or trans.en or trans.fr or trans.it):
+            # Keep the original description even if its language is not supported (de, en, fr, it).
+            for locale in self.source_data.locales:
+                text = locale.description or locale.summary
+                if text:
+                    trans.de = text
+                    break
 
         return trans
 
