@@ -6,6 +6,7 @@ from hut_services.camptocamp.schema import (
     CamptocampHut0Convert,
     CamptocampLocale,
 )
+from hut_services.core.schema import AnswerEnum
 
 
 def _doc(lang: str, title: str, summary: str | None = None) -> CamptocampDocument:
@@ -39,6 +40,18 @@ def test_convert_description_unsupported_locale() -> None:
         source_data=_doc("sl", "Koča na Pesku", summary="Lepa koča v Sloveniji"), include_photos=False
     ).get_hut()
     assert hut.description.i18n == "Lepa koča v Sloveniji"
+
+
+def test_convert_open_monthly() -> None:
+    """Opening months are parsed from the free text access period."""
+    doc = _doc("fr", "Cabane Hollandia")
+    doc.locales[0].access_period = "Mi-mars à fin mai et juillet à début septembre"
+    hut = CamptocampHut0Convert(source_data=doc, include_photos=False).get_hut()
+    assert hut.open_monthly[3] is AnswerEnum.yesish
+    assert hut.open_monthly[4] is AnswerEnum.yes
+    assert hut.open_monthly[6] is AnswerEnum.unknown
+    assert hut.open_monthly[9] is AnswerEnum.yesish
+    assert hut.open_monthly.url == "https://www.camptocamp.org/waypoints/1931266"
 
 
 def test_convert_url_and_source_link() -> None:

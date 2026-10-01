@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, computed_field
 from pyproj import Transformer
 
 from hut_services import (
+    AnswerEnum,
     AuthorSchema,
     BaseHutConverterSchema,
     BaseHutSourceSchema,
@@ -17,6 +18,7 @@ from hut_services import (
     HutTypeSchema,
     LicenseSchema,
     LocationEleSchema,
+    OpenMonthlySchema,
     OwnerSchema,
     PhotoSchema,
     SourceDataSchema,
@@ -26,6 +28,7 @@ from hut_services import (
 )
 from hut_services.core.guess import guess_hut_type
 
+from .open_period import parse_open_months
 from .utils import get_images
 
 logger = logging.getLogger(__name__)
@@ -390,6 +393,20 @@ class CamptocampHut0Convert(BaseHutConverterSchema[CamptocampDocument]):
             operator=None,  # Camptocamp doesn't provide SAC/DAV operator info
             osm_tag=osm_tag,
         )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def open_monthly(self) -> OpenMonthlySchema:
+        """Opening months parsed from the (free text) access period."""
+        months: dict[int, AnswerEnum] = {}
+        for locale in self.source_data.locales:
+            if locale.access_period:
+                months = parse_open_months(locale.access_period)
+                if months:
+                    break
+        data: dict[str, Any] = {"url": f"https://www.camptocamp.org/waypoints/{self.source_data.document_id}"}
+        data.update({f"month_{month:02d}": value for month, value in months.items()})
+        return OpenMonthlySchema(**data)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
