@@ -339,10 +339,8 @@ class CamptocampHut0Convert(BaseHutConverterSchema[CamptocampDocument]):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def url(self) -> str:
-        """Get URL if available."""
-        if hasattr(self.source_data, "url") and self.source_data.url:
-            return self.source_data.url
-        return f"https://www.camptocamp.org/waypoints/{self.source_data.document_id}"
+        """Hut website if available (the camptocamp page link is in `source`)."""
+        return self.source_data.url or ""
 
     @computed_field  # type: ignore[prop-decorator]
     @property

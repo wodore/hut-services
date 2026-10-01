@@ -45,9 +45,9 @@ def test_camptocamp_service_hut_online(huts: list[HutSchema]) -> None:
     for h in huts:
         assert type(h) is HutSchema
         assert h.name.i18n
-        assert h.url
         assert h.source is not None
         assert h.source.name == "camptocamp"
+        assert h.source.url
 
 
 def test_camptocamp_service_convert_dict_online(

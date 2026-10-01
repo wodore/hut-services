@@ -41,6 +41,18 @@ def test_convert_description_unsupported_locale() -> None:
     assert hut.description.i18n == "Lepa koča v Sloveniji"
 
 
+def test_convert_url_and_source_link() -> None:
+    """`url` is the hut website only (or empty); the camptocamp page link lives in `source`."""
+    hut = CamptocampHut0Convert(source_data=_doc("sl", "Koča na Pesku"), include_photos=False).get_hut()
+    assert hut.url == ""
+    assert hut.source is not None
+    assert hut.source.url == "https://www.camptocamp.org/waypoints/1931266"
+    doc = _doc("sl", "Koča na Pesku")
+    doc.url = "https://example.com"
+    hut2 = CamptocampHut0Convert(source_data=doc, include_photos=False).get_hut()
+    assert hut2.url == "https://example.com"
+
+
 def test_convert_web_mercator_location() -> None:
     """Leftover Web Mercator coordinates are converted to WGS84 (x=913125, y=5850123 -> ~46.43N 8.20E)."""
     hut = CamptocampHut0Convert(source_data=_doc("sl", "Koča na Pesku"), include_photos=False).get_hut()
