@@ -348,51 +348,64 @@ class CamptocampHut0Convert(BaseHutConverterSchema[CamptocampDocument]):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def capacity(self) -> CapacitySchema:
-        """Get capacity information."""
-        # Use the capacity field directly if available
-        capacity_open = self.source_data.capacity
-        capacity_staffed = self.source_data.capacity_staffed
+        """Get capacity information.
 
-        return CapacitySchema(open=capacity_open, closed=capacity_staffed)
+        Camptocamp's `capacity` is the unstaffed (winter room) number and
+        `capacity_staffed` the staffed one: only huts with a staffed capacity
+        have a second, smaller number for the closed season.
+        """
+        if self.source_data.capacity_staffed is not None:
+            return CapacitySchema(open=self.source_data.capacity_staffed, closed=self.source_data.capacity)
+        return CapacitySchema(open=self.source_data.capacity)
 
     @computed_field(alias="type")  # type: ignore[prop-decorator]
     @property
     def hut_type(self) -> HutTypeSchema:
         """Guess hut type based on waypoint_type and other info."""
-        # Map Camptocamp waypoint types to OSM-like tags
         waypoint_type = self.source_data.waypoint_type or "hut"
 
-        # Map Camptocamp types to OSM tourism tags for better type detection
-        osm_tag_map = {
-            "bivouac": "wilderness_hut",
-            "hut": "alpine_hut",
-            "gite": "hostel",
-            "shelter": "shelter",
-            "camp_site": "camp_site",
-            "base_camp": "alpine_hut",
-        }
+        if waypoint_type == "bivouac":
+            # camptocamp's 'bivouac' is authoritative:
+            # do not let the name/elevation heuristics override it.
+            hut_type = HutTypeSchema(open=HutTypeEnum.bivouac)
+        else:
+            # Map Camptocamp types to OSM-like tags for better type detection
+            osm_tag_map = {
+                "hut": "alpine_hut",
+                "gite": "hostel",
+                "shelter": "shelter",
+                "camp_site": "camp_site",
+                "base_camp": "alpine_hut",
+            }
+            osm_tag = osm_tag_map.get(waypoint_type, "")
 
-        osm_tag = osm_tag_map.get(waypoint_type, "")
+            # Determine default based on waypoint type
+            default_map = {
+                "gite": HutTypeEnum.hostel,
+                "shelter": HutTypeEnum.shelter,
+                "camp_site": HutTypeEnum.camping,
+                "base_camp": HutTypeEnum.hut,
+            }
+            default_type = default_map.get(waypoint_type, HutTypeEnum.hut)
 
-        # Determine default based on waypoint type
-        default_map = {
-            "bivouac": HutTypeEnum.bivouac,
-            "hut": HutTypeEnum.hut,
-            "gite": HutTypeEnum.hostel,
-            "shelter": HutTypeEnum.shelter,
-            "camp_site": HutTypeEnum.camping,
-            "base_camp": HutTypeEnum.hut,
-        }
-        default_type = default_map.get(waypoint_type, HutTypeEnum.hut)
+            hut_type = guess_hut_type(
+                name=self.name.i18n or "",
+                default=default_type,
+                capacity=self.capacity,
+                elevation=self.location.ele,
+                operator=None,  # Camptocamp doesn't provide SAC/DAV operator info
+                osm_tag=osm_tag,
+            )
 
-        return guess_hut_type(
-            name=self.name.i18n or "",
-            default=default_type,
-            capacity=self.capacity,
-            elevation=self.location.ele,
-            operator=None,  # Camptocamp doesn't provide SAC/DAV operator info
-            osm_tag=osm_tag,
-        )
+        # A hut that is only open part of the year needs a reduced (closed) type for the
+        # rest of the year: use the one guessed from the smaller winter capacity, and
+        # 'unknown' if there is no second, smaller capacity number.
+        if hut_type.if_closed is None:
+            open_monthly = self.open_monthly
+            known_months = [m for m in range(1, 13) if open_monthly[m] != AnswerEnum.unknown]
+            if 0 < len(known_months) < 12:
+                hut_type.if_closed = HutTypeEnum.unknown
+        return hut_type
 
     @computed_field  # type: ignore[prop-decorator]
     @property
