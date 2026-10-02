@@ -18,6 +18,7 @@ def _doc(
     capacity: int | None = None,
     capacity_staffed: int | None = None,
     access_period: str | None = None,
+    custodianship: str | None = None,
 ) -> CamptocampDocument:
     return CamptocampDocument(
         document_id=1931266,
@@ -28,6 +29,7 @@ def _doc(
         waypoint_type=waypoint_type,
         capacity=capacity,
         capacity_staffed=capacity_staffed,
+        custodianship=custodianship,
     )
 
 
@@ -70,6 +72,29 @@ def test_convert_seasonal_without_second_capacity() -> None:
     doc = _doc("fr", "Cabane Test", waypoint_type="hut", elevation=2400, access_period="juillet à septembre")
     hut = CamptocampHut0Convert(source_data=doc, include_photos=False).get_hut()
     assert hut.hut_type.if_closed is HutTypeEnum.unknown
+
+
+def test_convert_gite_is_bhotel_closed_when_wardened() -> None:
+    """A gite is a 'bhotel' and 'gardé, fermé hors gardiennage' means closed otherwise (waypoint 1933757)."""
+    doc = _doc(
+        "fr",
+        "Refuge de Becchi Rossi",
+        waypoint_type="gite",
+        elevation=1900,
+        access_period="Je pense que la route est fermée l'hiver (?)",
+        custodianship="accessible_when_wardened",
+    )
+    hut = CamptocampHut0Convert(source_data=doc, include_photos=False).get_hut()
+    assert hut.hut_type.if_open is HutTypeEnum.bhotel
+    assert hut.hut_type.if_closed is HutTypeEnum.closed
+
+
+def test_convert_hotel_like_seasonal_closed() -> None:
+    """bhotel, hostel and hotel simply close outside their season."""
+    doc = _doc("fr", "Gîte du Test", waypoint_type="gite", elevation=1900, access_period="juillet à septembre")
+    hut = CamptocampHut0Convert(source_data=doc, include_photos=False).get_hut()
+    assert hut.hut_type.if_open is HutTypeEnum.bhotel
+    assert hut.hut_type.if_closed is HutTypeEnum.closed
 
 
 def test_convert_year_round_no_reduced_type() -> None:

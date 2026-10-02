@@ -21,13 +21,6 @@ from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
 from hut_services.core.service import BaseService
 
-if __name__ == "__main__":  # only for testing
-    from rich import print as rprint  # noqa: F401, RUF100
-    from rich.traceback import install
-
-    install(show_locals=False)
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -274,6 +267,10 @@ class CamptocampService(BaseService[CamptocampHutSource]):
 
 
 if __name__ == "__main__":
+    from rich import print as rprint
+    from rich.traceback import install
+
+    install(show_locals=False)
     logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
 
     # Test the service

@@ -364,10 +364,11 @@ class CamptocampHut0Convert(BaseHutConverterSchema[CamptocampDocument]):
         """Guess hut type based on waypoint_type and other info."""
         waypoint_type = self.source_data.waypoint_type or "hut"
 
-        if waypoint_type == "bivouac":
-            # camptocamp's 'bivouac' is authoritative:
-            # do not let the name/elevation heuristics override it.
-            hut_type = HutTypeSchema(open=HutTypeEnum.bivouac)
+        if waypoint_type in ("bivouac", "gite"):
+            # camptocamp's 'bivouac' and 'gite' are authoritative:
+            # do not let the name/elevation heuristics override them.
+            authoritative = {"bivouac": HutTypeEnum.bivouac, "gite": HutTypeEnum.bhotel}
+            hut_type = HutTypeSchema(open=authoritative[waypoint_type])
         else:
             # Map Camptocamp types to OSM-like tags for better type detection
             osm_tag_map = {
@@ -397,14 +398,22 @@ class CamptocampHut0Convert(BaseHutConverterSchema[CamptocampDocument]):
                 osm_tag=osm_tag,
             )
 
-        # A hut that is only open part of the year needs a reduced (closed) type for the
-        # rest of the year: use the one guessed from the smaller winter capacity, and
-        # 'unknown' if there is no second, smaller capacity number.
+        # A hut that is only open part of the year needs a reduced (closed) type for the rest
+        # of the year: 'closed' when camptocamp says it is only accessible when wardened, or for
+        # hotel-like types that simply close off-season; otherwise the type guessed from the
+        # smaller winter capacity, and 'unknown' if there is no second capacity number.
         if hut_type.if_closed is None:
-            open_monthly = self.open_monthly
-            known_months = [m for m in range(1, 13) if open_monthly[m] != AnswerEnum.unknown]
-            if 0 < len(known_months) < 12:
-                hut_type.if_closed = HutTypeEnum.unknown
+            if self.source_data.custodianship == "accessible_when_wardened":
+                # 'gardé, fermé hors gardiennage': closed outside the warden season.
+                hut_type.if_closed = HutTypeEnum.closed
+            else:
+                open_monthly = self.open_monthly
+                known_months = [m for m in range(1, 13) if open_monthly[m] != AnswerEnum.unknown]
+                seasonal = 0 < len(known_months) < 12
+                if seasonal and hut_type.if_open in (HutTypeEnum.bhotel, HutTypeEnum.hostel, HutTypeEnum.hotel):
+                    hut_type.if_closed = HutTypeEnum.closed
+                elif seasonal:
+                    hut_type.if_closed = HutTypeEnum.unknown
         return hut_type
 
     @computed_field  # type: ignore[prop-decorator]

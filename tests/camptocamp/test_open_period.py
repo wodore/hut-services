@@ -57,3 +57,9 @@ def test_compound_ranges() -> None:
 def test_unparseable_stays_empty() -> None:
     assert _m("ouvert sur réservation") == {}
     assert _m("") == {}
+
+
+def test_closed_word_skips_segment() -> None:
+    """'fermé(e)' in a segment is about closure, not opening (waypoint 1933757)."""
+    assert _m("Je pense que la route est fermée l'hiver (?)") == {}
+    assert _m("route fermée l'hiver, ouvert de juin à septembre") == {6: "yes", 7: "yes", 8: "yes", 9: "yes"}

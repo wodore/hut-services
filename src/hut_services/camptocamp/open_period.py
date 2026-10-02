@@ -54,7 +54,7 @@ _ALL_YEAR = (
     "tutto l anno",
     "sempre",
 )
-_CLOSED = re.compile(r"\b(ferme|closed|chiuso|gesperrt)\b")
+_CLOSED = re.compile(r"\b(fermee?|closed|chiuso|gesperrt)\b")
 _SEASON_SUMMER = re.compile(r"\b(ete|summer|sommer|estate)\b")
 _SEASON_WINTER = re.compile(r"\b(hiver|winter|inverno)\b")
 
