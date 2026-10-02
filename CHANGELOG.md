@@ -7,6 +7,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-10-02
+
+#### 🚀 Features
+- Add camptocamp.org hut service ([#21]) - [43960a1]
+
+
+[#21]: https://github.com/wodore/hut-services/pull/21
+[43960a1]: https://github.com/wodore/hut-services/commit/43960a1af2c5705ecc7d5d0464b5ff226cf3fec8
+
+[0.5.0]: https://github.com/wodore/hut-services/compare/v0.4.0..v0.5.0
 ## [0.4.0] - 2026-09-26
 
 #### 🚀 Features
