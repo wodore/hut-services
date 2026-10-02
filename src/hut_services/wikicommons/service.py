@@ -14,7 +14,6 @@ import requests
 from bs4 import BeautifulSoup, Tag
 from pydantic import ValidationError
 from pydantic_string_url import HttpUrl
-from rich import print as rprint
 
 from hut_services import (
     AuthorSchema,
@@ -26,14 +25,6 @@ from hut_services import (
 )
 from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
-
-if __name__ == "__main__":  # only for testing
-    from icecream import ic  # type: ignore[import-untyped] # noqa: F401, RUF100 , PGH003
-    from rich import print as rprint  # noqa: F401, RUF100
-    from rich.traceback import install
-
-    install(show_locals=False)
-
 
 logger = logging.getLogger(__name__)
 
@@ -256,6 +247,10 @@ class WikicommonsService:
 wikicommons_service = WikicommonsService()
 
 if __name__ == "__main__":
+    from rich import print as rprint
+    from rich.traceback import install
+
+    install(show_locals=False)
     logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
 
     # File names to query

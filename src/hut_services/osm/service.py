@@ -12,13 +12,6 @@ from hut_services.core.schema.geo import BBox
 from hut_services.core.service import BaseService
 from hut_services.osm.schema import OsmHut0Convert, OsmHutSchema, OsmHutSource, OsmProperties
 
-if __name__ == "__main__":  # only for testing
-    from rich import print as rprint  # noqa: F401, RUF100
-    from rich.traceback import install
-
-    install(show_locals=False)
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -117,6 +110,11 @@ class OsmService(BaseService[OsmHutSource]):
 if __name__ == "__main__":
     logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
     limit = 10
+    from rich import print as rprint
+    from rich.traceback import install
+
+    install(show_locals=False)
+
     wikidata_photos = True
     osm_service = OsmService()
     # osm_service.get_wikidata_photos = wikidata_photos

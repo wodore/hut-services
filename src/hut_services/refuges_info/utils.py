@@ -8,10 +8,6 @@ from bs4 import BeautifulSoup
 from PIL import ImageFile
 from pydantic_string_url import HttpUrl
 
-# if __name__ == "__main__":
-from rich import print as rprint
-
-# from numpy import imag
 from hut_services.core.cache import file_cache
 from hut_services.core.schema._license import LicenseSchema, SourceSchema
 from hut_services.core.schema._photo import PhotoSchema
@@ -103,5 +99,7 @@ def get_original_images(hut_id: str) -> list[PhotoSchema]:
 
 
 if __name__ == "__main__":
+    from rich import print as rprint
+
     photos = get_original_images("9819")
     rprint(photos)
