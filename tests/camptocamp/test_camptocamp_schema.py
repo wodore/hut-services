@@ -97,6 +97,28 @@ def test_convert_hotel_like_seasonal_closed() -> None:
     assert hut.hut_type.if_closed is HutTypeEnum.closed
 
 
+def test_convert_attended_small_hut_stays_hut() -> None:
+    """A small but wardened hut is a hut, not a selfhut (waypoint 1933719 FALC)."""
+    doc = _doc(
+        "fr",
+        "FALC",
+        waypoint_type="hut",
+        elevation=2120,
+        capacity_staffed=20,
+        custodianship="accessible_when_wardened",
+    )
+    hut = CamptocampHut0Convert(source_data=doc, include_photos=False).get_hut()
+    assert hut.hut_type.if_open is HutTypeEnum.hut
+    assert hut.hut_type.if_closed is HutTypeEnum.closed
+
+
+def test_convert_unattended_small_hut_is_selfhut() -> None:
+    """An unattended small hut is still guessed as selfhut."""
+    doc = _doc("fr", "FALC", waypoint_type="hut", elevation=2120, capacity=20)
+    hut = CamptocampHut0Convert(source_data=doc, include_photos=False).get_hut()
+    assert hut.hut_type.if_open is HutTypeEnum.selfhut
+
+
 def test_convert_year_round_no_reduced_type() -> None:
     """A hut open all year has no reduced type."""
     doc = _doc("fr", "Cabane Test", waypoint_type="hut", elevation=2400, access_period="Toute l'année")

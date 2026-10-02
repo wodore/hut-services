@@ -36,6 +36,7 @@ def guess_hut_type(
     osm_tag: str | None = "",
     missing_walls: int | None | str = 0,
     open_monthly: OpenMonthlySchema | None = None,
+    attended: bool = False,
     # ) -> HutType:
 ) -> HutTypeSchema:
     """Guess hut type based on some input parameters.
@@ -47,7 +48,8 @@ def guess_hut_type(
         operator: who is operating the hut
         osm_tag: osm toursm tag
         missing_walls: missing_walls value from refuges.info
-        open_monthly: list which month it is open"""
+        open_monthly: list which month it is open
+        attended: the hut is staffed/wardened; do not downgrade small attended huts to selfhut"""
     # check if every month is closed
     is_closed = False if open_monthly is None else all(o == AnswerEnum.no for o in open_monthly)
     # if capacity is not None and capacity.if_open == 0 and capacity.if_closed in (0, None):
@@ -82,7 +84,7 @@ def guess_hut_type(
         slug_open = HutTypeEnum.camping
     elif osm_tag == "wilderness_hut" or missing_walls > 0:
         slug_open = HutTypeEnum.bivouac if elevation > 2500 and not _possible_hut else HutTypeEnum.shelter
-    elif (capacity_open == capacity_closed or capacity_open < 22) and capacity_open > 0:
+    elif not attended and (capacity_open == capacity_closed or capacity_open < 22) and capacity_open > 0:
         slug_open = HutTypeEnum.bivouac if elevation > 2500 and not _possible_hut else HutTypeEnum.selfhut
     elif _possible_hut:
         slug_open = HutTypeEnum.hut

@@ -396,6 +396,7 @@ class CamptocampHut0Convert(BaseHutConverterSchema[CamptocampDocument]):
                 elevation=self.location.ele,
                 operator=None,  # Camptocamp doesn't provide SAC/DAV operator info
                 osm_tag=osm_tag,
+                attended=self.source_data.capacity_staffed is not None,
             )
 
         # A hut that is only open part of the year needs a reduced (closed) type for the rest
