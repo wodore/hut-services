@@ -19,14 +19,6 @@ from hut_services.wikidata.schema import (
     WikidataProperties,
 )
 
-if __name__ == "__main__":  # only for testing
-    from icecream import ic  # type: ignore[import-untyped] # noqa: F401, RUF100 , PGH003
-    from rich import print as rprint  # noqa: F401, RUF100
-    from rich.traceback import install
-
-    install(show_locals=False)
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -146,6 +138,11 @@ wikidata_service = WikidataService()
 
 if __name__ == "__main__":
     logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
+    from rich import print as rprint
+    from rich.traceback import install
+
+    install(show_locals=False)
+
     # qid = "Q42157530"
     # qid = "Q887175"  # Bluemlisalp
     # service = WikidataService()

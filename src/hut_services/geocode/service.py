@@ -13,14 +13,6 @@ from hut_services.geocode.schema import GeocodeHut0Convert, GeocodeHutSchema, Ge
 
 # from hut_services.core.schema.geo import BBox
 
-if __name__ == "__main__":  # only for testing
-    from icecream import ic  # type: ignore[import-untyped] # noqa: F401, RUF100 , PGH003
-    from rich import print as rprint  # noqa: F401, RUF100
-    from rich.traceback import install
-
-    install(show_locals=False)
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -134,6 +126,11 @@ geocode_service = GeocodeService()
 
 if __name__ == "__main__":
     logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
+    from rich import print as rprint
+    from rich.traceback import install
+
+    install(show_locals=False)
+
     # qid = "Q42157530"
     # qid = "Q887175"  # Bluemlisalp
     # service = WikidataService()

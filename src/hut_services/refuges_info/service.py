@@ -19,13 +19,6 @@ from hut_services.refuges_info.schema import (
     RefugesInfoHutSource,
 )
 
-if __name__ == "__main__":  # only for testing
-    from rich import print as rprint  # noqa: F401, RUF100
-    from rich.traceback import install
-
-    install(show_locals=False)
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -130,6 +123,11 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
+    from rich import print as rprint
+    from rich.traceback import install
+
+    install(show_locals=False)
+
     logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
     logging.getLogger("chardet").setLevel(logging.WARNING)
     logging.getLogger("tzlocal").setLevel(logging.WARNING)
