@@ -36,7 +36,7 @@ dependencies = [
   "joblib==1.*",              # https://pypi.org/project/joblib/
   "defusedxml>=0.7.1,<1.0",   # https://pypi.org/project/defusedxml/
   "pydantic-string-url==1.*", # https://pypi.org/project/pydantic-string-url/
-  "pillow>=10.4.0,<12.0",     # https://pypi.org/project/Pillow/
+  "pillow>=10.4.0,<13.0",     # https://pypi.org/project/Pillow/
   "dateparser==1.*",          # https://pypi.org/project/dateparser/
   "requests==2.*",            # https://pypi.org/project/requests/
   "bs4>=0.0.2,<1.0",          # https://pypi.org/project/bs4/
