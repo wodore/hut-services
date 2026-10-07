@@ -26,6 +26,7 @@ from hut_services import (
     HutTypeSchema,
     LicenseSchema,
     OwnerSchema,
+    PhotoSchema,
     SourceDataSchema,
     SourcePropertiesSchema,
     SourceSchema,
@@ -33,6 +34,8 @@ from hut_services import (
 )
 from hut_services.core.guess import guess_hut_type
 from hut_services.core.schema.geo import LocationEleSchema
+
+from .images import get_hut_images, resolve_page_url
 
 logger = logging.getLogger(__name__)
 
@@ -144,6 +147,7 @@ class DocNzProperties(SourcePropertiesSchema):
     region: str | None = Field(None, description="DOC region name")
     place: str | None = Field(None, description="place / conservation area name")
     hut_category: str | None = Field(None, description="hut category by DOC (e.g. 'Serviced', 'Basic')")
+    page_uuid: str | None = Field(None, description="uuid of the hut's source link (/link/<uuid>.aspx)")
 
 
 class DocNzHutSource(BaseHutSourceSchema[DocNzHutSchema, DocNzProperties]):
@@ -210,7 +214,7 @@ def get_hut_category(category: str | None) -> HutCategoryEnum:
 class DocNzHut0Convert(BaseHutConverterSchema[DocNzHutSchema]):
     """Converter for the DOC NZ source (version 0)."""
 
-    include_photos: bool = False
+    include_photos: bool = True
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -259,7 +263,25 @@ class DocNzHut0Convert(BaseHutConverterSchema[DocNzHutSchema]):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def url(self) -> str:
-        return self.source_data.static_link or ""
+        """Real hut page URL (the `/link/<uuid>.aspx` source link redirects to it)."""
+        if self.source_data.static_link:
+            try:
+                return t.cast("str", resolve_page_url(self.source_data.static_link))
+            except Exception:  # network failure -> no url
+                return ""
+        return ""
+
+    @computed_field()  # type: ignore[prop-decorator]
+    @property
+    def photos(self) -> list[PhotoSchema]:
+        """Hero + gallery photos from the hut page (CC/DOC licensed only,
+        third party (c) images are skipped; one cached page request per hut)."""
+        if not self.include_photos or not self.source_data.static_link:
+            return []
+        try:
+            return t.cast("list[PhotoSchema]", get_hut_images(self.source_data.static_link))
+        except Exception:  # photos are optional
+            return []
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -385,6 +407,7 @@ class DocNzCampsiteProperties(SourcePropertiesSchema):
     region: str | None = Field(None, description="DOC region name")
     place: str | None = Field(None, description="place / conservation area name")
     campsite_category: str | None = Field(None, description="category by DOC (e.g. 'Standard', 'Backcountry')")
+    page_uuid: str | None = Field(None, description="uuid of the campsite's source link (/link/<uuid>.aspx)")
 
 
 class DocNzCampsiteHutSource(BaseHutSourceSchema[DocNzCampsiteSchema, DocNzCampsiteProperties]):

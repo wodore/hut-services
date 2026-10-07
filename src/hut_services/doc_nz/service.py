@@ -19,6 +19,7 @@ keeps them far below the API's rate limit (100 req/s).
 
 import logging
 import os
+import re
 import typing as t
 
 import httpx
@@ -188,6 +189,13 @@ def doc_nz_alerts_request(api_url: str, api_key: str, kind: str = "huts") -> lis
 DocNzAnySource: t.TypeAlias = DocNzHutSource | DocNzCampsiteHutSource
 
 
+def _page_uuid(static_link: str | None) -> str | None:
+    """uuid of a `/link/<uuid>.aspx` source link."""
+    if static_link and (m := re.search(r"/link/([0-9a-f]{32})\.aspx", static_link)):
+        return m.group(1)
+    return None
+
+
 def _enrich_hut(api_url: str, api_key: str, hut: DocNzHutSchema) -> DocNzHutSchema:
     """Merge DOC API v2 hut detail fields into a layer hut (best effort)."""
     raw = doc_nz_detail_request(api_url, hut.asset_id, api_key, kind="huts")
@@ -300,7 +308,11 @@ class DocNzService(BaseService[DocNzAnySource]):
                     source_id=hut.get_id(),
                     location=hut.get_location(),
                     source_properties=DocNzProperties(
-                        bookable=hut.bookable, region=hut.region, place=hut.place, hut_category=hut.hut_category
+                        bookable=hut.bookable,
+                        region=hut.region,
+                        place=hut.place,
+                        hut_category=hut.hut_category,
+                        page_uuid=_page_uuid(hut.static_link),
                     ),
                 )
             )
@@ -322,6 +334,7 @@ class DocNzService(BaseService[DocNzAnySource]):
                             region=campsite.region,
                             place=campsite.place,
                             campsite_category=campsite.campsite_category,
+                            page_uuid=_page_uuid(campsite.static_link),
                         ),
                     )
                 )
@@ -441,6 +454,7 @@ class DocNzCampsiteService(BaseService[DocNzCampsiteHutSource]):
                         region=campsite.region,
                         place=campsite.place,
                         campsite_category=campsite.campsite_category,
+                        page_uuid=_page_uuid(campsite.static_link),
                     ),
                 )
             )

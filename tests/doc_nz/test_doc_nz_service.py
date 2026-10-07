@@ -116,8 +116,14 @@ def test_doc_nz_category_mapping() -> None:
     assert get_hut_category(None) == Cat.unknown
 
 
-def test_doc_nz_convert_offline() -> None:
+def test_doc_nz_convert_offline(monkeypatch: pytest.MonkeyPatch) -> None:
     """Conversion to HutSchema works with base layer data only."""
+    from hut_services.doc_nz import schema as doc_schema
+
+    monkeypatch.setattr(
+        doc_schema, "resolve_page_url", lambda s: "https://www.doc.govt.nz/parks-and-recreation/test/huts/mcintosh-hut/"
+    )
+    monkeypatch.setattr(doc_schema, "get_hut_images", lambda s: [])
     hut_src = DocNzHutSource(
         name="Mcintosh Hut",
         source_data=DocNzHutSchema.model_validate(CANNED_FEATURE),
@@ -129,7 +135,7 @@ def test_doc_nz_convert_offline() -> None:
     assert type(hut) is HutSchema
     assert hut.name.en == "Mcintosh Hut"
     assert hut.country_code == "nz"
-    assert hut.url.startswith("https://www.doc.govt.nz/link/")
+    assert hut.url == "https://www.doc.govt.nz/parks-and-recreation/test/huts/mcintosh-hut/"
     assert hut.source is not None and hut.source.ident == "100040290"
     assert hut.license is not None and hut.license.slug == "CC-BY-4.0"
     assert hut.owner is not None and "Department of Conservation" in hut.owner.name
@@ -245,3 +251,58 @@ def test_doc_nz_service_convert_dict_online(hut_sources: list[DocNzHutSource], s
         hut = service.convert(h_dict)
         assert type(hut) is HutSchema
         assert hut.name.en != ""
+
+
+def test_doc_nz_parse_page_images() -> None:
+    """Hero + gallery parsing with license rules ((c) skipped, CC/DOC kept)."""
+    from hut_services.doc_nz import images
+
+    canned = (
+        '<section class="doc-main-layout__hero">'
+        '<div class="hero__top-caption"><doc-image-caption caption="Ellis Hut">'
+        '<div class="hide-content"><span><b>Image: </b></span> Ian Wright <span> | &copy;</span></div>'
+        "</doc-image-caption></div>"
+        '<picture><source srcset="/thumbs/hero/contentassets/08c2bcb0cd644a7fa0f375cea329ae2c/ellis-hut-1067.jpg"/>'
+        '<img src="/thumbs/hero/contentassets/08c2bcb0cd644a7fa0f375cea329ae2c/ellis-hut-1067.jpg" alt="Ellis Hut.">'
+        "</picture></section>"
+        '<doc-fancy-image src="/globalassets/images/a/view-1200.jpg" '
+        'caption="Mt Cook from Mueller Hut Image: Robert Gr&ouml;tschel | &lt;a href=&quot; /footer-links/copyright/&quot; target=&quot;_blank&quot;&gt;DOC&lt;/a&gt;">'
+        '<doc-image alt="Mt Cook from Mueller Hut. " src="/thumbs/gallery/globalassets/images/a/view-1200.jpg">'
+        "</doc-image></doc-fancy-image>"
+        '<doc-fancy-image src="/globalassets/images/b/winter-1200.jpg" '
+        'caption="Mueller Hut winter Image: Jamie Blyth | &lt;a href=&quot;https://creativecommons.org/licenses/by-nc/4.0/&quot; target=&quot;_blank&quot;&gt;Creative Commons&lt;/a&gt;">'
+        '<doc-image alt="Mueller Hut winter." src="/thumbs/gallery/globalassets/images/b/winter-1200.jpg">'
+        "</doc-image></doc-fancy-image>"
+        '<doc-fancy-image src="/globalassets/images/c/protected-1200.jpg" '
+        'caption="Some photo Image: A Photographer">'
+        '<doc-image alt="Some photo." src="/thumbs/gallery/globalassets/images/c/protected-1200.jpg">'
+        "</doc-image></doc-fancy-image>"
+    )
+    photos = images.parse_page_images(
+        canned, "https://www.doc.govt.nz/real/huts/test-hut/", "https://www.doc.govt.nz/link/abc.aspx"
+    )
+    assert len(photos) == 2  # hero ((c)) and unlicensed gallery photo skipped
+    doc_photo, cc_photo = photos
+    assert doc_photo.raw_url == "https://www.doc.govt.nz/globalassets/images/a/view-1200.jpg"
+    assert doc_photo.licenses[0].slug == "CC-BY-4.0"  # DOC = Crown CC BY 4.0
+    assert doc_photo.author is not None and doc_photo.author.name == "Robert Grötschel"
+    assert doc_photo.caption.en == "Mt Cook from Mueller Hut"
+    assert str(doc_photo.url) == "https://www.doc.govt.nz/real/huts/test-hut/"
+    assert cc_photo.licenses[0].slug == "CC-BY-NC-4.0"  # exact CC license from the link
+    assert cc_photo.author is not None and cc_photo.author.name == "Jamie Blyth"
+
+
+def test_doc_nz_photos_online() -> None:
+    """Live: the Mueller Hut page yields photos with licenses."""
+    import pytest as _pytest
+
+    from hut_services.doc_nz.images import get_hut_images
+
+    try:
+        photos = get_hut_images("https://www.doc.govt.nz/link/ca3bf5da422f462781809b92757e7278.aspx")
+    except Exception as e:  # network/HTTP errors -> skip
+        _pytest.skip(f"doc.govt.nz not reachable: {e!r}")
+    assert len(photos) >= 2
+    for photo in photos:
+        assert photo.licenses, "every included photo must carry a license"
+    assert any(p.licenses[0].slug == "CC-BY-4.0" for p in photos)
