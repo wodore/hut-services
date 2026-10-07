@@ -44,7 +44,7 @@ CANNED_FEATURE: dict = {
 #: Same hut enriched with DOC API v2 detail fields (offline test data).
 CANNED_DETAIL: dict = {
     "numberOfBunks": 10,
-    "hutCategory": "Standard hut",
+    "hutCategory": "Standard",
     "proximityToRoadEnd": "2 hr walk",
     "introduction": "A standard six-bunk hut in the Landsborough.",
     "status": "OPEN",
@@ -94,17 +94,19 @@ def test_doc_nz_schema_detail_merge() -> None:
     detail = DocNzHutSchema.model_validate({**CANNED_FEATURE, **CANNED_DETAIL})
     assert hut.number_of_bunks is None
     assert detail.number_of_bunks == 10
-    assert detail.hut_category == "Standard hut"
+    assert detail.hut_category == "Standard"
     assert detail.introduction is not None and detail.introduction.startswith("A standard")
 
 
 def test_doc_nz_category_mapping() -> None:
     assert get_hut_category(None) == Cat.unknown
-    assert get_hut_category("Great Walks Hut") == Cat.great_walk
-    assert get_hut_category("Serviced Hut") == Cat.serviced
-    assert get_hut_category("Standard hut") == Cat.standard
-    assert get_hut_category("Basic Hut") == Cat.basic
-    assert get_hut_category("Bivvy or Basic hut") == Cat.bivvy
+    # real API vocabulary (sampled 2026-10): "Great Walk", "Serviced", "Standard", "Basic/bivvies"
+    assert get_hut_category("Great Walk") == Cat.great_walk
+    assert get_hut_category("Serviced") == Cat.serviced
+    assert get_hut_category("Standard") == Cat.standard
+    assert get_hut_category("Basic/bivvies") == Cat.basic  # combined category, NOT bivvy
+    assert get_hut_category("Bivvy or Basic hut") == Cat.bivvy  # standalone bivvy category
+    assert get_hut_category(None) == Cat.unknown
 
 
 def test_doc_nz_convert_offline() -> None:
@@ -139,12 +141,22 @@ def test_doc_nz_convert_enriched_offline() -> None:
     assert hut.description.en is not None and hut.description.en.startswith("A standard")
     assert hut.author is not None
     assert hut.is_active is True
-    assert hut.extras["hut_category"] == "Standard hut"
+    assert hut.extras["hut_category"] == "Standard"
+
+
+def test_doc_nz_convert_basic_bivvies_offline() -> None:
+    """'Basic/bivvies' stays selfhut (the model's bivouac implies altitude, NZ bivs have none)."""
+    basic = {**CANNED_FEATURE, "hutCategory": "Basic/bivvies", "numberOfBunks": 4}
+    hut = DocNzHut0Convert(source_data=DocNzHutSchema.model_validate(basic), include_photos=False).get_hut()
+    assert hut.hut_type.if_open.value == "selfhut"
+    biv_named = {**basic, "name": "Candlesticks Biv"}
+    hut2 = DocNzHut0Convert(source_data=DocNzHutSchema.model_validate(biv_named), include_photos=False).get_hut()
+    assert hut2.hut_type.if_open.value == "selfhut"  # guess: elevation < 2200 -> selfhut
 
 
 def test_doc_nz_convert_great_walk_offline() -> None:
     """Great Walk huts convert to attended 'hut' type."""
-    great_walk = {**CANNED_FEATURE, "hutCategory": "Great Walks Hut", "numberOfBunks": 40, "bookable": "Yes"}
+    great_walk = {**CANNED_FEATURE, "hutCategory": "Great Walk", "numberOfBunks": 40, "bookable": "Yes"}
     hut = DocNzHut0Convert(source_data=DocNzHutSchema.model_validate(great_walk), include_photos=False).get_hut()
     assert hut.hut_type.if_open.value == "hut"
     assert hut.capacity.if_open == 40

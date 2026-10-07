@@ -120,7 +120,7 @@ def doc_nz_detail_request(api_url: str, asset_id: int, api_key: str, _delay: flo
         timeout=15,
     )
     time.sleep(_delay)
-    if r.status_code in (403, 404):
+    if r.status_code in (400, 403, 404):
         logger.info(f"DOC API detail for hut {asset_id}: HTTP {r.status_code}")
         return None
     r.raise_for_status()

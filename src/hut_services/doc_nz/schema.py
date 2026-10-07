@@ -184,7 +184,12 @@ DOC_NZ_AUTHOR = AuthorSchema(name="Department of Conservation Te Papa Atawhai", 
 
 
 def get_hut_category(category: str | None) -> HutCategoryEnum:
-    """Map a DOC hut category string (e.g. `"Bivvy or Basic hut"`) to [`HutCategoryEnum`][...]."""
+    """Map a DOC hut category string to [`HutCategoryEnum`][...].
+
+    Observed API vocabulary: `"Great Walk"`, `"Serviced"`, `"Standard"`,
+    `"Basic/bivvies"` (one combined category — bivs stay `selfhut`, the
+    model's `bivouac` implies altitude which NZ bivs do not have).
+    """
     if not category:
         return HutCategoryEnum.unknown
     cat = category.strip().lower()
@@ -192,12 +197,12 @@ def get_hut_category(category: str | None) -> HutCategoryEnum:
         return HutCategoryEnum.great_walk
     if "serviced" in cat:
         return HutCategoryEnum.serviced
-    if "biv" in cat:  # check before "basic": categories like "Bivvy or Basic hut"
+    if "standard" in cat:
+        return HutCategoryEnum.standard
+    if cat.startswith("biv") or "bivouac" in cat:  # standalone bivvy category, NOT "Basic/bivvies"
         return HutCategoryEnum.bivvy
     if "basic" in cat:
         return HutCategoryEnum.basic
-    if "standard" in cat:
-        return HutCategoryEnum.standard
     return HutCategoryEnum.unknown
 
 
