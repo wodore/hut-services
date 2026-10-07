@@ -62,14 +62,6 @@ def _strip_tags(text: str) -> str:
     return html.unescape(re.sub(r"<[^>]+>", "", text)).strip()
 
 
-@file_cache(forever=True)
-def resolve_page_url(static_link: str) -> str:
-    """Resolve a `/link/<uuid>.aspx` source link to the real page URL (redirect)."""
-    r = httpx.head(static_link, follow_redirects=True, timeout=15, headers=_HEADERS)
-    r.raise_for_status()
-    return str(r.url)
-
-
 @file_cache()
 def _fetch_page(static_link: str) -> tuple[str, str]:
     """Fetch a hut page: returns `(real_url, html)` (file-cached)."""

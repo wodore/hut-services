@@ -120,22 +120,21 @@ def test_doc_nz_convert_offline(monkeypatch: pytest.MonkeyPatch) -> None:
     """Conversion to HutSchema works with base layer data only."""
     from hut_services.doc_nz import schema as doc_schema
 
-    monkeypatch.setattr(
-        doc_schema, "resolve_page_url", lambda s: "https://www.doc.govt.nz/parks-and-recreation/test/huts/mcintosh-hut/"
-    )
     monkeypatch.setattr(doc_schema, "get_hut_images", lambda s: [])
     hut_src = DocNzHutSource(
         name="Mcintosh Hut",
         source_data=DocNzHutSchema.model_validate(CANNED_FEATURE),
         source_id="100040290",
         location=DocNzHutSchema.model_validate(CANNED_FEATURE).get_location(),
-        source_properties=DocNzProperties(bookable=False, region="Otago", place="Whakaari", hut_category=None),
+        source_properties=DocNzProperties(
+            bookable=False, region="Otago", place="Whakaari", hut_category=None, page_uuid=None
+        ),
     )
     hut = DocNzHut0Convert(source_data=hut_src.source_data, include_photos=False).get_hut()  # type: ignore[arg-type]
     assert type(hut) is HutSchema
     assert hut.name.en == "Mcintosh Hut"
     assert hut.country_code == "nz"
-    assert hut.url == "https://www.doc.govt.nz/parks-and-recreation/test/huts/mcintosh-hut/"
+    assert hut.url == ""  # DOC huts have no separate-domain website; the doc page lives on source.url
     assert hut.source is not None and hut.source.ident == "100040290"
     assert hut.license is not None and hut.license.slug == "CC-BY-4.0"
     assert hut.owner is not None and "Department of Conservation" in hut.owner.name
@@ -306,3 +305,41 @@ def test_doc_nz_photos_online() -> None:
     for photo in photos:
         assert photo.licenses, "every included photo must carry a license"
     assert any(p.licenses[0].slug == "CC-BY-4.0" for p in photos)
+
+
+def test_doc_nz_get_images_offline(monkeypatch: pytest.MonkeyPatch) -> None:
+    """get_images resolves the assetId to a page link, independent of conversion."""
+    from hut_services.core.schema import PhotoSchema
+    from hut_services.doc_nz import service as doc_service
+
+    canned = PhotoSchema(
+        raw_url="https://www.doc.govt.nz/globalassets/x-1200.jpg",
+        url="https://www.doc.govt.nz/real/huts/x/",
+        source=None,
+        author=None,
+        licenses=[],
+        width=1200,
+        height=800,
+        capture_date=None,
+        comment="",
+    )
+    monkeypatch.setattr(
+        doc_service, "_static_link_for", lambda aid: "https://www.doc.govt.nz/link/abc.aspx" if aid == 42 else None
+    )
+    monkeypatch.setattr(doc_service, "get_hut_images", lambda s: [canned])
+    service = DocNzService()
+    assert service.get_images(42) == [canned]
+    assert service.get_images("42") == [canned]  # str ids accepted
+    assert service.get_images(999) == []  # unknown -> [] (warning logged)
+    assert service.get_images("not-an-id") == []
+
+
+def test_doc_nz_get_images_online() -> None:
+    """Live: Mueller Hut (assetId 100040842) has licensed photos."""
+    service = DocNzService()
+    try:
+        photos = service.get_images(100040842)
+    except OSError as e:
+        pytest.skip(f"DOC not reachable: {e!r}")
+    assert len(photos) >= 2
+    assert all(p.licenses for p in photos)

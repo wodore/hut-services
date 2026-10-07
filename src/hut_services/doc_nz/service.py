@@ -26,10 +26,11 @@ import httpx
 from pydantic import ValidationError
 
 from hut_services.core.cache import file_cache
-from hut_services.core.schema import HutSchema, SourceDataSchema
+from hut_services.core.schema import HutSchema, PhotoSchema, SourceDataSchema
 from hut_services.core.schema.geo import BBox
 from hut_services.core.service import BaseService
 
+from .images import get_hut_images
 from .schema import (
     DocNzCampsite0Convert,
     DocNzCampsiteHutSource,
@@ -189,6 +190,27 @@ def doc_nz_alerts_request(api_url: str, api_key: str, kind: str = "huts") -> lis
 DocNzAnySource: t.TypeAlias = DocNzHutSource | DocNzCampsiteHutSource
 
 
+@file_cache()
+def _static_link_for(asset_id: int) -> str | None:
+    """`staticLink` for an assetId, queried directly from the layers (huts first, then campsites)."""
+    for query_url in (DOC_NZ_FEATURESERVER_URL, DOC_NZ_CAMPSITES_URL):
+        try:
+            r = httpx.get(
+                query_url,
+                params={"where": f"assetId={asset_id}", "outFields": "staticLink", "f": "json", "resultRecordCount": 1},
+                timeout=20,
+            )
+            r.raise_for_status()
+            features = r.json().get("features") or []
+            if features:
+                link = features[0].get("attributes", {}).get("staticLink")
+                if link:
+                    return str(link)
+        except Exception as exc:
+            logger.warning("doc_nz static link lookup for asset %s on %s failed: %r", asset_id, query_url, exc)
+    return None
+
+
 def _page_uuid(static_link: str | None) -> str | None:
     """uuid of a `/link/<uuid>.aspx` source link."""
     if static_link and (m := re.search(r"/link/([0-9a-f]{32})\.aspx", static_link)):
@@ -339,6 +361,34 @@ class DocNzService(BaseService[DocNzAnySource]):
                     )
                 )
         return sources
+
+    def get_images(self, source_id: int | str) -> list[PhotoSchema]:
+        """Hut/campsite page photos for one asset, independent of conversion.
+
+        Use this to import huts without photos and fetch the (license-filtered)
+        images separately: one cached page request per asset plus one partial
+        download per photo. Unknown ids return `[]` (with a warning).
+
+        Args:
+            source_id: DOC assetId (doc_nz source id, int or str).
+
+        Returns:
+            Photos with licenses (CC or DOC/Crown only - third party (c) is skipped).
+        """
+        try:
+            asset_id = int(str(source_id).strip())
+        except ValueError:
+            logger.warning("get_images: source id %r is not an assetId", source_id)
+            return []
+        static_link = _static_link_for(asset_id)
+        if not static_link:
+            logger.warning("get_images: no page link for assetId %s", source_id)
+            return []
+        try:
+            return t.cast("list[PhotoSchema]", get_hut_images(static_link))
+        except Exception as exc:  # photos are optional
+            logger.warning("get_images: fetch failed for assetId %s: %r", source_id, exc)
+            return []
 
     def get_alerts(self) -> list[DocNzHutAlerts]:
         """Get current alerts for all huts from the DOC API v2 (needs an API key).

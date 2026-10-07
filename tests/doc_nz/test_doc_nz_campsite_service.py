@@ -92,7 +92,7 @@ def test_doc_nz_campsite_convert_offline() -> None:
     assert type(hut) is HutSchema
     assert hut.name.en == "Kiosk Creek Campsite"
     assert hut.country_code == "nz"
-    assert hut.url.startswith("https://www.doc.govt.nz/link/")
+    assert hut.url == ""  # no separate-domain website
     assert hut.source is not None and hut.source.ident == "100065488"
     assert hut.license is not None and hut.license.slug == "CC-BY-4.0"
     assert hut.description.en is not None and hut.description.en.startswith("There are spectacular views")

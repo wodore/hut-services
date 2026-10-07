@@ -35,7 +35,7 @@ from hut_services import (
 from hut_services.core.guess import guess_hut_type
 from hut_services.core.schema.geo import LocationEleSchema
 
-from .images import get_hut_images, resolve_page_url
+from .images import get_hut_images
 
 logger = logging.getLogger(__name__)
 
@@ -263,12 +263,11 @@ class DocNzHut0Convert(BaseHutConverterSchema[DocNzHutSchema]):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def url(self) -> str:
-        """Real hut page URL (the `/link/<uuid>.aspx` source link redirects to it)."""
-        if self.source_data.static_link:
-            try:
-                return t.cast("str", resolve_page_url(self.source_data.static_link))
-            except Exception:  # network failure -> no url
-                return ""
+        """External hut website (separate domain) - DOC huts have none, so empty.
+
+        The DOC hut page (source link `/link/<uuid>.aspx`) lives on
+        `source.url`, not here.
+        """
         return ""
 
     @computed_field()  # type: ignore[prop-decorator]
@@ -481,7 +480,8 @@ class DocNzCampsite0Convert(BaseHutConverterSchema[DocNzCampsiteSchema]):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def url(self) -> str:
-        return self.source_data.static_link or ""
+        """External campsite website (separate domain) - DOC campsites have none."""
+        return ""
 
     @computed_field  # type: ignore[prop-decorator]
     @property
