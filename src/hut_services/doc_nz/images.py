@@ -47,28 +47,11 @@ _HERO_IMAGES = re.compile(r'(?:srcset="|src=")(/thumbs/hero/[^"\s]+?\.(?:jpg|jpe
 _FANCY = re.compile(r'<doc-fancy-image\s+src="([^"]+)"\s+caption="([^"]*)"', re.S)
 _FANCY_THUMB = re.compile(r'<doc-image[^>]*src="(/thumbs/gallery/[^"]+)"')
 _CC_URL = re.compile(r"https?://creativecommons\.org/licenses/(?P<code>[a-z0-9-]+)/(?P<ver>\d+\.\d+)/")
-_BODY_TEXT = re.compile(r"<doc-body-text>(.*?)</doc-body-text>", re.S)
 _CONTACTS_PANEL = re.compile(r"<doc-generic-contacts-panel.*?</doc-generic-contacts-panel>", re.S)
 _WEBSITE_ROW = re.compile(
     r'<td\s+class="contactsubHeading"[^>]*>\s*Website:?\s*</td>\s*'
     r'<td\s+class="contactContent"[^>]*>\s*<a[^>]+href="(https?://[^"]+)"',
     re.I | re.S,
-)
-_HREF = re.compile(r'<a[^>]+href="(https?://[^"]+)"[^>]*>(.*?)</a>', re.S)
-_JUNK_DOMAINS = (
-    "doc.govt.nz",
-    "creativecommons.org",
-    "docnz.files.wordpress.com",
-    "episerver.net",
-    "arcgisonline",
-    "google",
-    "youtube.com",
-    "facebook.com",
-    "instagram.com",
-    "twitter.com",
-    "x.com",
-    "linkedin.com",
-    "fonts.gstatic.com",
 )
 
 
@@ -166,6 +149,7 @@ def _photo(
         width=width,
         height=height,
         capture_date=None,
+        comment="",
     )
 
 
@@ -218,32 +202,23 @@ def parse_page_images(html: str, real_url: str, static_link: str) -> list[PhotoS
 
 
 def _extract_website(html: str) -> str:
-    """The hut's own separate-domain website from its page; `""` if none.
+    """The hut's own website from the contact panel's `Website:` row; `""` if none.
 
-    Primary source: the structured contact panel (`Website:` row of
-    `<doc-generic-contacts-panel>`). Fallback: the first external content
-    link inside `<doc-body-text>` blocks (footer/social/CDN boilerplate
-    lives elsewhere, known junk domains are skipped).
+    Only the structured `<doc-generic-contacts-panel>` table counts - no
+    body-text link guessing.
     """
     for panel in _CONTACTS_PANEL.finditer(html):
         m = _WEBSITE_ROW.search(panel.group(0))
         if m:
             return m.group(1)
-    for block in _BODY_TEXT.finditer(html):
-        for m in _HREF.finditer(block.group(1)):
-            url = m.group(1)
-            host = url.split("/")[2].lower().removeprefix("www.")
-            if any(junk in host for junk in _JUNK_DOMAINS):
-                continue
-            return url
     return ""
 
 
 def get_hut_website(static_link: str) -> str:
-    """External hut website (separate domain) parsed from the hut page's
-    contact panel (primary) or body text (fallback). Independent of the
-    photo pipeline - works with `include_photos=False` (own cached page
-    fetch). NOT available through the DOC API (no contact fields there).
+    """External hut website (separate domain) from the hut page's contact
+    panel `Website:` row. Independent of the photo pipeline - works with
+    `include_photos=False` (own cached page fetch). NOT available through
+    the DOC API (no contact fields there).
 
     Raises on fetch errors (nothing broken gets cached; the page itself is
     file-cached, so this only re-runs the cheap extraction). Most DOC huts

@@ -347,17 +347,21 @@ def test_doc_nz_get_images_online() -> None:
 
 
 def test_doc_nz_extract_website() -> None:
-    """External website links come from the page body text; junk domains are skipped."""
+    """Website comes only from the contact panel's Website row."""
     from hut_services.doc_nz.images import _extract_website
 
-    canned = (
-        '<doc-body-text><div><p><a href="https://maps.google.com/maps">Directions</a>. '
-        "Privately owned, managed by Rakiura Maori Lands Trust. "
-        '<a href="https://rmlt.co.nz/hunting/">See the Rakiura Maori Lands Trust website</a>.</p></div></doc-body-text>'
+    contact_panel = (
+        "<doc-generic-contacts-panel><template #content><p><strong>Rakiura Maori Lands Trust</strong></p>"
+        '<table><tbody><tr><td class="contactsubHeading">Website:</td>'
+        '<td class="contactContent"><a href="http://www.rmlt.co.nz/hunting/">www.rmlt.co.nz/hunting/</a></td>'
+        "</tr></tbody></table></template></doc-generic-contacts-panel>"
     )
-    assert _extract_website(canned) == "https://rmlt.co.nz/hunting/"  # google link skipped
-    assert _extract_website("<doc-body-text><p>No links here.</p></doc-body-text>") == ""
-    assert _extract_website("<p>Link outside the body: <a href='https://x.example.com/'>x</a></p>") == ""
+    assert _extract_website(contact_panel) == "http://www.rmlt.co.nz/hunting/"
+    body_only = (
+        '<doc-body-text><div><p><a href="https://rmlt.co.nz/hunting/">See the website</a>.</p></div></doc-body-text>'
+    )
+    assert _extract_website(body_only) == ""  # body-text links are ignored
+    assert _extract_website("<p>No panel, no links.</p>") == ""
 
 
 def test_doc_nz_hut_website_online() -> None:
