@@ -154,6 +154,17 @@ def test_doc_nz_convert_basic_bivvies_offline() -> None:
     assert hut2.hut_type.if_open.value == "selfhut"  # guess: elevation < 2200 -> selfhut
 
 
+def test_doc_nz_convert_closed_status_offline() -> None:
+    """Closed huts report is_active=False (real vocabulary: 'OPEN'/'CLSD')."""
+    closed = {**CANNED_FEATURE, "status": "CLSD"}
+    hut = DocNzHut0Convert(source_data=DocNzHutSchema.model_validate(closed), include_photos=False).get_hut()
+    assert hut.is_active is False
+    open_hut = DocNzHut0Convert(
+        source_data=DocNzHutSchema.model_validate({**CANNED_FEATURE, **CANNED_DETAIL}), include_photos=False
+    ).get_hut()
+    assert open_hut.is_active is True
+
+
 def test_doc_nz_convert_great_walk_offline() -> None:
     """Great Walk huts convert to attended 'hut' type."""
     great_walk = {**CANNED_FEATURE, "hutCategory": "Great Walk", "numberOfBunks": 40, "bookable": "Yes"}

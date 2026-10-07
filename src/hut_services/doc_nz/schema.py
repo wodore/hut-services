@@ -290,7 +290,7 @@ class DocNzHut0Convert(BaseHutConverterSchema[DocNzHutSchema]):
         status = self.source_data.status
         if status is None:
             return True
-        return status.strip().lower() not in ("closed", "removed", "destroyed")
+        return status.strip().lower() not in ("closed", "clsd", "removed", "destroyed")
 
     @computed_field  # type: ignore[prop-decorator]
     @property
