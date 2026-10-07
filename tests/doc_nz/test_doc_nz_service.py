@@ -53,7 +53,9 @@ CANNED_DETAIL: dict = {
 
 @pytest.fixture(scope="module")
 def service() -> DocNzService:
-    return DocNzService(api_key="test-key")  # api_key only used when enrich=True
+    # no fake key: with auto-enrichment a bogus key would fire useless
+    # detail requests (gracefully ignored, but pointless)
+    return DocNzService()
 
 
 @pytest.fixture(scope="module")
@@ -150,7 +152,7 @@ def test_doc_nz_convert_great_walk_offline() -> None:
 
 
 def test_doc_nz_service_enrich_without_key() -> None:
-    """`enrich=True` without an API key raises (explicit opt-in, not a silent fallback)."""
+    """`enrich=True` without an API key raises (explicit demand, not a silent fallback)."""
     no_key_service = DocNzService(api_key=None)
     import os
 

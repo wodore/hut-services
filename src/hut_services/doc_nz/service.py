@@ -6,7 +6,9 @@ ArcGIS FeatureServer, CC-BY 4.0, no authentication) with coordinates, the
 
 Optional enrichment: the official DOC API v2 (free key from
 <https://api.doc.govt.nz>, sent as `x-api-key` header) adds bunk counts,
-hut categories, introductions and a bulk alerts endpoint.
+hut categories, introductions and a bulk alerts endpoint. Used
+automatically whenever a key is configured (`api_key` argument or
+`DOC_NZ_API_KEY` environment variable); opt out with `enrich=False`.
 """
 
 import logging
@@ -154,11 +156,12 @@ class DocNzService(BaseService[DocNzHutSource]):
         huts = service.get_huts(limit=20)  # base layer, no API key needed
         ```
 
-        With detail enrichment (bunks, category, introduction; free key from
-        <https://api.doc.govt.nz>):
+        With detail enrichment (bunks, category, introduction) — done
+        automatically when a key is configured, free key from
+        <https://api.doc.govt.nz>:
         ```python
         service = DocNzService(api_key="...")
-        huts = service.get_huts(limit=20, enrich=True)
+        huts = service.get_huts(limit=20)  # enriched, one cached request per hut
         ```
     """
 
@@ -178,7 +181,7 @@ class DocNzService(BaseService[DocNzHutSource]):
         bbox: BBox | None = None,
         limit: int = 1,
         offset: int = 0,
-        enrich: bool = False,
+        enrich: bool | None = None,
         **kwargs: t.Any,
     ) -> list[DocNzHutSource]:
         """Get huts from the DOC NZ open-data layer.
@@ -188,15 +191,19 @@ class DocNzService(BaseService[DocNzHutSource]):
             limit: Limit (how many entries to retrieve), `0` for all.
             offset: Offset of the request.
             enrich: Fetch detail (bunks, category, introduction, status) from
-                the official DOC API v2 for every hut — needs an API key
-                (`api_key` argument or `DOC_NZ_API_KEY` environment variable)
-                and one request per hut (file-cached).
+                the official DOC API v2 for every hut — one request per hut
+                (file-cached). `None` (default): enrich automatically when an
+                API key is configured (`api_key` argument or `DOC_NZ_API_KEY`
+                environment variable); `True`: require a key (raises without);
+                `False`: never enrich.
 
         Returns:
             Huts from source.
         """
         logger.info(f"get DOC NZ huts from {self.request_url}")
         src_huts = doc_nz_request(request_url=self.request_url, bbox=bbox, limit=limit, offset=offset)
+        if enrich is None:
+            enrich = self.api_key is not None
         if enrich:
             if not self.api_key:
                 msg = "DOC API key required for enrichment: pass `api_key` or set `DOC_NZ_API_KEY`."
