@@ -35,7 +35,7 @@ from hut_services import (
 from hut_services.core.guess import guess_hut_type
 from hut_services.core.schema.geo import LocationEleSchema
 
-from .images import get_hut_images
+from .images import get_hut_images, get_hut_website
 
 logger = logging.getLogger(__name__)
 
@@ -263,11 +263,17 @@ class DocNzHut0Convert(BaseHutConverterSchema[DocNzHutSchema]):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def url(self) -> str:
-        """External hut website (separate domain) - DOC huts have none, so empty.
+        """External hut website (separate domain), parsed from the page body
+        (e.g. the trust managing the hut). Most DOC huts have none -> `""`.
 
         The DOC hut page (source link `/link/<uuid>.aspx`) lives on
         `source.url`, not here.
         """
+        if self.source_data.static_link:
+            try:
+                return t.cast("str", get_hut_website(self.source_data.static_link))
+            except Exception:  # network failure -> no url
+                return ""
         return ""
 
     @computed_field()  # type: ignore[prop-decorator]

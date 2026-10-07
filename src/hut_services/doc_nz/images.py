@@ -47,6 +47,23 @@ _HERO_IMAGES = re.compile(r'(?:srcset="|src=")(/thumbs/hero/[^"\s]+?\.(?:jpg|jpe
 _FANCY = re.compile(r'<doc-fancy-image\s+src="([^"]+)"\s+caption="([^"]*)"', re.S)
 _FANCY_THUMB = re.compile(r'<doc-image[^>]*src="(/thumbs/gallery/[^"]+)"')
 _CC_URL = re.compile(r"https?://creativecommons\.org/licenses/(?P<code>[a-z0-9-]+)/(?P<ver>\d+\.\d+)/")
+_BODY_TEXT = re.compile(r"<doc-body-text>(.*?)</doc-body-text>", re.S)
+_HREF = re.compile(r'<a[^>]+href="(https?://[^"]+)"[^>]*>(.*?)</a>', re.S)
+_JUNK_DOMAINS = (
+    "doc.govt.nz",
+    "creativecommons.org",
+    "docnz.files.wordpress.com",
+    "episerver.net",
+    "arcgisonline",
+    "google",
+    "youtube.com",
+    "facebook.com",
+    "instagram.com",
+    "twitter.com",
+    "x.com",
+    "linkedin.com",
+    "fonts.gstatic.com",
+)
 
 
 def _unescape(text: str) -> str:
@@ -192,6 +209,34 @@ def parse_page_images(html: str, real_url: str, static_link: str) -> list[PhotoS
         if photo:
             photos.append(photo)
     return photos
+
+
+def _extract_website(html: str) -> str:
+    """First external content link from the page body text - a hut's own
+    separate-domain website (e.g. the trust managing it); `""` if none.
+
+    Only links inside `<doc-body-text>` blocks count (footer/social/CDN
+    boilerplate lives elsewhere), and known junk domains are skipped.
+    """
+    for block in _BODY_TEXT.finditer(html):
+        for m in _HREF.finditer(block.group(1)):
+            url = m.group(1)
+            host = url.split("/")[2].lower().removeprefix("www.")
+            if any(junk in host for junk in _JUNK_DOMAINS):
+                continue
+            return url
+    return ""
+
+
+def get_hut_website(static_link: str) -> str:
+    """External hut website (separate domain) parsed from the hut page.
+
+    Raises on fetch errors (nothing broken gets cached; the page itself is
+    file-cached, so this only re-runs the cheap extraction). Most DOC huts
+    have no website -> `""`.
+    """
+    _, html = _fetch_page(static_link)
+    return _extract_website(html)
 
 
 @file_cache()

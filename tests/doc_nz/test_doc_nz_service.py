@@ -121,6 +121,7 @@ def test_doc_nz_convert_offline(monkeypatch: pytest.MonkeyPatch) -> None:
     from hut_services.doc_nz import schema as doc_schema
 
     monkeypatch.setattr(doc_schema, "get_hut_images", lambda s: [])
+    monkeypatch.setattr(doc_schema, "get_hut_website", lambda s: "")
     hut_src = DocNzHutSource(
         name="Mcintosh Hut",
         source_data=DocNzHutSchema.model_validate(CANNED_FEATURE),
@@ -134,7 +135,7 @@ def test_doc_nz_convert_offline(monkeypatch: pytest.MonkeyPatch) -> None:
     assert type(hut) is HutSchema
     assert hut.name.en == "Mcintosh Hut"
     assert hut.country_code == "nz"
-    assert hut.url == ""  # DOC huts have no separate-domain website; the doc page lives on source.url
+    assert hut.url == ""  # no website link in the (patched) page body; the doc page lives on source.url
     assert hut.source is not None and hut.source.ident == "100040290"
     assert hut.license is not None and hut.license.slug == "cc-by-4.0"
     assert hut.owner is not None and "Department of Conservation" in hut.owner.name
@@ -343,3 +344,28 @@ def test_doc_nz_get_images_online() -> None:
         pytest.skip(f"DOC not reachable: {e!r}")
     assert len(photos) >= 2
     assert all(p.licenses for p in photos)
+
+
+def test_doc_nz_extract_website() -> None:
+    """External website links come from the page body text; junk domains are skipped."""
+    from hut_services.doc_nz.images import _extract_website
+
+    canned = (
+        '<doc-body-text><div><p><a href="https://maps.google.com/maps">Directions</a>. '
+        "Privately owned, managed by Rakiura Maori Lands Trust. "
+        '<a href="https://rmlt.co.nz/hunting/">See the Rakiura Maori Lands Trust website</a>.</p></div></doc-body-text>'
+    )
+    assert _extract_website(canned) == "https://rmlt.co.nz/hunting/"  # google link skipped
+    assert _extract_website("<doc-body-text><p>No links here.</p></doc-body-text>") == ""
+    assert _extract_website("<p>Link outside the body: <a href='https://x.example.com/'>x</a></p>") == ""
+
+
+def test_doc_nz_hut_website_online() -> None:
+    """Live: Chew Tobacco Hunters Hut links its manager's website (rmlt.co.nz)."""
+    from hut_services.doc_nz.images import get_hut_website
+
+    try:
+        url = get_hut_website("https://www.doc.govt.nz/link/1b3d9da012a3464688f3ebe4982ec653.aspx")
+    except Exception as e:
+        pytest.skip(f"doc.govt.nz not reachable: {e!r}")
+    assert url == "https://rmlt.co.nz/hunting/"
