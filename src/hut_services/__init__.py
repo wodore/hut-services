@@ -7,6 +7,8 @@ __all__ = [
     "BaseService",
     "CapacitySchema",
     "ContactSchema",
+    "DocNzCampsiteService",
+    "DocNzService",
     "GeocodeService",
     "HutSchema",
     "HutSourceSchema",
@@ -55,6 +57,7 @@ from .core.schema import (
 from .core.schema.geo import LocationEleSchema, LocationSchema
 from .core.schema.locale import TranslationSchema
 from .core.service import BaseService
+from .doc_nz.service import DocNzCampsiteService, DocNzService
 from .geocode import GeocodeService
 from .osm import OsmService
 from .refuges_info import RefugesInfoService

@@ -5,6 +5,7 @@ from hut_services import HutSourceSchema, clear_file_cache
 from hut_services.core.schema import (
     HutBookingsSchema,
     HutSchema,
+    PhotoSchema,
     TotalFallback,
 )
 from hut_services.core.schema.geo import BBox
@@ -103,7 +104,7 @@ class BaseService(t.Generic[THutSourceSchema]):
 
         Args:
             src: Source schema.
-            include_photos: Include photos, some service need additonal requests to get the photos.
+            include_photos: Include photos, some services need additional requests to get the photos.
 
         Returns:
             Converted hut.
@@ -125,6 +126,45 @@ class BaseService(t.Generic[THutSourceSchema]):
         src_huts = self.get_huts_from_source(bbox=bbox, limit=limit, offset=offset, **kwargs)
         huts = [self.convert(h, include_photos=include_photos) for h in src_huts]
         return huts
+
+    def get_images(self, source_id: int | str) -> list[PhotoSchema]:
+        """Get photos for one hut (by source id), independent of conversion.
+
+        Use this to import huts without photos and enrich the images
+        separately. Services without direct image access raise
+        `MethodNotImplementedError` - their photos only come through
+        `convert(include_photos=True)`.
+
+        Args:
+            source_id: Source id of the hut.
+
+        Returns:
+            Photos with licenses.
+        """
+        raise self.MethodNotImplementedError(self, "get_images")
+
+    def get_images_many(self, source_ids: list[int | str], max_workers: int = 8) -> dict[int | str, list[PhotoSchema]]:
+        """Get images for many huts in parallel (bounded thread concurrency).
+
+        Generic default implementation: parallelizes [`get_images`][...]
+        over a `ThreadPoolExecutor` — every service implementing
+        `get_images` inherits this. Per-id results keep the file cache;
+        call it from async code with `asyncio.to_thread` if needed.
+
+        Args:
+            source_ids: Source ids of the huts.
+            max_workers: Upper bound of concurrent requests (be polite to the source).
+
+        Returns:
+            Photos per source id (ids without images map to `[]`).
+        """
+        if not source_ids:
+            return {}
+        from concurrent.futures import ThreadPoolExecutor
+
+        with ThreadPoolExecutor(max_workers=max(1, min(max_workers, len(source_ids)))) as pool:
+            results = list(pool.map(self.get_images, source_ids))
+        return dict(zip(source_ids, results, strict=True))
 
     def get_bookings(
         self,
