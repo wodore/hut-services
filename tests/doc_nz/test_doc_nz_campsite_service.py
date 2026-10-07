@@ -94,7 +94,7 @@ def test_doc_nz_campsite_convert_offline() -> None:
     assert hut.country_code == "nz"
     assert hut.url == ""  # no separate-domain website
     assert hut.source is not None and hut.source.ident == "100065488"
-    assert hut.license is not None and hut.license.slug == "CC-BY-4.0"
+    assert hut.license is not None and hut.license.slug == "cc-by-4.0"
     assert hut.description.en is not None and hut.description.en.startswith("There are spectacular views")
     assert hut.capacity.if_open is None and hut.capacity.if_closed is None  # capacity intentionally not mapped
     assert hut.extras["bookable"] is True

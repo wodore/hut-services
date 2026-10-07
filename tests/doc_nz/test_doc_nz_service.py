@@ -136,7 +136,7 @@ def test_doc_nz_convert_offline(monkeypatch: pytest.MonkeyPatch) -> None:
     assert hut.country_code == "nz"
     assert hut.url == ""  # DOC huts have no separate-domain website; the doc page lives on source.url
     assert hut.source is not None and hut.source.ident == "100040290"
-    assert hut.license is not None and hut.license.slug == "CC-BY-4.0"
+    assert hut.license is not None and hut.license.slug == "cc-by-4.0"
     assert hut.owner is not None and "Department of Conservation" in hut.owner.name
     assert hut.capacity.if_open is None  # bunks need the DOC API
     assert hut.extras["bookable"] is False
@@ -283,11 +283,11 @@ def test_doc_nz_parse_page_images() -> None:
     assert len(photos) == 2  # hero ((c)) and unlicensed gallery photo skipped
     doc_photo, cc_photo = photos
     assert doc_photo.raw_url == "https://www.doc.govt.nz/globalassets/images/a/view-1200.jpg"
-    assert doc_photo.licenses[0].slug == "CC-BY-4.0"  # DOC = Crown CC BY 4.0
+    assert doc_photo.licenses[0].slug == "cc-by-4.0"  # DOC = Crown CC BY 4.0
     assert doc_photo.author is not None and doc_photo.author.name == "Robert Grötschel"
     assert doc_photo.caption.en == "Mt Cook from Mueller Hut"
     assert str(doc_photo.url) == "https://www.doc.govt.nz/real/huts/test-hut/"
-    assert cc_photo.licenses[0].slug == "CC-BY-NC-4.0"  # exact CC license from the link
+    assert cc_photo.licenses[0].slug == "cc-by-nc-4.0"  # exact CC license from the link
     assert cc_photo.author is not None and cc_photo.author.name == "Jamie Blyth"
 
 
@@ -304,7 +304,7 @@ def test_doc_nz_photos_online() -> None:
     assert len(photos) >= 2
     for photo in photos:
         assert photo.licenses, "every included photo must carry a license"
-    assert any(p.licenses[0].slug == "CC-BY-4.0" for p in photos)
+    assert any(p.licenses[0].slug == "cc-by-4.0" for p in photos)
 
 
 def test_doc_nz_get_images_offline(monkeypatch: pytest.MonkeyPatch) -> None:

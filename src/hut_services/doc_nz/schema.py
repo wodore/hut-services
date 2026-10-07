@@ -177,7 +177,7 @@ DOC_NZ_CATEGORY_TYPES: dict[HutCategoryEnum, HutTypeEnum] = {
 }
 
 DOC_NZ_LICENSE = LicenseSchema(
-    slug="CC-BY-4.0",
+    slug="cc-by-4.0",
     url="https://creativecommons.org/licenses/by/4.0/",
     name="Creative Commons Attribution 4.0 International",
 )

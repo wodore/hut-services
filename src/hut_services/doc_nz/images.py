@@ -27,7 +27,7 @@ _HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100
 DOC_SITE = "https://www.doc.govt.nz"
 COPYRIGHT_URL = f"{DOC_SITE}/footer-links/copyright/"
 DOC_CROWN_LICENSE = LicenseSchema(
-    slug="CC-BY-4.0",
+    slug="cc-by-4.0",
     url="https://creativecommons.org/licenses/by/4.0/",
     name="Crown Copyright (Department of Conservation), CC BY 4.0",
 )
@@ -99,7 +99,7 @@ def _parse_credit(credit_html: str) -> tuple[str | None, str | None, LicenseSche
         return (
             author,
             None,
-            LicenseSchema(slug=f"CC-{code.upper()}-{ver}", url=cc.group(0), name=f"Creative Commons {name} {ver}"),
+            LicenseSchema(slug=f"cc-{code}-{ver}", url=cc.group(0), name=f"Creative Commons {name} {ver}"),
             False,
         )
     if "copyright" in credit_html or ">DOC<" in _unescape(credit_html) or _strip_tags(credit_html).endswith("DOC"):

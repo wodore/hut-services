@@ -5,6 +5,7 @@ from hut_services import HutSourceSchema, clear_file_cache
 from hut_services.core.schema import (
     HutBookingsSchema,
     HutSchema,
+    PhotoSchema,
     TotalFallback,
 )
 from hut_services.core.schema.geo import BBox
@@ -103,7 +104,7 @@ class BaseService(t.Generic[THutSourceSchema]):
 
         Args:
             src: Source schema.
-            include_photos: Include photos, some service need additonal requests to get the photos.
+            include_photos: Include photos, some services need additional requests to get the photos.
 
         Returns:
             Converted hut.
@@ -125,6 +126,22 @@ class BaseService(t.Generic[THutSourceSchema]):
         src_huts = self.get_huts_from_source(bbox=bbox, limit=limit, offset=offset, **kwargs)
         huts = [self.convert(h, include_photos=include_photos) for h in src_huts]
         return huts
+
+    def get_images(self, source_id: int | str) -> list[PhotoSchema]:
+        """Get photos for one hut (by source id), independent of conversion.
+
+        Use this to import huts without photos and enrich the images
+        separately. Services without direct image access raise
+        `MethodNotImplementedError` - their photos only come through
+        `convert(include_photos=True)`.
+
+        Args:
+            source_id: Source id of the hut.
+
+        Returns:
+            Photos with licenses.
+        """
+        raise self.MethodNotImplementedError(self, "get_images")
 
     def get_bookings(
         self,
