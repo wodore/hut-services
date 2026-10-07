@@ -96,9 +96,13 @@ class _Date(BaseModel):
 
 
 class _Article(BaseModel):
-    demonstratif: str
-    defini: str
-    partitif: str
+    """Grammar article data - the API sends mixed shapes
+    ({demonstratif, defini, partitif} or reduced {nom, partitif})."""
+
+    demonstratif: str = ""
+    defini: str = ""
+    partitif: str = ""
+    nom: str | None = None
 
 
 class _SiteOfficiel(_ValeurNom):
@@ -106,11 +110,12 @@ class _SiteOfficiel(_ValeurNom):
 
 
 class _PlacesMatelas(BaseModel):
-    """Mattress places. `valeur` is a number in current API responses."""
+    """Mattress places. `valeur` is a number in current API responses;
+    `nb` is omitted when unknown (`valeur` == '**Inconnu**')."""
 
     nom: str
     valeur: int | str | None
-    nb: int | None
+    nb: int | None = None
 
 
 class _Places(BaseModel):
@@ -149,10 +154,9 @@ class _RefugesInfoFeatureProperties(BaseModel):
     remarque: _ValeurNom
     acces: _ValeurNom
     proprio: _ValeurNom
-    createur: _NomID
+    createur: _NomID | None = None  # absent from current API responses
     article: _Article
-    info_comp: _InfoComp
-    description: _Description
+    info_comp: _InfoComp | None = None  # not sent for every hut
 
 
 class RefugesInfoFeature(Feature, SourceDataSchema):
@@ -273,7 +277,7 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def url(self) -> str:
-        official_site = self._props.info_comp.site_officiel
+        official_site = self._props.info_comp.site_officiel if self._props.info_comp is not None else None
         return (official_site.url or "") if official_site else ""
 
     @computed_field  # type: ignore[prop-decorator]
@@ -293,7 +297,8 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
             capacity=self.capacity,
             elevation=self.location.ele,
             operator=None,
-            missing_walls=self._props.info_comp.manque_un_mur.valeur or "0",
+            missing_walls=(self._props.info_comp.manque_un_mur.valeur if self._props.info_comp is not None else None)
+            or "0",
         )
 
     @computed_field  # type: ignore[prop-decorator]
