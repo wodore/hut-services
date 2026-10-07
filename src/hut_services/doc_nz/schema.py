@@ -432,7 +432,7 @@ def get_campsite_hut_type(category: str | None) -> HutTypeSchema:
 class DocNzCampsite0Convert(BaseHutConverterSchema[DocNzCampsiteSchema]):
     """Converter for the DOC NZ campsite source (version 0)."""
 
-    include_photos: bool = False
+    include_photos: bool = True
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -482,6 +482,18 @@ class DocNzCampsite0Convert(BaseHutConverterSchema[DocNzCampsiteSchema]):
     def url(self) -> str:
         """External campsite website (separate domain) - DOC campsites have none."""
         return ""
+
+    @computed_field()  # type: ignore[prop-decorator]
+    @property
+    def photos(self) -> list[PhotoSchema]:
+        """Hero + gallery photos from the campsite page (CC/DOC licensed only,
+        third party (c) images are skipped; one cached page request per campsite)."""
+        if not self.include_photos or not self.source_data.static_link:
+            return []
+        try:
+            return t.cast("list[PhotoSchema]", get_hut_images(self.source_data.static_link))
+        except Exception:  # photos are optional
+            return []
 
     @computed_field  # type: ignore[prop-decorator]
     @property
