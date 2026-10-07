@@ -368,4 +368,4 @@ def test_doc_nz_hut_website_online() -> None:
         url = get_hut_website("https://www.doc.govt.nz/link/1b3d9da012a3464688f3ebe4982ec653.aspx")
     except Exception as e:
         pytest.skip(f"doc.govt.nz not reachable: {e!r}")
-    assert url == "https://rmlt.co.nz/hunting/"
+    assert url == "http://www.rmlt.co.nz/hunting/"  # the contact panel's Website row
