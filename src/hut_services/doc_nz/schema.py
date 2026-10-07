@@ -10,6 +10,7 @@ free API key from <https://api.doc.govt.nz>.
 """
 
 import logging
+import re
 import typing as t
 from datetime import datetime, timezone
 from enum import Enum
@@ -286,6 +287,14 @@ class DocNzHut0Convert(BaseHutConverterSchema[DocNzHutSchema]):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
+    def notes(self) -> list[TranslationSchema]:
+        """Human-readable facilities note (structured list stays in `extras`)."""
+        if self.source_data.facilities:
+            return [TranslationSchema(en="Facilities: " + ", ".join(self.source_data.facilities))]
+        return []
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
     def is_active(self) -> bool:
         status = self.source_data.status
         if status is None:
@@ -316,4 +325,201 @@ class DocNzHut0Convert(BaseHutConverterSchema[DocNzHutSchema]):
             extra["status"] = self.source_data.status
         if self.source_data.introduction_thumbnail:
             extra["introduction_thumbnail"] = self.source_data.introduction_thumbnail
+        return extra
+
+
+def _strip_html(text: str) -> str:
+    """Remove HTML tags from DOC attribute strings (e.g. `dogsAllowed`)."""
+    return " ".join(t.strip() for t in re.sub(r"<[^>]+>", " ", text).split()) if text else ""
+
+
+class DocNzCampsiteSchema(SourceDataSchema):
+    """One campsite from the DOC NZ `DOC Campsites` open-data layer,
+    optionally enriched with status/introduction from the official DOC API
+    v2 `/campsites/{id}/detail` endpoint.
+
+    Unlike the huts layer, campsites already ship `introduction` and
+    `campsiteCategory` in the layer itself.
+    """
+
+    asset_id: int = Field(..., alias="assetId")
+    name: str
+    place: str | None = None
+    region: str | None = None
+    introduction: str | None = None
+    campsite_category: str | None = Field(None, alias="campsiteCategory")
+    number_of_powered_sites: int | None = Field(None, alias="numberOfPoweredSites")
+    number_of_unpowered_sites: int | None = Field(None, alias="numberOfUnpoweredSites")
+    bookable: YesNoBool = None
+    free: str | None = None
+    facilities: FacilitiesList = None
+    activities: FacilitiesList = None
+    dogs_allowed: str | None = Field(None, alias="dogsAllowed")
+    access: FacilitiesList = None
+    has_alerts: str | None = Field(None, alias="hasAlerts")
+    introduction_thumbnail: str | None = Field(None, alias="introductionThumbnail")
+    static_link: str | None = Field(None, alias="staticLink")
+    location_string: str | None = Field(None, alias="locationString")
+    object_id: int | None = Field(None, alias="OBJECTID")
+    global_id: str | None = Field(None, alias="GlobalID")
+    date_loaded: EpochMs = Field(None, alias="dateLoadedToGIS")
+    status: str | None = None  # enrichment (DOC API v2)
+    lat: float
+    lon: float
+
+    def get_id(self) -> str:
+        """DOC `assetId` as string."""
+        return str(self.asset_id)
+
+    def get_name(self) -> str:
+        return self.name.strip()
+
+    def get_location(self) -> LocationEleSchema:
+        return LocationEleSchema(lat=self.lat, lon=self.lon, ele=None)
+
+
+class DocNzCampsiteProperties(SourcePropertiesSchema):
+    """Properties saved together with the campsite source data."""
+
+    bookable: bool | None = Field(None, description="campsite can be booked through DOC's online booking system")
+    region: str | None = Field(None, description="DOC region name")
+    place: str | None = Field(None, description="place / conservation area name")
+    campsite_category: str | None = Field(None, description="category by DOC (e.g. 'Standard', 'Backcountry')")
+
+
+class DocNzCampsiteHutSource(BaseHutSourceSchema[DocNzCampsiteSchema, DocNzCampsiteProperties]):
+    """Data from the DOC NZ campsites open-data layer."""
+
+    source_name: str = "doc_nz_camp"
+
+
+def get_campsite_hut_type(category: str | None) -> HutTypeSchema:
+    """Map a DOC campsite category to a hut type.
+
+    Observed vocabulary: `"Great Walk"`, `"Serviced"`, `"Standard"`,
+    `"Basic"`, `"Backcountry"`. Managed/bookable categories map to
+    `camping` (attended), the rest to `campgr`. Direct mapping —
+    `guess_hut_type` is not used since campsite names would match its
+    `CAMPING_NAMES` rule for all of them.
+    """
+    if category and ("great walk" in category.lower() or "serviced" in category.lower()):
+        return HutTypeSchema(open=HutTypeEnum.camping, closed=None)
+    return HutTypeSchema(open=HutTypeEnum.campgr, closed=None)
+
+
+class DocNzCampsite0Convert(BaseHutConverterSchema[DocNzCampsiteSchema]):
+    """Converter for the DOC NZ campsite source (version 0)."""
+
+    include_photos: bool = False
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def name(self) -> TranslationSchema:
+        return TranslationSchema(en=self.source_data.get_name())
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def source_name(self) -> str:
+        return "doc_nz_camp"
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def description(self) -> TranslationSchema:
+        if self.source_data.introduction:
+            return TranslationSchema(en=self.source_data.introduction)
+        return TranslationSchema()
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def author(self) -> AuthorSchema | None:
+        if self.source_data.introduction:
+            return DOC_NZ_AUTHOR
+        return None
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def source(self) -> SourceSchema | None:
+        return SourceSchema(
+            name=self.source_name,
+            ident=self.source_data.get_id(),
+            url=self.source_data.static_link,
+        )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def license(self) -> LicenseSchema | None:
+        return DOC_NZ_LICENSE
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def owner(self) -> OwnerSchema | None:
+        return DOC_NZ_OWNER
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def url(self) -> str:
+        return self.source_data.static_link or ""
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def country_code(self) -> str | None:
+        return "nz"
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def notes(self) -> list[TranslationSchema]:
+        """Human-readable facilities note (structured list stays in `extras`)."""
+        if self.source_data.facilities:
+            return [TranslationSchema(en="Facilities: " + ", ".join(self.source_data.facilities))]
+        return []
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def capacity(self) -> CapacitySchema:
+        """Intentionally not mapped: site counts stay in `extras` (`powered_sites`/`unpowered_sites`)."""
+        return CapacitySchema(open=None, closed=None)
+
+    @computed_field(alias="type")  # type: ignore[prop-decorator]
+    @property
+    def hut_type(self) -> HutTypeSchema:
+        return get_campsite_hut_type(self.source_data.campsite_category)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def is_active(self) -> bool:
+        status = self.source_data.status
+        if status is None:
+            return True
+        return status.strip().lower() not in ("closed", "clsd", "removed", "destroyed")
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def extras(self) -> dict[str, t.Any]:
+        """DOC campsite fields: `region`, `place`, `campsite_category`, `bookable`,
+        `facilities`, `powered_sites`, `unpowered_sites`, `dogs_allowed` (HTML
+        stripped), `free`, `access`, `status`. `bookable` is a static flag
+        (booking itself runs on bookings.doc.govt.nz)."""
+        extra: dict[str, t.Any] = {}
+        if self.source_data.region:
+            extra["region"] = self.source_data.region
+        if self.source_data.place:
+            extra["place"] = self.source_data.place
+        if self.source_data.campsite_category:
+            extra["campsite_category"] = self.source_data.campsite_category
+        if self.source_data.bookable is not None:
+            extra["bookable"] = self.source_data.bookable
+        if self.source_data.facilities:
+            extra["facilities"] = self.source_data.facilities
+        if self.source_data.number_of_powered_sites is not None:
+            extra["powered_sites"] = self.source_data.number_of_powered_sites
+        if self.source_data.number_of_unpowered_sites is not None:
+            extra["unpowered_sites"] = self.source_data.number_of_unpowered_sites
+        if self.source_data.dogs_allowed:
+            extra["dogs_allowed"] = _strip_html(self.source_data.dogs_allowed)
+        if self.source_data.free:
+            extra["free"] = self.source_data.free
+        if self.source_data.access:
+            extra["access"] = self.source_data.access
+        if self.source_data.status:
+            extra["status"] = self.source_data.status
         return extra

@@ -20,11 +20,15 @@ import httpx
 from pydantic import ValidationError
 
 from hut_services.core.cache import file_cache
-from hut_services.core.schema import HutSchema
+from hut_services.core.schema import HutSchema, SourceDataSchema
 from hut_services.core.schema.geo import BBox
 from hut_services.core.service import BaseService
 
 from .schema import (
+    DocNzCampsite0Convert,
+    DocNzCampsiteHutSource,
+    DocNzCampsiteProperties,
+    DocNzCampsiteSchema,
     DocNzDetailSchema,
     DocNzHut0Convert,
     DocNzHutAlerts,
@@ -38,27 +42,28 @@ logger = logging.getLogger(__name__)
 DOC_NZ_FEATURESERVER_URL: str = (
     "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_Huts/FeatureServer/0/query"
 )
+DOC_NZ_CAMPSITES_URL: str = (
+    "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_Campsites/FeatureServer/0/query"
+)
 DOC_NZ_API_URL: str = "https://api.doc.govt.nz/v2"
 DOC_NZ_PAGE_SIZE: int = 2000  # max records per FeatureServer request
 
 
+TLayerSchema = t.TypeVar("TLayerSchema", bound=SourceDataSchema)
+
+
 @file_cache()
-def doc_nz_request(
-    request_url: str = DOC_NZ_FEATURESERVER_URL,
+def doc_nz_layer_features(
+    request_url: str,
     bbox: BBox | None = None,
     limit: int = 0,
     offset: int = 0,
-) -> list[DocNzHutSchema]:
-    """Query the DOC NZ huts ArcGIS FeatureServer (WGS84, file-cached).
+) -> list[dict[str, t.Any]]:
+    """Fetch raw features from a DOC NZ ArcGIS layer (WGS84, file-cached).
 
-    Args:
-        request_url: FeatureServer query endpoint.
-        bbox: Optional boundary box (WGS84).
-        limit: Maximum number of huts, `0` for all.
-        offset: Query offset.
-
-    Returns:
-        Huts from the layer.
+    Paginates, applies an optional `bbox` envelope filter and merges the
+    point geometry (`outSR=4326`: `{"x": <lon>, "y": <lat>}`) into the
+    attributes as `lat`/`lon` keys.
     """
     result_offset = max(offset, 0)
     result_count = limit if limit and limit > 0 else DOC_NZ_PAGE_SIZE
@@ -91,30 +96,66 @@ def doc_nz_request(
         result_offset += len(batch)
         if limit and limit > 0:
             break  # single limited request is enough
-    huts: list[DocNzHutSchema] = []
+    merged: list[dict[str, t.Any]] = []
     for feature in features:
         attributes: dict[str, t.Any] = dict(feature.get("attributes", {}))
         geometry: dict[str, t.Any] = feature.get("geometry") or {}
-        # with `outSR=4326` the point geometry is {"x": <lon>, "y": <lat>}
         attributes["lon"] = geometry.get("x")
         attributes["lat"] = geometry.get("y")
+        merged.append(attributes)
+    return merged
+
+
+def _parse_layer_features(
+    features: list[dict[str, t.Any]], schema_cls: type[TLayerSchema], label: str
+) -> list[TLayerSchema]:
+    """Validate raw layer features into `schema_cls` (skips invalid ones with a warning)."""
+    parsed: list[TLayerSchema] = []
+    for attributes in features:
         try:
-            huts.append(DocNzHutSchema.model_validate(attributes))
+            parsed.append(schema_cls.model_validate(attributes))
         except ValidationError as e:
             name = attributes.get("name", "?")
-            logger.warning(f"cannot parse DOC NZ hut '{name}': {e.error_count()} error(s): {e.errors()[0]['msg']}")
+            logger.warning(f"cannot parse DOC NZ {label} '{name}': {e.error_count()} error(s): {e.errors()[0]['msg']}")
+    return parsed
+
+
+def doc_nz_request(
+    request_url: str = DOC_NZ_FEATURESERVER_URL,
+    bbox: BBox | None = None,
+    limit: int = 0,
+    offset: int = 0,
+) -> list[DocNzHutSchema]:
+    """Query the DOC NZ huts ArcGIS FeatureServer (WGS84, file-cached)."""
+    features = doc_nz_layer_features(request_url=request_url, bbox=bbox, limit=limit, offset=offset)
+    huts = _parse_layer_features(features, DocNzHutSchema, "hut")
     logger.info(f"successfully got {len(huts)} huts from the DOC NZ layer")
     return huts
 
 
-@file_cache(ignore=["api_key"])
-def doc_nz_detail_request(api_url: str, asset_id: int, api_key: str, _delay: float = 0.3) -> dict[str, t.Any] | None:
-    """Get hut detail from the DOC API v2 `/huts/{id}/detail` (file-cached).
+def doc_nz_campsite_request(
+    request_url: str = DOC_NZ_CAMPSITES_URL,
+    bbox: BBox | None = None,
+    limit: int = 0,
+    offset: int = 0,
+) -> list[DocNzCampsiteSchema]:
+    """Query the DOC NZ campsites ArcGIS FeatureServer (WGS84, file-cached)."""
+    features = doc_nz_layer_features(request_url=request_url, bbox=bbox, limit=limit, offset=offset)
+    campsites = _parse_layer_features(features, DocNzCampsiteSchema, "campsite")
+    logger.info(f"successfully got {len(campsites)} campsites from the DOC NZ layer")
+    return campsites
 
-    Returns `None` if the hut is not found or the key has no access.
+
+@file_cache(ignore=["api_key"])
+def doc_nz_detail_request(
+    api_url: str, asset_id: int, api_key: str, kind: str = "huts", _delay: float = 0.3
+) -> dict[str, t.Any] | None:
+    """Get asset detail from the DOC API v2 `/{kind}/{id}/detail` (file-cached).
+
+    Returns `None` if the asset is not found or the key has no access.
     """
     r = httpx.get(
-        f"{api_url}/huts/{asset_id}/detail",
+        f"{api_url}/{kind}/{asset_id}/detail",
         params={"coordinates": "wgs84"},
         headers={"x-api-key": api_key, "Accept": "application/json"},
         timeout=15,
@@ -128,10 +169,10 @@ def doc_nz_detail_request(api_url: str, asset_id: int, api_key: str, _delay: flo
 
 
 @file_cache(ignore=["api_key"])
-def doc_nz_alerts_request(api_url: str, api_key: str) -> list[DocNzHutAlerts]:
-    """Get alerts for all huts from the DOC API v2 `/huts/alerts` (file-cached)."""
+def doc_nz_alerts_request(api_url: str, api_key: str, kind: str = "huts") -> list[DocNzHutAlerts]:
+    """Get alerts for all assets from the DOC API v2 `/{kind}/alerts` (file-cached)."""
     r = httpx.get(
-        f"{api_url}/huts/alerts",
+        f"{api_url}/{kind}/alerts",
         headers={"x-api-key": api_key, "Accept": "application/json"},
         timeout=30,
     )
@@ -266,6 +307,129 @@ class DocNzService(BaseService[DocNzHutSource]):
             return DocNzHut0Convert(include_photos=include_photos, source_data=hut_src.source_data).get_hut()
         else:
             err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} not implemented."
+            raise NotImplementedError(err_msg)
+
+
+class DocNzCampsiteService(BaseService[DocNzCampsiteHutSource]):
+    """Service to get campsites from New Zealand's
+    [Department of Conservation](https://www.doc.govt.nz)
+    ([DOC Campsites open data](https://doc-deptconservation.opendata.arcgis.com/maps/doc-campsites)).
+
+    Same infrastructure as [`DocNzService`][hut_services.doc_nz.service.DocNzService]:
+    open-data layer without authentication (the campsites layer already
+    ships introductions and categories), optional DOC API v2 enrichment
+    (status/introduction) and a bulk alerts endpoint. Site counts
+    (powered/unpowered) are NOT mapped to `capacity` — they live in `extras`.
+
+    Note:
+        The methods are described in [`BaseService`][hut_services.BaseService].
+    """
+
+    def __init__(
+        self,
+        request_url: str = DOC_NZ_CAMPSITES_URL,
+        api_url: str = DOC_NZ_API_URL,
+        api_key: str | None = None,
+    ) -> None:
+        super().__init__(support_bbox=True, support_limit=True, support_offset=True, support_convert=True)
+        self.request_url = request_url
+        self.api_url = api_url
+        self.api_key = api_key if api_key is not None else os.environ.get("HUT_SRV_DOC_NZ_API_KEY")
+
+    def get_huts_from_source(
+        self,
+        bbox: BBox | None = None,
+        limit: int = 1,
+        offset: int = 0,
+        enrich: bool | None = None,
+        **kwargs: t.Any,
+    ) -> list[DocNzCampsiteHutSource]:
+        """Get campsites from the DOC NZ open-data layer.
+
+        Args:
+            bbox: Boundary box.
+            limit: Limit (how many entries to retrieve), `0` for all.
+            offset: Offset of the request.
+            enrich: Fetch status/introduction from the official DOC API v2
+                for every campsite — one request per campsite (file-cached).
+                `None` (default): enrich automatically when an API key is
+                configured (`api_key` argument or `HUT_SRV_DOC_NZ_API_KEY`
+                environment variable); `True`: require a key (raises without);
+                `False`: never enrich. The layer already ships introduction
+                and category, so enrichment adds little.
+
+        Returns:
+            Campsites from source.
+        """
+        logger.info(f"get DOC NZ campsites from {self.request_url}")
+        campsites = doc_nz_campsite_request(request_url=self.request_url, bbox=bbox, limit=limit, offset=offset)
+        if enrich is None:
+            enrich = self.api_key is not None
+        if enrich:
+            if not self.api_key:
+                msg = "DOC API key required for enrichment: pass `api_key` or set `HUT_SRV_DOC_NZ_API_KEY`."
+                raise ValueError(msg)
+            campsites = [self._enrich_campsite(campsite) for campsite in campsites]
+        sources: list[DocNzCampsiteHutSource] = []
+        for campsite in campsites:
+            sources.append(
+                DocNzCampsiteHutSource(
+                    name=campsite.get_name(),
+                    source_data=campsite,
+                    source_id=campsite.get_id(),
+                    location=campsite.get_location(),
+                    source_properties=DocNzCampsiteProperties(
+                        bookable=campsite.bookable,
+                        region=campsite.region,
+                        place=campsite.place,
+                        campsite_category=campsite.campsite_category,
+                    ),
+                )
+            )
+        return sources
+
+    def _enrich_campsite(self, campsite: DocNzCampsiteSchema) -> DocNzCampsiteSchema:
+        """Merge DOC API v2 campsites detail fields into a layer campsite (best effort)."""
+        if not self.api_key:
+            return campsite
+        raw = doc_nz_detail_request(self.api_url, campsite.asset_id, self.api_key, kind="campsites")
+        if raw is None:
+            return campsite
+        update: dict[str, t.Any] = {}
+        if raw.get("status") is not None:
+            update["status"] = str(raw["status"])
+        if raw.get("introduction"):
+            update["introduction"] = str(raw["introduction"])
+        return campsite.model_copy(update=update) if update else campsite
+
+    def get_alerts(self) -> list[DocNzHutAlerts]:
+        """Get current alerts for all campsites from the DOC API v2 (needs an API key).
+
+        Returns:
+            List of alerts per campsite (`assetId`, `name`, `alerts`).
+        """
+        if not self.api_key:
+            msg = "DOC API key required for alerts: pass `api_key` or set `HUT_SRV_DOC_NZ_API_KEY`."
+            raise ValueError(msg)
+        alerts = doc_nz_alerts_request(self.api_url, self.api_key, kind="campsites")
+        return t.cast("list[DocNzHutAlerts]", alerts)
+
+    def convert(self, src: t.Mapping | t.Any, include_photos: bool = True) -> HutSchema:
+        campsite_src = (
+            DocNzCampsiteHutSource(**src)
+            if isinstance(src, t.Mapping)
+            else DocNzCampsiteHutSource.model_validate(src, from_attributes=True)
+        )
+        if campsite_src.version >= 0:
+            if campsite_src.source_data is None:
+                err_msg = (
+                    f"Conversion for '{campsite_src.source_name}' version {campsite_src.version} "
+                    "without 'source_data' not allowed."
+                )
+                raise AttributeError(err_msg)
+            return DocNzCampsite0Convert(include_photos=include_photos, source_data=campsite_src.source_data).get_hut()
+        else:
+            err_msg = f"Conversion for '{campsite_src.source_name}' version {campsite_src.version} not implemented."
             raise NotImplementedError(err_msg)
 
 

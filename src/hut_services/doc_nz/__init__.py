@@ -1,3 +1,3 @@
-from .service import DocNzService
+from .service import DocNzCampsiteService, DocNzService
 
-__all__ = ["DocNzService"]
+__all__ = ["DocNzCampsiteService", "DocNzService"]

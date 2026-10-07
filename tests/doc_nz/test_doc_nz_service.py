@@ -129,6 +129,7 @@ def test_doc_nz_convert_offline() -> None:
     assert hut.capacity.if_open is None  # bunks need the DOC API
     assert hut.extras["bookable"] is False
     assert "Heating" in hut.extras["facilities"]
+    assert hut.notes and hut.notes[0].en.startswith("Facilities: ")  # human-readable facilities note
     assert hut.is_bookable is False  # no booking service in the public source
 
 
