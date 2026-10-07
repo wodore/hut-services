@@ -397,12 +397,12 @@ def get_campsite_hut_type(category: str | None) -> HutTypeSchema:
     """Map a DOC campsite category to a hut type.
 
     Observed vocabulary: `"Great Walk"`, `"Serviced"`, `"Standard"`,
-    `"Basic"`, `"Backcountry"`. Managed/bookable categories map to
-    `camping` (attended), the rest to `campgr`. Direct mapping —
+    `"Basic"`, `"Backcountry"`. Managed/standard categories map to
+    `camping`, the rustic ones to `campgr`. Direct mapping —
     `guess_hut_type` is not used since campsite names would match its
     `CAMPING_NAMES` rule for all of them.
     """
-    if category and ("great walk" in category.lower() or "serviced" in category.lower()):
+    if category and any(k in category.lower() for k in ("great walk", "serviced", "standard")):
         return HutTypeSchema(open=HutTypeEnum.camping, closed=None)
     return HutTypeSchema(open=HutTypeEnum.campgr, closed=None)
 

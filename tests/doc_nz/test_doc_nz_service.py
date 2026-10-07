@@ -5,6 +5,9 @@ are skipped when it is unreachable. Conversion tests run offline against
 canned layer data.
 """
 
+import os
+import typing as t
+
 import pytest
 
 from hut_services.core.schema import HutSchema
@@ -61,7 +64,11 @@ def service() -> DocNzService:
 @pytest.fixture(scope="module")
 def hut_sources(service: DocNzService) -> list[DocNzHutSource]:
     try:
-        return service.get_huts_from_source(limit=HUT_LIMIT)
+        # include_campsites=False guarantees hut-only results (typed as the union otherwise)
+        return t.cast(
+            "list[DocNzHutSource]",
+            service.get_huts_from_source(limit=HUT_LIMIT, include_campsites=False),
+        )
     except OSError as e:  # httpx network errors derive from OSError
         pytest.skip(f"DOC FeatureServer not usable from this environment, skipping: {e!r}")
 
@@ -69,7 +76,7 @@ def hut_sources(service: DocNzService) -> list[DocNzHutSource]:
 @pytest.fixture(scope="module")
 def huts(service: DocNzService) -> list[HutSchema]:
     try:
-        return service.get_huts(limit=HUT_LIMIT)
+        return service.get_huts(limit=HUT_LIMIT, include_campsites=False)
     except OSError as e:
         pytest.skip(f"DOC FeatureServer not usable from this environment, skipping: {e!r}")
 
@@ -178,7 +185,6 @@ def test_doc_nz_convert_great_walk_offline() -> None:
 def test_doc_nz_service_enrich_without_key() -> None:
     """`enrich=True` without an API key raises (explicit demand, not a silent fallback)."""
     no_key_service = DocNzService(api_key=None)
-    import os
 
     old = os.environ.pop("HUT_SRV_DOC_NZ_API_KEY", None)
     try:
@@ -191,7 +197,6 @@ def test_doc_nz_service_enrich_without_key() -> None:
 
 def test_doc_nz_alerts_without_key() -> None:
     no_key_service = DocNzService(api_key=None)
-    import os
 
     old = os.environ.pop("HUT_SRV_DOC_NZ_API_KEY", None)
     try:
@@ -200,6 +205,20 @@ def test_doc_nz_alerts_without_key() -> None:
     finally:
         if old is not None:
             os.environ["HUT_SRV_DOC_NZ_API_KEY"] = old
+
+
+def test_doc_nz_service_includes_campsites_online(service: DocNzService) -> None:
+    """Default call returns huts AND campsites; both convert through the same service."""
+    try:
+        sources = service.get_huts_from_source(limit=1)
+    except OSError as e:
+        pytest.skip(f"DOC FeatureServer not usable from this environment, skipping: {e!r}")
+    source_types = {type(s).__name__ for s in sources}
+    assert "DocNzHutSource" in source_types
+    assert "DocNzCampsiteHutSource" in source_types
+    for src in sources:
+        hut = service.convert(src.model_dump(by_alias=True))
+        assert type(hut) is HutSchema
 
 
 def test_doc_nz_service_source_online(hut_sources: list[DocNzHutSource]) -> None:

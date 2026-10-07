@@ -104,13 +104,14 @@ def test_doc_nz_campsite_convert_offline() -> None:
     assert "<a href" not in hut.extras["dogs_allowed"]  # HTML stripped
     assert hut.notes and hut.notes[0].en.startswith("Facilities: ")
     assert hut.is_bookable is False  # no booking service in the public source
+    assert hut.hut_type.if_open.value == "camping"  # Standard -> camping
 
 
 def test_doc_nz_campsite_hut_type_mapping() -> None:
-    """Managed categories -> camping, the rest -> campgr."""
+    """Managed and standard categories -> camping, rustic ones -> campgr."""
     assert get_campsite_hut_type("Great Walk").if_open == HutTypeEnum.camping
     assert get_campsite_hut_type("Serviced").if_open == HutTypeEnum.camping
-    assert get_campsite_hut_type("Standard").if_open == HutTypeEnum.campgr
+    assert get_campsite_hut_type("Standard").if_open == HutTypeEnum.camping
     assert get_campsite_hut_type("Basic").if_open == HutTypeEnum.campgr
     assert get_campsite_hut_type("Backcountry").if_open == HutTypeEnum.campgr
     assert get_campsite_hut_type(None).if_open == HutTypeEnum.campgr
