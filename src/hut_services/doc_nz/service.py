@@ -8,7 +8,7 @@ Optional enrichment: the official DOC API v2 (free key from
 <https://api.doc.govt.nz>, sent as `x-api-key` header) adds bunk counts,
 hut categories, introductions and a bulk alerts endpoint. Used
 automatically whenever a key is configured (`api_key` argument or
-`DOC_NZ_API_KEY` environment variable); opt out with `enrich=False`.
+`HUT_SRV_DOC_NZ_API_KEY` environment variable); opt out with `enrich=False`.
 """
 
 import logging
@@ -174,7 +174,7 @@ class DocNzService(BaseService[DocNzHutSource]):
         super().__init__(support_bbox=True, support_limit=True, support_offset=True, support_convert=True)
         self.request_url = request_url
         self.api_url = api_url
-        self.api_key = api_key if api_key is not None else os.environ.get("DOC_NZ_API_KEY")
+        self.api_key = api_key if api_key is not None else os.environ.get("HUT_SRV_DOC_NZ_API_KEY")
 
     def get_huts_from_source(
         self,
@@ -193,7 +193,7 @@ class DocNzService(BaseService[DocNzHutSource]):
             enrich: Fetch detail (bunks, category, introduction, status) from
                 the official DOC API v2 for every hut — one request per hut
                 (file-cached). `None` (default): enrich automatically when an
-                API key is configured (`api_key` argument or `DOC_NZ_API_KEY`
+                API key is configured (`api_key` argument or `HUT_SRV_DOC_NZ_API_KEY`
                 environment variable); `True`: require a key (raises without);
                 `False`: never enrich.
 
@@ -206,7 +206,7 @@ class DocNzService(BaseService[DocNzHutSource]):
             enrich = self.api_key is not None
         if enrich:
             if not self.api_key:
-                msg = "DOC API key required for enrichment: pass `api_key` or set `DOC_NZ_API_KEY`."
+                msg = "DOC API key required for enrichment: pass `api_key` or set `HUT_SRV_DOC_NZ_API_KEY`."
                 raise ValueError(msg)
             src_huts = [self._enrich_hut(hut) for hut in src_huts]
         huts: list[DocNzHutSource] = []
@@ -248,7 +248,7 @@ class DocNzService(BaseService[DocNzHutSource]):
             List of alerts per hut (`assetId`, hut `name`, `alerts`).
         """
         if not self.api_key:
-            msg = "DOC API key required for alerts: pass `api_key` or set `DOC_NZ_API_KEY`."
+            msg = "DOC API key required for alerts: pass `api_key` or set `HUT_SRV_DOC_NZ_API_KEY`."
             raise ValueError(msg)
         alerts = doc_nz_alerts_request(self.api_url, self.api_key)
         return t.cast("list[DocNzHutAlerts]", alerts)

@@ -156,26 +156,26 @@ def test_doc_nz_service_enrich_without_key() -> None:
     no_key_service = DocNzService(api_key=None)
     import os
 
-    old = os.environ.pop("DOC_NZ_API_KEY", None)
+    old = os.environ.pop("HUT_SRV_DOC_NZ_API_KEY", None)
     try:
         with pytest.raises(ValueError, match="DOC API key required"):
             no_key_service.get_huts_from_source(limit=1, enrich=True)
     finally:
         if old is not None:
-            os.environ["DOC_NZ_API_KEY"] = old
+            os.environ["HUT_SRV_DOC_NZ_API_KEY"] = old
 
 
 def test_doc_nz_alerts_without_key() -> None:
     no_key_service = DocNzService(api_key=None)
     import os
 
-    old = os.environ.pop("DOC_NZ_API_KEY", None)
+    old = os.environ.pop("HUT_SRV_DOC_NZ_API_KEY", None)
     try:
         with pytest.raises(ValueError, match="DOC API key required"):
             no_key_service.get_alerts()
     finally:
         if old is not None:
-            os.environ["DOC_NZ_API_KEY"] = old
+            os.environ["HUT_SRV_DOC_NZ_API_KEY"] = old
 
 
 def test_doc_nz_service_source_online(hut_sources: list[DocNzHutSource]) -> None:
