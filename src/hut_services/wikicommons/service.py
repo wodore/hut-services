@@ -21,7 +21,7 @@ from hut_services import (
     PhotoSchema,
     SourceSchema,
     TranslationSchema,
-    file_cache,
+    cached,
 )
 from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
@@ -84,7 +84,7 @@ def _resize_image_url(url: str, max_dimension: int) -> str:
     return (url + f"/{max_dimension}px-{filename}").replace("commons/", "commons/thumb/")
 
 
-@file_cache()
+@cached()
 def _wikicommon_api_call(
     filename: str, api_url: str = "https://magnus-toolserver.toolforge.org/commonsapi.php"
 ) -> bytes | None:

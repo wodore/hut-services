@@ -25,7 +25,7 @@ import typing as t
 import httpx
 from pydantic import ValidationError
 
-from hut_services.core.cache import file_cache
+from hut_services.core.cache import cached
 from hut_services.core.schema import HutSchema, PhotoSchema, SourceDataSchema
 from hut_services.core.schema.geo import BBox
 from hut_services.core.service import BaseService
@@ -59,7 +59,7 @@ DOC_NZ_PAGE_SIZE: int = 2000  # max records per FeatureServer request
 TLayerSchema = t.TypeVar("TLayerSchema", bound=SourceDataSchema)
 
 
-@file_cache()
+@cached()
 def doc_nz_layer_features(
     request_url: str,
     bbox: BBox | None = None,
@@ -153,7 +153,7 @@ def doc_nz_campsite_request(
     return campsites
 
 
-@file_cache(ignore=["api_key"])
+@cached(ignore=["api_key"])
 def doc_nz_detail_request(api_url: str, asset_id: int, api_key: str, kind: str = "huts") -> dict[str, t.Any] | None:
     """Get asset detail from the DOC API v2 `/{kind}/{id}/detail` (file-cached).
 
@@ -174,7 +174,7 @@ def doc_nz_detail_request(api_url: str, asset_id: int, api_key: str, kind: str =
     return t.cast("dict[str, t.Any]", r.json())
 
 
-@file_cache(ignore=["api_key"])
+@cached(ignore=["api_key"])
 def doc_nz_alerts_request(api_url: str, api_key: str, kind: str = "huts") -> list[DocNzHutAlerts]:
     """Get alerts for all assets from the DOC API v2 `/{kind}/alerts` (file-cached)."""
     r = httpx.get(
@@ -190,7 +190,7 @@ def doc_nz_alerts_request(api_url: str, api_key: str, kind: str = "huts") -> lis
 DocNzAnySource: t.TypeAlias = DocNzHutSource | DocNzCampsiteHutSource
 
 
-@file_cache()
+@cached()
 def _static_link_for(asset_id: int) -> str | None:
     """`staticLink` for an assetId, queried directly from the layers (huts first, then campsites)."""
     for query_url in (DOC_NZ_FEATURESERVER_URL, DOC_NZ_CAMPSITES_URL):

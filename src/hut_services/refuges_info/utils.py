@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from PIL import ImageFile
 from pydantic_string_url import HttpUrl
 
-from hut_services.core.cache import file_cache
+from hut_services.core.cache import cached
 from hut_services.core.schema._license import LicenseSchema, SourceSchema
 from hut_services.core.schema._photo import PhotoSchema
 from hut_services.core.schema.locale import TranslationSchema
@@ -26,7 +26,7 @@ refuges_lic = LicenseSchema(
 )
 
 
-@file_cache(forever=True)
+@cached(forever=True)
 def _get_image_size(url: HttpUrl, _delay: float = 0.2) -> tuple[int, int]:
     response = requests.get(url, stream=True, timeout=15)
     image_data = BytesIO()
@@ -41,7 +41,7 @@ def _get_image_size(url: HttpUrl, _delay: float = 0.2) -> tuple[int, int]:
     return 0, 0
 
 
-@file_cache(forever=True)
+@cached(forever=True)
 def _get_original_images_request(hut_id: str, _delay: float = 1.5) -> bytes:
     url = f"https://www.refuges.info/point/{hut_id}"
     response = requests.get(url, timeout=15)
@@ -49,7 +49,7 @@ def _get_original_images_request(hut_id: str, _delay: float = 1.5) -> bytes:
     return response.content
 
 
-@file_cache()
+@cached()
 def get_original_images(hut_id: str) -> list[PhotoSchema]:
     soup = BeautifulSoup(_get_original_images_request(hut_id), "html.parser")
     comments = soup.find_all("li")

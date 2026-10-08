@@ -6,7 +6,7 @@ import typing as t
 
 import overpy  # type: ignore[import-untyped]
 
-from hut_services.core.cache import file_cache
+from hut_services.core.cache import cached
 from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
 from hut_services.core.service import BaseService
@@ -15,7 +15,7 @@ from hut_services.osm.schema import OsmHut0Convert, OsmHutSchema, OsmHutSource, 
 logger = logging.getLogger(__name__)
 
 
-@file_cache(ignore=["api"])
+@cached(ignore=["api"])
 def _get_huts_from_source(
     api: t.Any, bbox: BBox | None = None, limit: int = 1, offset: int = 0, **kwargs: dict
 ) -> list[OsmHutSource]:

@@ -7,7 +7,7 @@ from datetime import datetime
 
 import httpx
 
-from hut_services.core.cache import file_cache
+from hut_services.core.cache import cached
 from hut_services.core.schema._license import AuthorSchema, LicenseSchema, SourceSchema
 from hut_services.core.schema._photo import PhotoSchema
 from hut_services.core.schema.locale import TranslationSchema
@@ -32,7 +32,7 @@ personal_lic = LicenseSchema(
 )
 
 
-@file_cache(forever=True)
+@cached(forever=True)
 def _get_image_request(image_id: int, _delay: float = 0.2) -> dict[str, t.Any] | None:
     """Request image details from the camptocamp API."""
     try:

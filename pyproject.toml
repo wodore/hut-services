@@ -33,7 +33,6 @@ dependencies = [
   "httpx>=0.25.2",            # https://pypi.org/project/httpx/
   "python-slugify==8.*",      # https://pypi.org/project/python-slugify/
   "wikidata>=0.7.0,<1.0",     # https://pypi.org/project/wikidata/
-  "joblib==1.*",              # https://pypi.org/project/joblib/
   "defusedxml>=0.7.1,<1.0",   # https://pypi.org/project/defusedxml/
   "pydantic-string-url==1.*", # https://pypi.org/project/pydantic-string-url/
   "pillow>=10.4.0,<13.0",     # https://pypi.org/project/Pillow/

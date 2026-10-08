@@ -5,10 +5,12 @@ __all__ = [
     "BaseHutConverterSchema",
     "BaseHutSourceSchema",
     "BaseService",
+    "CacheBackend",
     "CapacitySchema",
     "ContactSchema",
     "DocNzCampsiteService",
     "DocNzService",
+    "FileCacheBackend",
     "GeocodeService",
     "HutSchema",
     "HutSourceSchema",
@@ -27,13 +29,26 @@ __all__ = [
     "SourcePropertiesSchema",
     "SourceSchema",
     "TranslationSchema",
+    "cached",
+    "clear_cache",
     "clear_file_cache",
     "file_cache",
+    "get_default_cache_backend",
+    "set_default_cache_backend",
 ]
 
 from httpx import Auth
 
-from .core.cache import clear_file_cache, file_cache
+from .core.cache import (
+    CacheBackend,
+    FileCacheBackend,
+    cached,
+    clear_cache,
+    clear_file_cache,
+    file_cache,
+    get_default_cache_backend,
+    set_default_cache_backend,
+)
 from .core.schema import (
     AnswerEnum,
     AuthorSchema,

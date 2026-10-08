@@ -18,7 +18,7 @@ import typing as t
 import httpx
 from PIL import ImageFile
 
-from hut_services import AuthorSchema, LicenseSchema, PhotoSchema, SourceSchema, TranslationSchema, file_cache
+from hut_services import AuthorSchema, LicenseSchema, PhotoSchema, SourceSchema, TranslationSchema, cached
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ def _strip_tags(text: str) -> str:
     return html.unescape(re.sub(r"<[^>]+>", "", text)).strip()
 
 
-@file_cache()
+@cached()
 def _fetch_page(static_link: str) -> tuple[str, str]:
     """Fetch a hut page: returns `(real_url, html)` (file-cached)."""
     r = httpx.get(static_link, follow_redirects=True, timeout=20, headers=_HEADERS)
@@ -76,7 +76,7 @@ def _fetch_page(static_link: str) -> tuple[str, str]:
     return str(r.url), r.text
 
 
-@file_cache(forever=True)
+@cached(forever=True)
 def _image_size(url: str) -> tuple[int, int]:
     """Image size via partial download (first parser hit wins)."""
     parser = ImageFile.Parser()
@@ -228,7 +228,7 @@ def get_hut_website(static_link: str) -> str:
     return _extract_website(html)
 
 
-@file_cache()
+@cached()
 def get_hut_images(static_link: str) -> list[PhotoSchema]:
     """Photos for one hut: page request (cached) + one partial download per photo.
 

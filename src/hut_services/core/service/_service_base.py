@@ -1,7 +1,7 @@
 import datetime
 import typing as t
 
-from hut_services import HutSourceSchema, clear_file_cache
+from hut_services import HutSourceSchema, clear_cache
 from hut_services.core.schema import (
     HutBookingsSchema,
     HutSchema,
@@ -82,7 +82,7 @@ class BaseService(t.Generic[THutSourceSchema]):
     @classmethod
     def clear_all_cache(cls) -> None:
         """Clears the cache of all services!"""
-        clear_file_cache()
+        clear_cache()
 
     def get_huts_from_source(
         self, bbox: BBox | None = None, limit: int = 1, offset: int = 0, **kwargs: t.Any
