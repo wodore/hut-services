@@ -189,7 +189,7 @@ DOC_NZ_AUTHOR = AuthorSchema(name="Department of Conservation Te Papa Atawhai", 
 
 
 def get_hut_category(category: str | None) -> HutCategoryEnum:
-    """Map a DOC hut category string to [`HutCategoryEnum`][...].
+    """Map a DOC hut category string to [`HutCategoryEnum`][hut_services.doc_nz.schema.HutCategoryEnum].
 
     Observed API vocabulary: `"Great Walk"`, `"Serviced"`, `"Standard"`,
     `"Basic/bivvies"` (one combined category — bivs stay `selfhut`, the

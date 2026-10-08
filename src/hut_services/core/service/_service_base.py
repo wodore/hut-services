@@ -146,10 +146,11 @@ class BaseService(t.Generic[THutSourceSchema]):
     def get_images_many(self, source_ids: list[int | str], max_workers: int = 8) -> dict[int | str, list[PhotoSchema]]:
         """Get images for many huts in parallel (bounded thread concurrency).
 
-        Generic default implementation: parallelizes [`get_images`][...]
-        over a `ThreadPoolExecutor` — every service implementing
-        `get_images` inherits this. Per-id results keep the file cache;
-        call it from async code with `asyncio.to_thread` if needed.
+        Generic default implementation: parallelizes
+        [`get_images`][hut_services.BaseService.get_images] over a
+        `ThreadPoolExecutor` — every service implementing `get_images` inherits
+        this. Per-id results keep the file cache; call it from async code with
+        `asyncio.to_thread` if needed.
 
         Args:
             source_ids: Source ids of the huts.
