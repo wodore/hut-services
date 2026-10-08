@@ -8,7 +8,6 @@ from hut_services.core import cache as cache_mod
 from hut_services.core.cache import (
     FileCacheBackend,
     cached,
-    file_cache,
     get_default_cache_backend,
     set_default_cache_backend,
 )
@@ -155,27 +154,3 @@ class TestCachedDecorator:
         versioned()
         key = next(iter(dict_cache.store))
         assert key.startswith(cache_mod.package_version)
-
-
-class TestDeprecatedAliases:
-    # same isolation: the real default backend persists across suite runs
-    isolated = TestCachedDecorator.isolated_default_backend
-
-    def test_file_cache_warns_and_works(self):
-        calls = []
-
-        with pytest.warns(DeprecationWarning, match="cached"):
-
-            @file_cache()
-            def double(x: int) -> int:
-                calls.append(x)
-                return x * 2
-
-        assert double(3) == 6
-        assert double(3) == 6
-        assert calls == [3]
-
-    def test_hut_services_still_exports_old_names(self):
-        from hut_services import file_cache as exported
-
-        assert exported is file_cache

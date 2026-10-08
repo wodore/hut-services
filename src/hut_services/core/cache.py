@@ -28,16 +28,13 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from time import time
 from typing import Any, Protocol, TypeVar
-from warnings import warn
 
 __all__ = [
     "CacheBackend",
     "FileCacheBackend",
     "cached",
     "clear_cache",
-    "clear_file_cache",
     "default_seconds",
-    "file_cache",
     "forever_seconds",
     "get_default_cache_backend",
     "set_default_cache_backend",
@@ -169,23 +166,6 @@ def cached(
     return decorator
 
 
-def file_cache(
-    func: None | Callable = None,
-    ignore: Sequence = (),
-    expire_in_seconds: int | None = None,
-    forever: bool = False,
-) -> Any:
-    """Deprecated alias for :func:`cached`."""
-    warn("`file_cache` is deprecated, use `cached` instead.", DeprecationWarning, stacklevel=2)
-    return cached(func, ignore=ignore, expire_in_seconds=expire_in_seconds, forever=forever)
-
-
 def clear_cache() -> None:
     """Clear the default cache backend."""
     get_default_cache_backend().clear()
-
-
-def clear_file_cache() -> None:
-    """Deprecated alias for :func:`clear_cache`."""
-    warn("`clear_file_cache` is deprecated, use `clear_cache` instead.", DeprecationWarning, stacklevel=2)
-    clear_cache()

@@ -31,8 +31,6 @@ __all__ = [
     "TranslationSchema",
     "cached",
     "clear_cache",
-    "clear_file_cache",
-    "file_cache",
     "get_default_cache_backend",
     "set_default_cache_backend",
 ]
@@ -44,8 +42,6 @@ from .core.cache import (
     FileCacheBackend,
     cached,
     clear_cache,
-    clear_file_cache,
-    file_cache,
     get_default_cache_backend,
     set_default_cache_backend,
 )

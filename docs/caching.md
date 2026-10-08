@@ -72,7 +72,3 @@ class HutConfig(AppConfig):
 With the database backend the cache survives container restarts and is shared
 across workers. Observed entry sizes are small enough (well under 1 MB) for
 comfortable database storage.
-
-!!! note
-    `file_cache` and `clear_file_cache` are deprecated aliases of `cached` and
-    `clear_cache` and will be removed in a future release.
