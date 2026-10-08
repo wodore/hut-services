@@ -8,6 +8,7 @@ copyright: Maintained by <a href="https://burgdev.ch">TBxy</a>.
 nav:
   - "Home": index.md
   - "Getting Started": docu.md
+  - "Caching": caching.md
   # Packages: packages.md
   # - References:
   #     - Core: api/core.md
