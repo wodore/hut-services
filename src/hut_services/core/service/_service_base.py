@@ -1,7 +1,7 @@
 import datetime
 import typing as t
 
-from hut_services import HutSourceSchema, clear_file_cache
+from hut_services import HutSourceSchema, clear_cache
 from hut_services.core.schema import (
     HutBookingsSchema,
     HutSchema,
@@ -82,7 +82,7 @@ class BaseService(t.Generic[THutSourceSchema]):
     @classmethod
     def clear_all_cache(cls) -> None:
         """Clears the cache of all services!"""
-        clear_file_cache()
+        clear_cache()
 
     def get_huts_from_source(
         self, bbox: BBox | None = None, limit: int = 1, offset: int = 0, **kwargs: t.Any
@@ -146,10 +146,11 @@ class BaseService(t.Generic[THutSourceSchema]):
     def get_images_many(self, source_ids: list[int | str], max_workers: int = 8) -> dict[int | str, list[PhotoSchema]]:
         """Get images for many huts in parallel (bounded thread concurrency).
 
-        Generic default implementation: parallelizes [`get_images`][...]
-        over a `ThreadPoolExecutor` — every service implementing
-        `get_images` inherits this. Per-id results keep the file cache;
-        call it from async code with `asyncio.to_thread` if needed.
+        Generic default implementation: parallelizes
+        [`get_images`][hut_services.BaseService.get_images] over a
+        `ThreadPoolExecutor` — every service implementing `get_images` inherits
+        this. Per-id results keep the file cache; call it from async code with
+        `asyncio.to_thread` if needed.
 
         Args:
             source_ids: Source ids of the huts.

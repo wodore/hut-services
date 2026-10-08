@@ -8,7 +8,7 @@ import httpx
 import xmltodict
 from easydict import EasyDict  # type: ignore[import-untyped]
 
-from hut_services.core.cache import file_cache
+from hut_services.core.cache import cached
 from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
 from hut_services.core.service import BaseService
@@ -22,7 +22,7 @@ from hut_services.refuges_info.schema import (
 logger = logging.getLogger(__name__)
 
 
-@file_cache()
+@cached()
 def refuges_info_request(
     url: str,
     limit: str | int = "all",

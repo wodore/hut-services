@@ -7,7 +7,7 @@ import typing as t
 from wikidata.client import Client
 from wikidata.entity import EntityId
 
-from hut_services import BaseService, file_cache
+from hut_services import BaseService, cached
 from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
 from hut_services.osm.service import OsmService
@@ -22,7 +22,7 @@ from hut_services.wikidata.schema import (
 logger = logging.getLogger(__name__)
 
 
-@file_cache(ignore=["client"])
+@cached(ignore=["client"])
 def _get_photo(client: Client, qid: EntityId) -> WikidataPhoto | None:
     image_prop = client.get(EntityId("P18"))  # image
     entity = client.get(qid, load=True)
@@ -35,7 +35,7 @@ def _get_photo(client: Client, qid: EntityId) -> WikidataPhoto | None:
     return WikidataPhoto.model_validate(image)
 
 
-@file_cache(ignore=["client"])
+@cached(ignore=["client"])
 def _get_attributes(client: Client, qid: EntityId) -> dict[str, t.Any]:
     entity = client.get(qid, load=True)
     return dict(entity.attributes.items())

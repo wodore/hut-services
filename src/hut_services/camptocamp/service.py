@@ -16,7 +16,7 @@ from hut_services.camptocamp.schema import (
     CamptocampHutSource,
     CamptocampProperties,
 )
-from hut_services.core.cache import file_cache
+from hut_services.core.cache import cached
 from hut_services.core.schema import HutSchema
 from hut_services.core.schema.geo import BBox
 from hut_services.core.service import BaseService
@@ -24,7 +24,7 @@ from hut_services.core.service import BaseService
 logger = logging.getLogger(__name__)
 
 
-@file_cache()
+@cached()
 def camptocamp_detail_request(
     url: str,
     document_id: int,
@@ -75,7 +75,7 @@ def camptocamp_detail_request(
         return None
 
 
-@file_cache()
+@cached()
 def camptocamp_request(
     url: str,
     waypoint_type: str = "hut",
