@@ -58,6 +58,7 @@ class CacheBackend(Protocol):
 
     def get(self, key: str, default: Any = None) -> Any: ...
     def set(self, key: str, value: Any, timeout: int | None = None) -> None: ...
+    def delete(self, key: str) -> None: ...
     def clear(self) -> None: ...
 
 
@@ -99,6 +100,9 @@ class FileCacheBackend:
             pickle.dump((effective, value), fh)
         os.replace(tmp, path)  # atomic on POSIX and Windows
 
+    def delete(self, key: str) -> None:
+        self._path(key).unlink(missing_ok=True)
+
     def clear(self) -> None:
         if self._root.exists():
             shutil.rmtree(self._root)
@@ -137,6 +141,10 @@ def cached(
     Keys are derived from the package version, the function's qualified name
     and its arguments; argument names in ``ignore`` (e.g. secrets or client
     objects) are excluded.  With ``forever`` the entry gets a 10-year timeout.
+
+    The wrapper gains an ``evict(*args, **kwargs)`` helper that deletes the
+    single entry a call with these arguments would read, e.g. to drop a cached
+    empty result of a failed request.
     """
     if forever:
         expire_in_seconds = forever_seconds
@@ -147,11 +155,14 @@ def cached(
         signature = inspect.signature(fn)
         key_prefix = f"{package_version}:{fn.__module__}:{fn.__qualname__}"
 
+        def key_for(arguments: dict[str, Any]) -> str:
+            return _cache_key(key_prefix, {k: v for k, v in arguments.items() if k not in ignore})
+
         @functools.wraps(fn)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             cache = backend if backend is not None else get_default_cache_backend()
             bound = signature.bind(*args, **kwargs)
-            key = _cache_key(key_prefix, {k: v for k, v in bound.arguments.items() if k not in ignore})
+            key = key_for(bound.arguments)
             hit = cache.get(key, _MISS)
             if hit is not _MISS:
                 return hit
@@ -159,6 +170,19 @@ def cached(
             cache.set(key, result, expire_in_seconds)
             return result
 
+        def evict(*args: Any, **kwargs: Any) -> None:
+            """Delete the cache entry a call with these arguments would read.
+
+            Uses the standard backend ``delete`` (Django ``BaseCache`` API), so
+            it works with any conforming backend.  Evicting *all* entries of a
+            function is deliberately not supported (backends cannot enumerate
+            keys); use ``clear_cache()`` for that.
+            """
+            cache = backend if backend is not None else get_default_cache_backend()
+            bound = signature.bind(*args, **kwargs)
+            cache.delete(key_for(bound.arguments))
+
+        wrapper.evict = evict  # type: ignore[attr-defined]  # joblib-style helper attached to the wrapper
         return wrapper
 
     if func is not None and callable(func):  # support bare @cached

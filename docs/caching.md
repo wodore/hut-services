@@ -38,6 +38,29 @@ def get_photo(client, qid: str) -> Photo | None:
 `clear_cache()` (or `BaseService.clear_all_cache()`) empties the default
 backend.
 
+### Evicting single entries
+
+A cached function exposes an `evict()` helper with the same signature as the
+function. It deletes exactly the entry a call with these arguments would read
+— via the backend's standard `delete(key)`, so it works with any conforming
+backend, including Django caches:
+
+```python
+@cached(ignore=["sync_client"])
+def get_hut(hut_id: int, sync_client=None) -> dict:
+    ...
+
+
+data = get_hut(42)
+if not data:  # e.g. a failed request was cached as an empty dict
+    get_hut.evict(42)  # next call re-fetches hut 42, all other entries survive
+```
+
+Arguments listed in `ignore` are excluded from the eviction key just as they
+are from the cache key. Evicting *all* entries of a function is deliberately
+not supported: Django's `BaseCache` cannot enumerate keys (`delete_pattern`
+only exists on some backends) — use `clear_cache()` for that.
+
 ## Custom backends
 
 Any object implementing

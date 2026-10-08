@@ -25,6 +25,9 @@ class DictCache:
     def set(self, key, value, timeout=None):
         self.store[key] = value
 
+    def delete(self, key):
+        self.store.pop(key, None)
+
     def clear(self) -> None:
         self.store.clear()
 
@@ -63,6 +66,16 @@ class TestFileCacheBackend:
         file_backend.set("persist", _Hat(name=" persistence"), timeout=3600)
         reborn = FileCacheBackend(tmp_path / "cache")
         assert reborn.get("persist") == _Hat(name=" persistence")
+
+    def test_delete_removes_entry(self, file_backend):
+        file_backend.set("doomed", 1, timeout=60)
+        file_backend.set("kept", 2, timeout=60)
+        file_backend.delete("doomed")
+        assert file_backend.get("doomed", "missed") == "missed"
+        assert file_backend.get("kept") == 2
+
+    def test_delete_missing_key_is_silent(self, file_backend):
+        file_backend.delete("never-existed")  # must not raise
 
     def test_clear_removes_entries(self, file_backend):
         file_backend.set("a", 1, timeout=60)
@@ -154,3 +167,63 @@ class TestCachedDecorator:
         versioned()
         key = next(iter(dict_cache.store))
         assert key.startswith(cache_mod.package_version)
+
+
+class TestEvict:
+    """The `evict` helper on cached functions (per-entry eviction)."""
+
+    @pytest.fixture(autouse=True)
+    def isolated_default_backend(self, tmp_path):
+        original = get_default_cache_backend()
+        set_default_cache_backend(FileCacheBackend(tmp_path / "cache"))
+        yield
+        set_default_cache_backend(original)
+
+    def test_evict_drops_only_matching_entry(self):
+        calls = []
+
+        @cached()
+        def square(n: int) -> int:
+            calls.append(n)
+            return n * n
+
+        assert square(2) == 4
+        assert square(3) == 9
+        square.evict(2)
+        assert square(2) == 4
+        assert square(3) == 9
+        assert calls == [2, 3, 2]  # only the evicted entry was recomputed
+
+    def test_evict_before_first_call_is_silent(self):
+        @cached()
+        def add(a: int, b: int = 1) -> int:
+            return a + b
+
+        add.evict(2)  # no entry yet, must not raise
+        assert add(2) == 3
+
+    def test_evict_respects_ignored_arguments(self):
+        calls = []
+
+        @cached(ignore=["api_key"])
+        def fetch(asset_id: int, api_key: str) -> str:
+            calls.append(asset_id)
+            return f"result-{asset_id}"
+
+        assert fetch(1, "secret") == "result-1"
+        fetch.evict(1, "anything-else")  # same key as fetch(1, "secret")
+        assert fetch(1, "secret") == "result-1"
+        assert calls == [1, 1]  # evicted despite differing ignored argument
+
+    def test_evict_works_with_django_shaped_backend(self):
+        dict_cache = DictCache()
+
+        @cached(backend=dict_cache)
+        def double(n: int) -> int:
+            return 2 * n
+
+        assert double(21) == 42
+        assert len(dict_cache.store) == 1
+        double.evict(21)
+        assert dict_cache.store == {}
+        assert double(21) == 42  # recomputed and re-stored
