@@ -373,3 +373,132 @@ def test_doc_nz_hut_website_online() -> None:
     except Exception as e:
         pytest.skip(f"doc.govt.nz not reachable: {e!r}")
     assert url == "http://www.rmlt.co.nz/hunting/"  # the contact panel's Website row
+
+
+def test_convert_campsite_from_model_like_payload(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Regression: consumers call `convert` with their own source-model
+    instances (e.g. a Django `HutSource`) — the campsite branch must
+    detect the payload via `campsiteCategory`, not `isinstance` (which
+    never fires for models). Campsites map to `camping`/`campgr`.
+    """
+    from types import SimpleNamespace
+
+    from hut_services.doc_nz import schema as doc_schema
+
+    monkeypatch.setattr(doc_schema, "get_hut_images", lambda s: [])
+    monkeypatch.setattr(doc_schema, "get_hut_website", lambda s: "")
+    service = DocNzService()
+    model_like = SimpleNamespace(
+        source_name="doc_nz",
+        version=0,
+        name="Dickey Flat Campsite",
+        source_id="100042010",
+        source_data={
+            "assetId": 100042010,
+            "name": "Dickey Flat Campsite",
+            "campsiteCategory": "Standard",
+            "bookable": "No",
+            "introduction": "A standard campsite beside the river.",
+            "lat": -37.4681,
+            "lon": 175.6656,
+        },
+        location={"lat": -37.4681, "lon": 175.6656, "ele": None},
+    )
+    hut = service.convert(model_like, include_photos=False)
+    assert hut.hut_type.if_open.value == "camping"  # 'Standard' campsite, NOT unknown
+    assert hut.is_bookable is False
+
+    basic = SimpleNamespace(
+        **{
+            **model_like.__dict__,
+            "source_data": {**model_like.source_data, "campsiteCategory": "Basic"},
+        }
+    )
+    hut2 = service.convert(basic, include_photos=False)
+    assert hut2.hut_type.if_open.value == "campgr"  # rustic category
+
+
+def test_convert_hut_from_model_like_payload(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Hut payloads via the model path keep converting as huts."""
+    from types import SimpleNamespace
+
+    from hut_services.doc_nz import schema as doc_schema
+
+    monkeypatch.setattr(doc_schema, "get_hut_images", lambda s: [])
+    monkeypatch.setattr(doc_schema, "get_hut_website", lambda s: "")
+    service = DocNzService()
+    model_like = SimpleNamespace(
+        source_name="doc_nz",
+        version=0,
+        name="Mcintosh Hut",
+        source_id="100040290",
+        source_data={**CANNED_FEATURE, **CANNED_DETAIL},
+        location={"lat": CANNED_FEATURE["lat"], "lon": CANNED_FEATURE["lon"], "ele": None},
+    )
+    hut = service.convert(model_like, include_photos=False)
+    assert hut.hut_type.if_open.value == "selfhut"  # 'Standard' category -> unattended
+    assert hut.capacity.if_open == 10
+
+
+def test_convert_converter_cls_hooks(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Subclasses swap converters via `hut0_convert_cls` / `campsite0_convert_cls`
+    without overriding `convert` (e.g. to set `is_bookable`)."""
+    from types import SimpleNamespace
+
+    from pydantic import computed_field
+
+    from hut_services.doc_nz import schema as doc_schema
+    from hut_services.doc_nz.schema import DocNzCampsite0Convert
+
+    monkeypatch.setattr(doc_schema, "get_hut_images", lambda s: [])
+    monkeypatch.setattr(doc_schema, "get_hut_website", lambda s: "")
+
+    class BookableHutConvert(DocNzHut0Convert):
+        @computed_field  # type: ignore[prop-decorator]
+        @property
+        def is_bookable(self) -> bool:
+            return bool(self.source_data.bookable)
+
+    class BookableCampsiteConvert(DocNzCampsite0Convert):
+        @computed_field  # type: ignore[prop-decorator]
+        @property
+        def is_bookable(self) -> bool:
+            return bool(self.source_data.bookable)
+
+    class BookableDocNzService(DocNzService):
+        hut0_convert_cls = BookableHutConvert
+        campsite0_convert_cls = BookableCampsiteConvert
+
+    service = BookableDocNzService()
+    hut_src = SimpleNamespace(
+        source_name="doc_nz",
+        version=0,
+        name="Mcintosh Hut",
+        source_id="100040290",
+        source_data={**CANNED_FEATURE, "bookable": "Yes"},
+        location={"lat": CANNED_FEATURE["lat"], "lon": CANNED_FEATURE["lon"], "ele": None},
+    )
+    hut = service.convert(hut_src, include_photos=False)
+    assert hut.is_bookable is True  # public default: False
+
+    campsite_src = SimpleNamespace(
+        source_name="doc_nz",
+        version=0,
+        name="Dickey Flat Campsite",
+        source_id="100042010",
+        source_data={
+            "assetId": 100042010,
+            "name": "Dickey Flat Campsite",
+            "campsiteCategory": "Standard",
+            "bookable": "Yes",
+            "lat": -37.4681,
+            "lon": 175.6656,
+        },
+        location={"lat": -37.4681, "lon": 175.6656, "ele": None},
+    )
+    camp = service.convert(campsite_src, include_photos=False)
+    assert camp.is_bookable is True

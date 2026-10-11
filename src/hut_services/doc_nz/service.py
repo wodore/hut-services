@@ -113,6 +113,23 @@ def doc_nz_layer_features(
     return merged
 
 
+def _is_campsite_payload(src: t.Any) -> bool:
+    """True when the source's `source_data` payload is a campsites-layer
+    feature (`campsiteCategory` attribute).
+
+    Works for mappings, ORM models and validated source schemas. Needed
+    in addition to the `isinstance(src, DocNzCampsiteHutSource)` check:
+    consumers typically call `convert` with their own source-model
+    instances (e.g. a Django `HutSource`), where the isinstance check
+    never fires and a campsite payload would silently validate as a hut
+    (type `unknown`, no capacity).
+    """
+    raw: t.Any = src.get("source_data") if isinstance(src, t.Mapping) else getattr(src, "source_data", None)
+    if isinstance(raw, t.Mapping):
+        return "campsiteCategory" in raw
+    return getattr(raw, "campsite_category", None) is not None
+
+
 def _parse_layer_features(
     features: list[dict[str, t.Any]], schema_cls: type[TLayerSchema], label: str
 ) -> list[TLayerSchema]:
@@ -255,6 +272,10 @@ class DocNzService(BaseService[DocNzAnySource]):
     only); they convert to `camping`/`campgr` types without capacity.
     For campsites only use `DocNzCampsiteService`.
 
+    Extension hooks: subclasses can swap the converters via the
+    `hut0_convert_cls` / `campsite0_convert_cls` class attributes (e.g.
+    to set `is_bookable`) without overriding `convert`.
+
     Note:
         The methods are described in [`BaseService`][hut_services.BaseService].
 
@@ -273,6 +294,12 @@ class DocNzService(BaseService[DocNzAnySource]):
         huts = service.get_huts(limit=20)  # enriched, one cached request per asset
         ```
     """
+
+    hut0_convert_cls: type[DocNzHut0Convert] = DocNzHut0Convert
+    """Converter for huts — swappable by subclasses (see class docstring)."""
+
+    campsite0_convert_cls: type[DocNzCampsite0Convert] = DocNzCampsite0Convert
+    """Converter for campsites — swappable by subclasses (see class docstring)."""
 
     def __init__(
         self,
@@ -403,11 +430,15 @@ class DocNzService(BaseService[DocNzAnySource]):
         return t.cast("list[DocNzHutAlerts]", alerts)
 
     def convert(self, src: t.Mapping | t.Any, include_photos: bool = True) -> HutSchema:
-        if isinstance(src, DocNzCampsiteHutSource) or (
-            isinstance(src, t.Mapping) and src.get("source_name") == "doc_nz_camp"
+        if (
+            _is_campsite_payload(src)
+            or isinstance(src, DocNzCampsiteHutSource)
+            or (isinstance(src, t.Mapping) and src.get("source_name") == "doc_nz_camp")
         ):
             campsite_src = (
-                DocNzCampsiteHutSource(**src) if isinstance(src, t.Mapping) else t.cast("DocNzCampsiteHutSource", src)
+                DocNzCampsiteHutSource(**src)
+                if isinstance(src, t.Mapping)
+                else t.cast("DocNzCampsiteHutSource", DocNzCampsiteHutSource.model_validate(src, from_attributes=True))
             )
             if campsite_src.source_data is None:
                 err_msg = (
@@ -415,7 +446,9 @@ class DocNzService(BaseService[DocNzAnySource]):
                     "without 'source_data' not allowed."
                 )
                 raise AttributeError(err_msg)
-            return DocNzCampsite0Convert(include_photos=include_photos, source_data=campsite_src.source_data).get_hut()
+            return self.campsite0_convert_cls(
+                include_photos=include_photos, source_data=campsite_src.source_data
+            ).get_hut()
         hut_src = (
             DocNzHutSource(**src)
             if isinstance(src, t.Mapping)
@@ -425,7 +458,7 @@ class DocNzService(BaseService[DocNzAnySource]):
             if hut_src.source_data is None:
                 err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} without 'source_data' not allowed."
                 raise AttributeError(err_msg)
-            return DocNzHut0Convert(include_photos=include_photos, source_data=hut_src.source_data).get_hut()
+            return self.hut0_convert_cls(include_photos=include_photos, source_data=hut_src.source_data).get_hut()
         else:
             err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} not implemented."
             raise NotImplementedError(err_msg)
