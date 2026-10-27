@@ -26,7 +26,7 @@ import httpx
 from pydantic import ValidationError
 
 from hut_services.core.cache import cached
-from hut_services.core.schema import HutSchema, PhotoSchema, SourceDataSchema
+from hut_services.core.schema import HutSchema, PhotoSchema, PhotosMode, SourceDataSchema, normalize_photos_mode
 from hut_services.core.schema.geo import BBox
 from hut_services.core.service import BaseService
 
@@ -429,7 +429,7 @@ class DocNzService(BaseService[DocNzAnySource]):
         alerts = doc_nz_alerts_request(self.api_url, self.api_key)
         return t.cast("list[DocNzHutAlerts]", alerts)
 
-    def convert(self, src: t.Mapping | t.Any, include_photos: bool = True) -> HutSchema:
+    def convert(self, src: t.Mapping | t.Any, include_photos: PhotosMode | bool = PhotosMode.EMBEDDED) -> HutSchema:
         if (
             _is_campsite_payload(src)
             or isinstance(src, DocNzCampsiteHutSource)
@@ -447,7 +447,7 @@ class DocNzService(BaseService[DocNzAnySource]):
                 )
                 raise AttributeError(err_msg)
             return self.campsite0_convert_cls(
-                include_photos=include_photos, source_data=campsite_src.source_data
+                include_photos=normalize_photos_mode(include_photos), source_data=campsite_src.source_data
             ).get_hut()
         hut_src = (
             DocNzHutSource(**src)
@@ -458,7 +458,9 @@ class DocNzService(BaseService[DocNzAnySource]):
             if hut_src.source_data is None:
                 err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} without 'source_data' not allowed."
                 raise AttributeError(err_msg)
-            return self.hut0_convert_cls(include_photos=include_photos, source_data=hut_src.source_data).get_hut()
+            return self.hut0_convert_cls(
+                include_photos=normalize_photos_mode(include_photos), source_data=hut_src.source_data
+            ).get_hut()
         else:
             err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} not implemented."
             raise NotImplementedError(err_msg)
@@ -561,7 +563,7 @@ class DocNzCampsiteService(BaseService[DocNzCampsiteHutSource]):
         alerts = doc_nz_alerts_request(self.api_url, self.api_key, kind="campsites")
         return t.cast("list[DocNzHutAlerts]", alerts)
 
-    def convert(self, src: t.Mapping | t.Any, include_photos: bool = True) -> HutSchema:
+    def convert(self, src: t.Mapping | t.Any, include_photos: PhotosMode | bool = PhotosMode.EMBEDDED) -> HutSchema:
         campsite_src = (
             DocNzCampsiteHutSource(**src)
             if isinstance(src, t.Mapping)
@@ -574,7 +576,9 @@ class DocNzCampsiteService(BaseService[DocNzCampsiteHutSource]):
                     "without 'source_data' not allowed."
                 )
                 raise AttributeError(err_msg)
-            return DocNzCampsite0Convert(include_photos=include_photos, source_data=campsite_src.source_data).get_hut()
+            return DocNzCampsite0Convert(
+                include_photos=normalize_photos_mode(include_photos), source_data=campsite_src.source_data
+            ).get_hut()
         else:
             err_msg = f"Conversion for '{campsite_src.source_name}' version {campsite_src.version} not implemented."
             raise NotImplementedError(err_msg)

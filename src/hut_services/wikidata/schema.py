@@ -9,6 +9,7 @@ from hut_services import (
     LicenseSchema,
     LocationEleSchema,
     PhotoSchema,
+    PhotosMode,
     SourceDataSchema,
     SourcePropertiesSchema,
     SourceSchema,
@@ -108,8 +109,9 @@ class WikidataHut0Convert(BaseHutConverterSchema[WikidataHutSchema]):
     @computed_field()  # type: ignore[prop-decorator]
     @property
     def photos(self) -> list[PhotoSchema]:
+        # resolving the embedded image title needs one wikicommons request -> only for ALL
         image = self.source_data.photo
-        if image is None or self.include_photos is False:
+        if image is None or self.include_photos is not PhotosMode.ALL:
             return []
         return [wikicommons_service.get_photo(image.title.replace("File:", ""))]
 

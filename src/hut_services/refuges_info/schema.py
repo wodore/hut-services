@@ -14,6 +14,7 @@ from hut_services import (
     HutTypeSchema,
     LicenseSchema,
     OwnerSchema,
+    PhotosMode,
     SourceDataSchema,
     SourcePropertiesSchema,
     SourceSchema,
@@ -270,7 +271,8 @@ class RefugesInfoHut0Convert(BaseHutConverterSchema[RefugesInfoFeature]):
     @computed_field()  # type: ignore[prop-decorator]
     @property
     def photos(self) -> list[PhotoSchema]:
-        if self.include_photos is False:
+        # scraping the hut page needs one additional request -> only for ALL
+        if self.include_photos is not PhotosMode.ALL:
             return []
         return cast(list[PhotoSchema], get_original_images(self.source_data.get_id()))
 

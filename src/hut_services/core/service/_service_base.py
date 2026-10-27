@@ -6,7 +6,9 @@ from hut_services.core.schema import (
     HutBookingsSchema,
     HutSchema,
     PhotoSchema,
+    PhotosMode,
     TotalFallback,
+    normalize_photos_mode,
 )
 from hut_services.core.schema.geo import BBox
 
@@ -99,12 +101,17 @@ class BaseService(t.Generic[THutSourceSchema]):
         """
         raise self.MethodNotImplementedError(self, "get_huts_from_source")
 
-    def convert(self, src: t.Mapping | t.Any, include_photos: bool = True) -> HutSchema:
+    def convert(self, src: t.Mapping | t.Any, include_photos: PhotosMode | bool = PhotosMode.EMBEDDED) -> HutSchema:
         """Convert one hut from source to [`HutSchema`][hut_services.HutSchema].
 
         Args:
             src: Source schema.
-            include_photos: Include photos, some services need additional requests to get the photos.
+            include_photos: Which photos to include
+                (see [`PhotosMode`][hut_services.PhotosMode]): `NONE`, `EMBEDDED`
+                (only photos already part of the source data - never makes
+                additional requests, the default) or `ALL` (may make additional
+                requests per hut/image). Legacy booleans are accepted
+                (`True` -> `ALL`, `False` -> `NONE`).
 
         Returns:
             Converted hut.
@@ -114,17 +121,29 @@ class BaseService(t.Generic[THutSourceSchema]):
         raise self.MethodNotImplementedError(self, "convert")
 
     def get_huts(
-        self, bbox: BBox | None = None, limit: int = 1, offset: int = 0, include_photos: bool = True, **kwargs: t.Any
+        self,
+        bbox: BBox | None = None,
+        limit: int = 1,
+        offset: int = 0,
+        include_photos: PhotosMode | bool = PhotosMode.EMBEDDED,
+        **kwargs: t.Any,
     ) -> list[HutSchema]:
         """Get all huts form source and converts them.
         Calls [`get_huts_from_source()`][hut_services.BaseService.get_huts_from_source]
         and [`convert()`][hut_services.BaseService.convert].
 
+        Args:
+            bbox: Boundary box.
+            limit: Limit (how many entries to retrieve).
+            offset: Offset of the request.
+            include_photos: Which photos to include
+                (see [`PhotosMode`][hut_services.PhotosMode]).
+
         Returns:
             Converted huts from source."""
-        huts = []
+        mode = normalize_photos_mode(include_photos)
         src_huts = self.get_huts_from_source(bbox=bbox, limit=limit, offset=offset, **kwargs)
-        huts = [self.convert(h, include_photos=include_photos) for h in src_huts]
+        huts = [self.convert(h, include_photos=mode) for h in src_huts]
         return huts
 
     def get_images(self, source_id: int | str) -> list[PhotoSchema]:
@@ -133,7 +152,7 @@ class BaseService(t.Generic[THutSourceSchema]):
         Use this to import huts without photos and enrich the images
         separately. Services without direct image access raise
         `MethodNotImplementedError` - their photos only come through
-        `convert(include_photos=True)`.
+        `convert(include_photos=PhotosMode.ALL)`.
 
         Args:
             source_id: Source id of the hut.
