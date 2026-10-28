@@ -1,6 +1,6 @@
 from typing import Any, Generic, TypeVar
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 from ..guess import guess_slug_name
 from ._contact import ContactSchema
@@ -15,6 +15,7 @@ from ._hut_fields import (
 )
 from ._license import AuthorSchema, SourceSchema
 from ._photo import PhotoSchema
+from ._photos_mode import PhotosMode, normalize_photos_mode
 from .geo import LocationEleSchema
 from .locale import TranslationSchema
 
@@ -40,7 +41,18 @@ class BaseHutConverterSchema(BaseModel, Generic[TSourceData]):
     # See [`OsmHut0Convert`][hut_services.osm.schema.OsmHut0Convert].
 
     source_data: TSourceData = Field(..., exclude=True)
-    include_photos: bool = True
+    include_photos: PhotosMode = PhotosMode.EMBEDDED
+    """Which photos the conversion includes (see [`PhotosMode`][hut_services.PhotosMode]).
+
+    Legacy booleans are accepted and normalized (`True` -> `ALL`, `False` -> `NONE`).
+    Services that need additional requests to fetch photos only do so for `ALL`.
+    """
+
+    @field_validator("include_photos", mode="before")
+    @classmethod
+    def _normalize_include_photos(cls, value: Any) -> Any:
+        """Accept legacy bools and plain strings for `include_photos`."""
+        return normalize_photos_mode(value)
 
     class FieldNotImplementedError(Exception):
         """Field is not implemented.

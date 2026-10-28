@@ -8,7 +8,7 @@ from wikidata.client import Client
 from wikidata.entity import EntityId
 
 from hut_services import BaseService, cached
-from hut_services.core.schema import HutSchema
+from hut_services.core.schema import HutSchema, PhotosMode, normalize_photos_mode
 from hut_services.core.schema.geo import BBox
 from hut_services.osm.service import OsmService
 from hut_services.wikidata.schema import (
@@ -118,7 +118,7 @@ class WikidataService(BaseService[WikidataHutSource]):
                 break
         return huts
 
-    def convert(self, src: t.Mapping | t.Any, include_photos: bool = True) -> HutSchema:
+    def convert(self, src: t.Mapping | t.Any, include_photos: PhotosMode | bool = PhotosMode.EMBEDDED) -> HutSchema:
         hut_src = (
             WikidataHutSource(**src)
             if isinstance(src, t.Mapping)
@@ -128,7 +128,9 @@ class WikidataService(BaseService[WikidataHutSource]):
             if hut_src.source_data is None:
                 err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} without 'source_data' not allowed."
                 raise AttributeError(err_msg)
-            return WikidataHut0Convert(source_data=hut_src.source_data, include_photos=include_photos).get_hut()
+            return WikidataHut0Convert(
+                source_data=hut_src.source_data, include_photos=normalize_photos_mode(include_photos)
+            ).get_hut()
         else:
             err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} not implemented."
             raise NotImplementedError(err_msg)

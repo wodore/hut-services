@@ -27,6 +27,7 @@ from hut_services import (
     LicenseSchema,
     OwnerSchema,
     PhotoSchema,
+    PhotosMode,
     SourceDataSchema,
     SourcePropertiesSchema,
     SourceSchema,
@@ -214,7 +215,9 @@ def get_hut_category(category: str | None) -> HutCategoryEnum:
 class DocNzHut0Convert(BaseHutConverterSchema[DocNzHutSchema]):
     """Converter for the DOC NZ source (version 0)."""
 
-    include_photos: bool = True
+    # ALL preserves the pre-PhotosMode direct-construction behaviour; the
+    # service's convert() defaults to EMBEDDED (photos need a page fetch).
+    include_photos: PhotosMode = PhotosMode.ALL
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -281,7 +284,8 @@ class DocNzHut0Convert(BaseHutConverterSchema[DocNzHutSchema]):
     def photos(self) -> list[PhotoSchema]:
         """Hero + gallery photos from the hut page (CC/DOC licensed only,
         third party (c) images are skipped; one cached page request per hut)."""
-        if not self.include_photos or not self.source_data.static_link:
+        # the page fetch is an additional request -> only for ALL
+        if self.include_photos is not PhotosMode.ALL or not self.source_data.static_link:
             return []
         try:
             return t.cast("list[PhotoSchema]", get_hut_images(self.source_data.static_link))
@@ -438,7 +442,9 @@ def get_campsite_hut_type(category: str | None) -> HutTypeSchema:
 class DocNzCampsite0Convert(BaseHutConverterSchema[DocNzCampsiteSchema]):
     """Converter for the DOC NZ campsite source (version 0)."""
 
-    include_photos: bool = True
+    # ALL preserves the pre-PhotosMode direct-construction behaviour; the
+    # service's convert() defaults to EMBEDDED (photos need a page fetch).
+    include_photos: PhotosMode = PhotosMode.ALL
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -494,7 +500,8 @@ class DocNzCampsite0Convert(BaseHutConverterSchema[DocNzCampsiteSchema]):
     def photos(self) -> list[PhotoSchema]:
         """Hero + gallery photos from the campsite page (CC/DOC licensed only,
         third party (c) images are skipped; one cached page request per campsite)."""
-        if not self.include_photos or not self.source_data.static_link:
+        # the page fetch is an additional request -> only for ALL
+        if self.include_photos is not PhotosMode.ALL or not self.source_data.static_link:
             return []
         try:
             return t.cast("list[PhotoSchema]", get_hut_images(self.source_data.static_link))

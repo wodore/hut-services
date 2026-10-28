@@ -24,6 +24,7 @@ __all__ = [
     "OwnerSchema",
     "PhotoSchema",
     "PhotoSchemaOld",
+    "PhotosMode",
     "RefugesInfoService",
     "SourceDataSchema",
     "SourcePropertiesSchema",
@@ -32,6 +33,7 @@ __all__ = [
     "cached",
     "clear_cache",
     "get_default_cache_backend",
+    "normalize_photos_mode",
     "set_default_cache_backend",
 ]
 
@@ -61,9 +63,11 @@ from .core.schema import (
     OwnerSchema,
     PhotoSchema,
     PhotoSchemaOld,
+    PhotosMode,
     SourceDataSchema,
     SourcePropertiesSchema,
     SourceSchema,
+    normalize_photos_mode,
 )
 from .core.schema.geo import LocationEleSchema, LocationSchema
 from .core.schema.locale import TranslationSchema

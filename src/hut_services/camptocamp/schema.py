@@ -21,6 +21,7 @@ from hut_services import (
     OpenMonthlySchema,
     OwnerSchema,
     PhotoSchema,
+    PhotosMode,
     SourceDataSchema,
     SourcePropertiesSchema,
     SourceSchema,
@@ -334,8 +335,12 @@ class CamptocampHut0Convert(BaseHutConverterSchema[CamptocampDocument]):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def photos(self) -> list[PhotoSchema]:
-        """Get photos associated with this hut from camptocamp.org."""
-        if self.include_photos is False:
+        """Get photos associated with this hut from camptocamp.org.
+
+        Fetching them needs one additional request per associated image,
+        so they are only included for `PhotosMode.ALL`.
+        """
+        if self.include_photos is not PhotosMode.ALL:
             return []
         return get_images(tuple(self.source_data.get_image_ids()))
 

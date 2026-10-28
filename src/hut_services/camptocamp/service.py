@@ -17,7 +17,7 @@ from hut_services.camptocamp.schema import (
     CamptocampProperties,
 )
 from hut_services.core.cache import cached
-from hut_services.core.schema import HutSchema
+from hut_services.core.schema import HutSchema, PhotosMode, normalize_photos_mode
 from hut_services.core.schema.geo import BBox
 from hut_services.core.service import BaseService
 
@@ -238,13 +238,14 @@ class CamptocampService(BaseService[CamptocampHutSource]):
         logger.info(f"Successfully got {len(huts)} huts")
         return huts
 
-    def convert(self, src: t.Mapping | t.Any, include_photos: bool = True) -> HutSchema:
+    def convert(self, src: t.Mapping | t.Any, include_photos: PhotosMode | bool = PhotosMode.EMBEDDED) -> HutSchema:
         """
         Convert CamptocampHutSource to HutSchema.
 
         Args:
             src: Source data (CamptocampHutSource or dict)
-            include_photos: Whether to include photos
+            include_photos: Which photos to include (see `PhotosMode`) -
+                `ALL` fetches one additional request per associated image
 
         Returns:
             HutSchema object
@@ -260,7 +261,9 @@ class CamptocampService(BaseService[CamptocampHutSource]):
                 err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} without 'source_data' not allowed."
                 raise AttributeError(err_msg)
 
-            return CamptocampHut0Convert(source_data=hut_src.source_data, include_photos=include_photos).get_hut()
+            return CamptocampHut0Convert(
+                source_data=hut_src.source_data, include_photos=normalize_photos_mode(include_photos)
+            ).get_hut()
         else:
             err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} not implemented."
             raise NotImplementedError(err_msg)

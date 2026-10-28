@@ -7,7 +7,7 @@ import typing as t
 import overpy  # type: ignore[import-untyped]
 
 from hut_services.core.cache import cached
-from hut_services.core.schema import HutSchema
+from hut_services.core.schema import HutSchema, PhotosMode, normalize_photos_mode
 from hut_services.core.schema.geo import BBox
 from hut_services.core.service import BaseService
 from hut_services.osm.schema import OsmHut0Convert, OsmHutSchema, OsmHutSource, OsmProperties
@@ -91,7 +91,7 @@ class OsmService(BaseService[OsmHutSource]):
         assert all(isinstance(p, OsmHutSource) for p in huts), "Wrong type, not a list of 'PhotoSchema'"  # noqa: S101
         return t.cast(list[OsmHutSource], huts)
 
-    def convert(self, src: t.Mapping | t.Any, include_photos: bool = True) -> HutSchema:
+    def convert(self, src: t.Mapping | t.Any, include_photos: PhotosMode | bool = PhotosMode.EMBEDDED) -> HutSchema:
         hut_src = (
             OsmHutSource(**src)
             if isinstance(src, t.Mapping)
@@ -101,7 +101,9 @@ class OsmService(BaseService[OsmHutSource]):
             if hut_src.source_data is None:
                 err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} without 'source_data' not allowed."
                 raise AttributeError(err_msg)
-            return OsmHut0Convert(include_photos=include_photos, source_data=hut_src.source_data).get_hut()
+            return OsmHut0Convert(
+                include_photos=normalize_photos_mode(include_photos), source_data=hut_src.source_data
+            ).get_hut()
         else:
             err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} not implemented."
             raise NotImplementedError(err_msg)

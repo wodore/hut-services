@@ -9,7 +9,7 @@ import xmltodict
 from easydict import EasyDict  # type: ignore[import-untyped]
 
 from hut_services.core.cache import cached
-from hut_services.core.schema import HutSchema
+from hut_services.core.schema import HutSchema, PhotosMode, normalize_photos_mode
 from hut_services.core.schema.geo import BBox
 from hut_services.core.service import BaseService
 from hut_services.refuges_info.massif import MASSIF_ALPES
@@ -105,7 +105,7 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
         logger.info(f"succesfully got {len(huts)} huts")
         return huts
 
-    def convert(self, src: t.Mapping | t.Any, include_photos: bool = True) -> HutSchema:
+    def convert(self, src: t.Mapping | t.Any, include_photos: PhotosMode | bool = PhotosMode.EMBEDDED) -> HutSchema:
         hut_src = (
             RefugesInfoHutSource(**src)
             if isinstance(src, t.Mapping)
@@ -115,7 +115,9 @@ class RefugesInfoService(BaseService[RefugesInfoHutSource]):
             if hut_src.source_data is None:
                 err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} without 'source_data' not allowed."
                 raise AttributeError(err_msg)
-            return RefugesInfoHut0Convert(source_data=hut_src.source_data, include_photos=include_photos).get_hut()
+            return RefugesInfoHut0Convert(
+                source_data=hut_src.source_data, include_photos=normalize_photos_mode(include_photos)
+            ).get_hut()
         else:
             err_msg = f"Conversion for '{hut_src.source_name}' version {hut_src.version} not implemented."
             raise NotImplementedError(err_msg)

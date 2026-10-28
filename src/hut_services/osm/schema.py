@@ -14,6 +14,7 @@ from hut_services import (
     LocationEleSchema,
     OwnerSchema,
     PhotoSchema,
+    PhotosMode,
     SourceDataSchema,
     SourcePropertiesSchema,
     TranslationSchema,
@@ -116,7 +117,7 @@ class OsmHutSource(BaseHutSourceSchema[OsmHutSchema, OsmProperties]):
 
 
 class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
-    include_photos: bool = False
+    include_photos: PhotosMode = PhotosMode.NONE
 
     @property
     def _tags(self) -> OSMTags:
@@ -278,7 +279,7 @@ class OsmHut0Convert(BaseHutConverterSchema[OsmHutSchema]):
     @property
     def photos(self) -> list[PhotoSchema]:
         """Not supported for osm data, use wikidata isntead which are based on the osm data."""
-        if self.wikidata_entity is not None and self.include_photos:
+        if self.wikidata_entity is not None and self.include_photos is PhotosMode.ALL:
             return self.wikidata_entity.get_photos()
         return []
 

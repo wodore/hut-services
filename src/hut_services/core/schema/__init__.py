@@ -22,6 +22,7 @@ from ._hut_fields import (
 )
 from ._license import AuthorSchema, LicenseSchema, SourceSchema
 from ._photo import PhotoSchema
+from ._photos_mode import PhotosMode, normalize_photos_mode
 
 __all__ = [
     "AnswerEnum",
@@ -41,10 +42,12 @@ __all__ = [
     "OwnerSchema",
     "PhotoSchema",
     "PhotoSchemaOld",
+    "PhotosMode",
     "PlacesSchema",
     "ReservationStatusEnum",
     "SourceDataSchema",
     "SourcePropertiesSchema",
     "SourceSchema",
     "TotalFallback",
+    "normalize_photos_mode",
 ]
