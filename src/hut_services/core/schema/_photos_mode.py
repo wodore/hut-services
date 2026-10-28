@@ -26,7 +26,7 @@ class PhotosMode(str, Enum):
     ALL = "all"
 
 
-def normalize_photos_mode(value: "PhotosMode | bool") -> PhotosMode:
+def normalize_photos_mode(value: "PhotosMode | bool | str") -> PhotosMode:
     """Normalize legacy bools and plain strings to [`PhotosMode`][hut_services.PhotosMode].
 
     Args:

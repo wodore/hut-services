@@ -215,6 +215,8 @@ def get_hut_category(category: str | None) -> HutCategoryEnum:
 class DocNzHut0Convert(BaseHutConverterSchema[DocNzHutSchema]):
     """Converter for the DOC NZ source (version 0)."""
 
+    # ALL preserves the pre-PhotosMode direct-construction behaviour; the
+    # service's convert() defaults to EMBEDDED (photos need a page fetch).
     include_photos: PhotosMode = PhotosMode.ALL
 
     @computed_field  # type: ignore[prop-decorator]
@@ -440,6 +442,8 @@ def get_campsite_hut_type(category: str | None) -> HutTypeSchema:
 class DocNzCampsite0Convert(BaseHutConverterSchema[DocNzCampsiteSchema]):
     """Converter for the DOC NZ campsite source (version 0)."""
 
+    # ALL preserves the pre-PhotosMode direct-construction behaviour; the
+    # service's convert() defaults to EMBEDDED (photos need a page fetch).
     include_photos: PhotosMode = PhotosMode.ALL
 
     @computed_field  # type: ignore[prop-decorator]
